@@ -90,7 +90,7 @@ const selectYaku = (id: string) => {
                 v-for="(tile, index) in yaku.tiles" 
                 :key="index" 
                 :tile-id="tile" 
-                :width="80"
+                :width="100"
               />
             </div>
           </div>
