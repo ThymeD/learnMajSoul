@@ -179,6 +179,7 @@ const selectYaku = (id: string) => {
 
 .han-tabs :deep(.el-radio-button) {
   flex: 1;
+  min-width: 80px;
 }
 
 .category-tabs {
@@ -192,6 +193,7 @@ const selectYaku = (id: string) => {
 
 .category-tabs :deep(.el-radio-button) {
   flex: 1;
+  min-width: 80px;
 }
 
 .yaku-list {
