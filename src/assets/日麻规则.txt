@@ -1,0 +1,285 @@
+==一飜役==
+{|class="wikitable"
+|+ 一飜役 無限制
+! rowspan="2" | 斷幺九
+| rowspan="2" | 推薦
+| 和牌时不存在[[幺九牌]]。幺九牌=[[File:1m.png|27x39px|alt=1m]][[File:9m.png|27x39px|alt=9m]][[File:1s.png|27x39px|alt=1s]][[File:9s.png|27x39px|alt=9s]][[File:1p.png|27x39px|alt=1p]][[File:9p.png|27x39px|alt=9p]][[File:1z.png|27x39px|alt=1z]][[File:2z.png|27x39px|alt=2z]][[File:3z.png|27x39px|alt=3z]][[File:4z.png|27x39px|alt=4z]][[File:5z.png|27x39px|alt=5z]][[File:6z.png|27x39px|alt=6z]][[File:7z.png|27x39px|alt=7z]]
+注：根据规则不同，有些情况下本役要求门清；[[三人麻将]]允许[[拔北]]时，被拔的北不计算在内。
+|-
+| [[File:5m.png|27x39px|alt=5m]][[File:6m.png|27x39px|alt=6m]][[File:7m.png|27x39px|alt=7m]][[File:3s.png|27x39px|alt=3s]][[File:4s.png|27x39px|alt=4s]][[File:5s.png|27x39px|alt=5s]][[File:7s.png|27x39px|alt=7s]][[File:7s.png|27x39px|alt=7s]][[File:7p.png|27x39px|alt=7p]][[File:8p.png|27x39px|alt=8p]][[File:h6p.png|36x30px|alt=橫6p]]　[[File:h4m.png|36x30px|alt=橫4m]][[File:3m.png|27x39px|alt=3m]][[File:4m.png|27x39px|alt=4m]]
+|-
+! rowspan="6" |役牌
+! rowspan="2" | 自風牌
+| 自風牌刻子或杠子<br />首次出牌人自風為東，其他三家按逆時針自風依次為南、西、北
+|-
+| [[File:3z.png|27x39px|alt=3z]][[File:3z.png|27x39px|alt=3z]][[File:3z.png|27x39px|alt=3z]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|-
+! rowspan="2" |場風牌
+| 場風刻子或杠子（東N局，場風為東，南局場風南）
+|-
+| [[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|-
+! rowspan="2"|三元牌
+| [[File:5z.png|27x39px|alt=5z]][[File:6z.png|27x39px|alt=6z]][[File:7z.png|27x39px|alt=7z]]刻子或杠子（役牌都是可疊加的）
+|-
+|  [[File:6z.png|27x39px|alt=6z]][[File:6z.png|27x39px|alt=6z]][[File:6z.png|27x39px|alt=6z]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|-
+! 河底摸魚
+| 偶然 
+| 和最後一張打出的牌
+|-
+! 嶺上開花
+| 偶然 
+| 槓後摸[[岭上牌]]補牌時自摸
+|-
+! 搶槓
+| 偶然 
+| 和加槓的牌
+|-
+! 海底撈月
+| 偶然 
+| 自摸最後一張牌
+|}
+
+{|class="wikitable"
+|+ 一飜役 只能門前淸
+! 立直
+| 推薦 
+| 門前淸時，支付1000點宣告聽牌，立直後只能暗槓與和牌。如果规则有[[里宝]]，则和牌後，翻開里宝表示牌。
+|-
+! 一發
+| 偶然 
+| 立直後，在一巡内完成和牌。并且，期间不能有人的吃、碰、杠、拔北。如果别人[[加杠]]或拔北时[[抢杠]]或和北，则加杠或拔北不成立；若此时之前无其他吃碰杠行为，则一发仍然成立。
+|-
+! 門前淸自摸和
+| 容易 
+| 門前淸時，自摸
+|-
+! rowspan="2" | 平和
+| rowspan="2" | 推薦
+| 除自摸外没有额外的符数。即只有顺子、雀头不能是自风或场风或三元牌，且两面听牌。注：通常情况下，平和自摸计20符2飜，自摸的2符被舍去；有些规则自摸和平和不能兼得。
+|-
+| [[File:1m.png|27x39px|alt=1m]][[File:2m.png|27x39px|alt=2m]][[File:3m.png|27x39px|alt=3m]][[File:5m.png|27x39px|alt=5m]][[File:6m.png|27x39px|alt=6m]][[File:7m.png|27x39px|alt=7m]][[File:2s.png|27x39px|alt=2s]][[File:3s.png|27x39px|alt=3s]][[File:4s.png|27x39px|alt=4s]][[File:7s.png|27x39px|alt=7s]][[File:7s.png|27x39px|alt=7s]][[File:7p.png|27x39px|alt=7p]][[File:8p.png|27x39px|alt=8p]][[File:h9p.png|36x30px|alt=橫9p]]
+|-
+! rowspan="2" | 一盃口
+| rowspan="2" | 容易
+| 一组相同的顺子
+|-
+| [[File:1p.png|27x39px|alt=1p]][[File:1p.png|27x39px|alt=1p]][[File:2p.png|27x39px|alt=2p]][[File:2p.png|27x39px|alt=2p]][[File:3p.png|27x39px|alt=3p]][[File:3p.png|27x39px|alt=3p]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|}
+
+==二飜役==
+{|class="wikitable"
+|+二飜役 無限制
+!rowspan="2"| 對對和
+|rowspan="2"| 容易
+| 全是刻子、槓子。同国标麻将“对对和”。
+|-
+| [[File:5z.png|27x39px|alt=5z]][[File:5z.png|27x39px|alt=5z]][[File:5z.png|27x39px|alt=5z]][[File:2s.png|27x39px|alt=2s]][[File:2s.png|27x39px|alt=2s]][[File:1p.png|27x39px|alt=1p]][[File:1p.png|27x39px|alt=1p]][[File:h1p.png|36x30px|alt=橫1p]]　[[File:2m.png|27x39px|alt=2m]][[File:h2m.png|36x30px|alt=橫2m]][[File:2m.png|27x39px|alt=2m]]　[[File:9m.png|27x39px|alt=9m]][[File:9m.png|27x39px|alt=9m]][[File:99m.png|36x57px|alt=加槓99m]]
+|-
+!rowspan="2"|三暗刻
+|rowspan="2"| 稍難
+| 暗刻+暗槓=3
+|-
+| [[File:2m.png|27x39px|alt=2m]][[File:2m.png|27x39px|alt=2m]][[File:2m.png|27x39px|alt=2m]][[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]]　[[File:b.png|27x39px|alt=牌背]][[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|-
+!rowspan="2"| 三槓子
+|rowspan="2"| 超難
+| 三組槓子
+|-
+| [[File:h2m.png|36x30px|alt=橫2m]][[File:2m.png|27x39px|alt=2m]][[File:2m.png|27x39px|alt=2m]][[File:2m.png|27x39px|alt=2m]]　[[File:11z.png|36x57px|alt=加槓11z]][[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]]　[[File:b.png|27x39px|alt=牌背]][[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|-
+!rowspan="2"|三色同刻
+|rowspan="2"| 難
+| 3組同一數字的刻子（或槓子）
+|-
+| [[File:2m.png|27x39px|alt=2m]][[File:2m.png|27x39px|alt=2m]][[File:2m.png|27x39px|alt=2m]]　[[File:h2s.png|36x30px|alt=橫2s]][[File:2s.png|27x39px|alt=2s]][[File:2s.png|27x39px|alt=2s]]　[[File:2p.png|27x39px|alt=2p]][[File:2p.png|27x39px|alt=2p]][[File:h2p.png|36x30px|alt=橫2p]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|-
+!rowspan="2"|混老頭
+|rowspan="2"| 稍難
+| 幺九牌組成的七對子或對對和。必須有字牌，不能全是字牌。
+|-
+| [[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]][[File:9m.png|27x39px|alt=9m]][[File:9m.png|27x39px|alt=9m]][[File:9m.png|27x39px|alt=9m]][[File:1s.png|27x39px|alt=1s]][[File:1s.png|27x39px|alt=1s]][[File:9s.png|27x39px|alt=9s]][[File:9s.png|27x39px|alt=9s]][[File:h9s.png|36x30px|alt=橫9s]] {{Tile|3z}}{{Tile|3z}}{{TileH|3z}}
+|-
+!rowspan="2"|小三元
+|rowspan="2"| 稍難
+| 三元牌刻子或杠子=2，三元牌雀頭=1。注：小三元成立时，另计两组役牌，如上述牌例另计中、发。
+|-
+| [[File:7z.png|27x39px|alt=7z]][[File:7z.png|27x39px|alt=7z]][[File:7z.png|27x39px|alt=7z]][[File:5z.png|27x39px|alt=5z]][[File:5z.png|27x39px|alt=5z]][[File:5z.png|27x39px|alt=5z]][[File:6z.png|27x39px|alt=6z]][[File:6z.png|27x39px|alt=6z]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|}
+
+{|class="wikitable"
+|+二飜役 [[副露]]後1翻
+! rowspan="2"| 三色同順
+| rowspan="2" | 普通 
+| 3種花色同一順子
+|-
+| [[File:2m.png|27x39px|alt=2m]][[File:3m.png|27x39px|alt=3m]][[File:4m.png|27x39px|alt=4m]]　[[File:h3p.png|36x30px|alt=橫3p]][[File:2p.png|27x39px|alt=2p]][[File:4p.png|27x39px|alt=4p]]　[[File:h4s.png|36x30px|alt=橫4s]][[File:2s.png|27x39px|alt=2s]][[File:3s.png|27x39px|alt=3s]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|-
+! rowspan="2"| 一氣通貫
+| rowspan="2" | 普通 
+| 同花色的123，456，789三組順子。同国标麻将“清龙”。
+|-
+| [[File:4m.png|27x39px|alt=4m]][[File:5m.png|27x39px|alt=5m]][[File:h6m.png|36x30px|alt=橫6m]]　[[File:h3m.png|36x30px|alt=橫3m]][[File:1m.png|27x39px|alt=1m]][[File:2m.png|27x39px|alt=2m]]　[[File:h8m.png|36x30px|alt=橫8m]][[File:7m.png|27x39px|alt=7m]][[File:9m.png|27x39px|alt=9m]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|-
+! rowspan="2"| 混全帶幺九
+| rowspan="2" | 普通 
+| 所有面子，對子都帶[[File:1m.png|27x39px|alt=1m]][[File:9m.png|27x39px|alt=9m]][[File:1s.png|27x39px|alt=1s]][[File:9s.png|27x39px|alt=9s]][[File:1p.png|27x39px|alt=1p]][[File:9p.png|27x39px|alt=9p]][[File:1z.png|27x39px|alt=1z]][[File:2z.png|27x39px|alt=2z]][[File:3z.png|27x39px|alt=3z]][[File:4z.png|27x39px|alt=4z]][[File:5z.png|27x39px|alt=5z]][[File:6z.png|27x39px|alt=6z]][[File:7z.png|27x39px|alt=7z]]
+（必须有顺子，必须有字牌，不能全是字牌。）同国标麻将“全带幺”。
+|-
+| [[File:1s.png|27x39px|alt=1s]][[File:2s.png|27x39px|alt=2s]][[File:3s.png|27x39px|alt=3s]][[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]][[File:h1z.png|36x30px|alt=橫1z]]　[[File:7s.png|27x39px|alt=7s]][[File:8s.png|27x39px|alt=8s]][[File:9s.png|27x39px|alt=9s]]　[[File:1p.png|27x39px|alt=1p]][[File:2p.png|27x39px|alt=2p]][[File:3p.png|27x39px|alt=3p]]　[[File:7p.png|27x39px|alt=7p]][[File:8p.png|27x39px|alt=8p]][[File:9p.png|27x39px|alt=9p]]
+|}
+
+{|class="wikitable"
+|+二飜役 只能門前淸
+! rowspan="2"| 七對子
+| rowspan="2" | 普通 
+| 對子=7（四張牌不能當作2組對子）
+|-
+| [[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]][[File:4m.png|27x39px|alt=4m]][[File:4m.png|27x39px|alt=4m]][[File:1p.png|27x39px|alt=1p]][[File:1p.png|27x39px|alt=1p]][[File:4p.png|27x39px|alt=4p]][[File:4p.png|27x39px|alt=4p]][[File:1s.png|27x39px|alt=1s]][[File:1s.png|27x39px|alt=1s]][[File:2s.png|27x39px|alt=2s]][[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]][[File:h2s.png|36x30px|alt=橫2s]]
+|-
+! 兩立直
+| 偶然 
+| 在第一巡、无吃、碰、杠、拔北时即宣告立直。
+|}
+
+==三飜役==
+{|class="wikitable"
+|+三飜役 [[副露]]後2翻
+! rowspan="2"| 混一色
+| rowspan="2" | 容易 
+| 同花色的牌+字牌
+|-
+| [[File:1m.png|27x39px|alt=1m]][[File:2m.png|27x39px|alt=2m]][[File:3m.png|27x39px|alt=3m]][[File:4m.png|27x39px|alt=4m]][[File:5m.png|27x39px|alt=5m]][[File:6m.png|27x39px|alt=6m]][[File:8m.png|27x39px|alt=8m]][[File:8m.png|27x39px|alt=8m]][[File:3z.png|27x39px|alt=3z]][[File:3z.png|27x39px|alt=3z]][[File:h3z.png|36x30px|alt=橫3z]]　[[File:5m.png|27x39px|alt=5m]][[File:6m.png|27x39px|alt=6m]][[File:7m.png|27x39px|alt=7m]]　[[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]][[File:h1z.png|36x30px|alt=橫1z]]
+|-
+! rowspan="2"| 純全帶幺九
+| rowspan="2" | 稍難 
+| 所有面子，對子都帶[[File:1m.png|27x39px|alt=1m]][[File:9m.png|27x39px|alt=9m]][[File:1s.png|27x39px|alt=1s]][[File:9s.png|27x39px|alt=9s]][[File:1p.png|27x39px|alt=1p]][[File:9p.png|27x39px|alt=9p]]。（必須有順子）
+|-
+| [[File:1s.png|27x39px|alt=1s]][[File:2s.png|27x39px|alt=2s]][[File:3s.png|27x39px|alt=3s]][[File:1m.png|27x39px|alt=1m]][[File:2m.png|27x39px|alt=2m]][[File:h3m.png|36x30px|alt=橫3m]]　[[File:7s.png|27x39px|alt=7s]][[File:8s.png|27x39px|alt=8s]][[File:9s.png|27x39px|alt=9s]]　[[File:1p.png|27x39px|alt=1p]][[File:2p.png|27x39px|alt=2p]][[File:3p.png|27x39px|alt=3p]]　[[File:7p.png|27x39px|alt=7p]][[File:8p.png|27x39px|alt=8p]][[File:9p.png|27x39px|alt=9p]]
+|}
+
+{|class="wikitable"
+|+三飜役 只能門前淸
+! rowspan="2"| 二盃口
+| rowspan="2" | 難 
+| 2組一盃口（[[File:1p.png|27x39px|alt=1p]][[File:1p.png|27x39px|alt=1p]][[File:1p.png|27x39px|alt=1p]][[File:1p.png|27x39px|alt=1p]][[File:2p.png|27x39px|alt=2p]][[File:2p.png|27x39px|alt=2p]][[File:2p.png|27x39px|alt=2p]][[File:2p.png|27x39px|alt=2p]][[File:3p.png|27x39px|alt=3p]][[File:3p.png|27x39px|alt=3p]][[File:3p.png|27x39px|alt=3p]][[File:3p.png|27x39px|alt=3p]]也算2杯口）
+|-
+| [[File:1p.png|27x39px|alt=1p]][[File:1p.png|27x39px|alt=1p]][[File:2p.png|27x39px|alt=2p]][[File:2p.png|27x39px|alt=2p]][[File:3p.png|27x39px|alt=3p]][[File:3p.png|27x39px|alt=3p]][[File:7p.png|27x39px|alt=7p]][[File:7p.png|27x39px|alt=7p]][[File:8p.png|27x39px|alt=8p]][[File:8p.png|27x39px|alt=8p]][[File:9p.png|27x39px|alt=9p]][[File:9p.png|27x39px|alt=9p]][[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]]
+|}
+
+==滿貫役==
+{|class="wikitable"
+|+滿貫役 無限制
+! rowspan="2"| 流局滿貫
+| rowspan="2" | 難 
+|[[荒牌流局]]前打出的牌全是幺九牌，所有牌不被他人吃碰槓
+（自己不需聽牌，自己的吃碰槓不影響流局滿貫）
+|}
+
+==六飜役==
+{|class="wikitable"
+|+ 六飜役 [[副露]]後5翻
+!rowspan="2"| 清一色
+|rowspan="2"| 稍難
+| 全是花色相同的牌
+|-
+| [[File:1m.png|27x39px|alt=1m]][[File:2m.png|27x39px|alt=2m]][[File:3m.png|27x39px|alt=3m]][[File:4m.png|27x39px|alt=4m]][[File:5m.png|27x39px|alt=5m]][[File:6m.png|27x39px|alt=6m]][[File:8m.png|27x39px|alt=8m]][[File:8m.png|27x39px|alt=8m]][[File:9m.png|27x39px|alt=9m]][[File:9m.png|27x39px|alt=9m]][[File:h9m.png|36x30px|alt=橫9m]]　[[File:5m.png|27x39px|alt=5m]][[File:6m.png|27x39px|alt=6m]][[File:7m.png|27x39px|alt=7m]]
+|}
+
+==役滿役==
+{|class="wikitable"
+|+役滿役 無限制
+! rowspan="2"| 大三元
+| rowspan="2" | 難 
+| [[File:5z.png|27x39px|alt=5z]][[File:6z.png|27x39px|alt=6z]][[File:7z.png|27x39px|alt=7z]]三組刻子（或杠子）
+|-
+| [[File:5z.png|27x39px|alt=5z]][[File:5z.png|27x39px|alt=5z]][[File:5z.png|27x39px|alt=5z]][[File:6z.png|27x39px|alt=6z]][[File:6z.png|27x39px|alt=6z]][[File:6z.png|27x39px|alt=6z]][[File:7z.png|27x39px|alt=7z]][[File:7z.png|27x39px|alt=7z]][[File:7z.png|27x39px|alt=7z]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|-
+! rowspan="2"| 小四喜
+| rowspan="2" | 超難 
+| [[File:1z.png|27x39px|alt=1z]][[File:2z.png|27x39px|alt=2z]][[File:3z.png|27x39px|alt=3z]][[File:4z.png|27x39px|alt=4z]]其中3种是刻子或杠子，另一种是對子
+|-
+| [[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]][[File:2z.png|27x39px|alt=2z]][[File:2z.png|27x39px|alt=2z]][[File:2z.png|27x39px|alt=2z]][[File:3z.png|27x39px|alt=3z]][[File:3z.png|27x39px|alt=3z]][[File:3z.png|27x39px|alt=3z]][[File:4z.png|27x39px|alt=4z]][[File:4z.png|27x39px|alt=4z]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|-
+! rowspan="2"| 大四喜
+| rowspan="2" | 超難 
+| [[File:1z.png|27x39px|alt=1z]][[File:2z.png|27x39px|alt=2z]][[File:3z.png|27x39px|alt=3z]][[File:4z.png|27x39px|alt=4z]]四組刻子（或杠子）
+|-
+| [[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]][[File:2z.png|27x39px|alt=2z]][[File:2z.png|27x39px|alt=2z]][[File:2z.png|27x39px|alt=2z]][[File:3z.png|27x39px|alt=3z]][[File:3z.png|27x39px|alt=3z]][[File:3z.png|27x39px|alt=3z]][[File:4z.png|27x39px|alt=4z]][[File:4z.png|27x39px|alt=4z]][[File:4z.png|27x39px|alt=4z]]　[[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]
+|-
+! rowspan="2"| 字一色
+| rowspan="2" | 超難 
+| [[File:1z.png|27x39px|alt=1z]][[File:2z.png|27x39px|alt=2z]][[File:3z.png|27x39px|alt=3z]][[File:4z.png|27x39px|alt=4z]][[File:5z.png|27x39px|alt=5z]][[File:6z.png|27x39px|alt=6z]][[File:7z.png|27x39px|alt=7z]]組成的七對子或對對和
+|-
+| [[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]][[File:1z.png|27x39px|alt=1z]][[File:2z.png|27x39px|alt=2z]][[File:2z.png|27x39px|alt=2z]][[File:2z.png|27x39px|alt=2z]][[File:5z.png|27x39px|alt=5z]][[File:5z.png|27x39px|alt=5z]][[File:5z.png|27x39px|alt=5z]][[File:6z.png|27x39px|alt=6z]][[File:6z.png|27x39px|alt=6z]]　[[File:3z.png|27x39px|alt=3z]][[File:3z.png|27x39px|alt=3z]][[File:33z.png|36x57px|alt=加槓33z]]
+|-
+! rowspan="2"|綠一色
+| rowspan="2" | 超難 
+| 由[[File:2s.png|27x39px|alt=2s]][[File:3s.png|27x39px|alt=3s]][[File:4s.png|27x39px|alt=4s]][[File:6s.png|27x39px|alt=6s]][[File:8s.png|27x39px|alt=8s]][[File:6z.png|27x39px|alt=6z]]組成的和牌
+|-
+| [[File:2s.png|27x39px|alt=2s]][[File:3s.png|27x39px|alt=3s]][[File:4s.png|27x39px|alt=4s]][[File:6z.png|27x39px|alt=6z]][[File:h6z.png|36x30px|alt=橫6z]]　[[File:h3s.png|36x30px|alt=橫3s]][[File:2s.png|27x39px|alt=2s]][[File:4s.png|27x39px|alt=4s]]　[[File:66s.png|36x57px|alt=加槓66s]][[File:6s.png|27x39px|alt=6s]][[File:6s.png|27x39px|alt=6s]]　[[File:8s.png|27x39px|alt=8s]][[File:8s.png|27x39px|alt=8s]][[File:h8s.png|36x30px|alt=橫8s]]
+|-
+! rowspan="2"| 清老頭
+| rowspan="2" | 超難 
+| 由[[File:1m.png|27x39px|alt=1m]][[File:9m.png|27x39px|alt=9m]][[File:1s.png|27x39px|alt=1s]][[File:9s.png|27x39px|alt=9s]][[File:1p.png|27x39px|alt=1p]][[File:9p.png|27x39px|alt=9p]]組成的對對和
+|-
+| [[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]][[File:9m.png|27x39px|alt=9m]][[File:9m.png|27x39px|alt=9m]][[File:9m.png|27x39px|alt=9m]][[File:1s.png|27x39px|alt=1s]][[File:h1s.png|36x30px|alt=橫1s]]　[[File:9s.png|27x39px|alt=9s]][[File:9s.png|27x39px|alt=9s]][[File:h9s.png|36x30px|alt=橫9s]]　[[File:1p.png|27x39px|alt=1p]][[File:1p.png|27x39px|alt=1p]][[File:11p.png|36x57px|alt=加槓11p]]
+|}
+
+{|class="wikitable"
+|+役滿役 只能門前淸
+! rowspan="2"| 國士無雙
+| rowspan="2" | 難 
+| 13种幺九牌各一枚再加其中任何一枚和牌，听牌时只有12种幺九牌
+|-
+| [[File:1m.png|27x39px|alt=1m]][[File:9m.png|27x39px|alt=9m]][[File:1p.png|27x39px|alt=1p]][[File:9p.png|27x39px|alt=9p]][[File:1s.png|27x39px|alt=1s]][[File:9s.png|27x39px|alt=9s]][[File:2z.png|27x39px|alt=2z]][[File:2z.png|27x39px|alt=2z]][[File:3z.png|27x39px|alt=3z]][[File:4z.png|27x39px|alt=4z]][[File:5z.png|27x39px|alt=5z]][[File:6z.png|27x39px|alt=6z]][[File:7z.png|27x39px|alt=7z]][[File:h1z.png|36x30px|alt=橫1z]]
+|-
+! rowspan="2"| 國士無雙13面
+| rowspan="2" | 最難 
+| 幺九種類=13，聽[[File:1m.png|27x39px|alt=1m]][[File:9m.png|27x39px|alt=9m]][[File:1s.png|27x39px|alt=1s]][[File:9s.png|27x39px|alt=9s]][[File:1p.png|27x39px|alt=1p]][[File:9p.png|27x39px|alt=9p]][[File:1z.png|27x39px|alt=1z]][[File:2z.png|27x39px|alt=2z]][[File:3z.png|27x39px|alt=3z]][[File:4z.png|27x39px|alt=4z]][[File:5z.png|27x39px|alt=5z]][[File:6z.png|27x39px|alt=6z]][[File:7z.png|27x39px|alt=7z]]
+|-
+| [[File:1m.png|27x39px|alt=1m]][[File:9m.png|27x39px|alt=9m]][[File:1p.png|27x39px|alt=1p]][[File:9p.png|27x39px|alt=9p]][[File:1s.png|27x39px|alt=1s]][[File:9s.png|27x39px|alt=9s]][[File:1z.png|27x39px|alt=1z]][[File:2z.png|27x39px|alt=2z]][[File:3z.png|27x39px|alt=3z]][[File:4z.png|27x39px|alt=4z]][[File:5z.png|27x39px|alt=5z]][[File:6z.png|27x39px|alt=6z]][[File:7z.png|27x39px|alt=7z]][[File:h1z.png|36x30px|alt=橫1z]]
+|-
+! rowspan="2"| 四暗刻
+| rowspan="2" | 難 
+| 门清对对和，[[双碰]]听牌，只能自摸。（如果荣和则是[[三暗刻]][[对对和]]）
+|-
+| [[File:1p.png|27x39px|alt=1p]][[File:1p.png|27x39px|alt=1p]][[File:1p.png|27x39px|alt=1p]][[File:2p.png|27x39px|alt=2p]][[File:2p.png|27x39px|alt=2p]][[File:2p.png|27x39px|alt=2p]][[File:3p.png|27x39px|alt=3p]][[File:3p.png|27x39px|alt=3p]][[File:3p.png|27x39px|alt=3p]][[File:6p.png|27x39px|alt=6p]][[File:6p.png|27x39px|alt=6p]][[File:8p.png|27x39px|alt=8p]][[File:8p.png|27x39px|alt=8p]][[File:h8p.png|36x30px|alt=橫8p]]
+|-
+! rowspan="2"| 四暗刻單騎
+| rowspan="2" | 超难 
+| 门清对对和，[[单骑]]听牌
+|-
+| [[File:1p.png|27x39px|alt=1p]][[File:1p.png|27x39px|alt=1p]][[File:1p.png|27x39px|alt=1p]][[File:2p.png|27x39px|alt=2p]][[File:2p.png|27x39px|alt=2p]][[File:2p.png|27x39px|alt=2p]][[File:3p.png|27x39px|alt=3p]][[File:3p.png|27x39px|alt=3p]][[File:3p.png|27x39px|alt=3p]][[File:6p.png|27x39px|alt=6p]][[File:6p.png|27x39px|alt=6p]][[File:6p.png|27x39px|alt=6p]][[File:8p.png|27x39px|alt=8p]][[File:h8p.png|36x30px|alt=橫8p]]
+|-
+! rowspan="2"| 九蓮寶燈
+| rowspan="2" | 最難 
+| 帶有1112345678999的清一色（非9面聽）
+|-
+| [[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]][[File:2m.png|27x39px|alt=2m]][[File:3m.png|27x39px|alt=3m]][[File:4m.png|27x39px|alt=4m]][[File:4m.png|27x39px|alt=4m]][[File:5m.png|27x39px|alt=5m]][[File:6m.png|27x39px|alt=6m]][[File:7m.png|27x39px|alt=7m]][[File:8m.png|27x39px|alt=8m]][[File:9m.png|27x39px|alt=9m]][[File:9m.png|27x39px|alt=9m]][[File:h9m.png|36x30px|alt=橫9m]]
+|-
+! rowspan="2"| 純正九蓮寶燈
+| rowspan="2" | 最難 
+| 由1112345678999組成，9面聽清一色
+|-
+| [[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]][[File:2m.png|27x39px|alt=2m]][[File:3m.png|27x39px|alt=3m]][[File:4m.png|27x39px|alt=4m]][[File:5m.png|27x39px|alt=5m]][[File:6m.png|27x39px|alt=6m]][[File:7m.png|27x39px|alt=7m]][[File:8m.png|27x39px|alt=8m]][[File:9m.png|27x39px|alt=9m]][[File:9m.png|27x39px|alt=9m]][[File:9m.png|27x39px|alt=9m]][[File:h4m.png|36x30px|alt=橫4m]]
+|-
+! 天和
+| 偶然 
+| 親家配牌時和牌
+|-
+!  地和
+|  偶然 
+| 子家首次摸牌时自摸，且之前无吃、碰、杠或拔北
+|-
+! rowspan="2"| 四槓子
+| rowspan="2" | 最難 
+| 四組杠子
+|-
+| [[File:b.png|27x39px|alt=牌背]][[File:b.png|27x39px|alt=牌背]]　[[File:h1m.png|36x30px|alt=橫1m]][[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]][[File:1m.png|27x39px|alt=1m]]　[[File:5p.png|27x39px|alt=5p]][[File:5p.png|27x39px|alt=5p]][[File:55p.png|36x57px|alt=加槓55p]]　[[File:h2m.png|36x30px|alt=橫2m]][[File:2m.png|27x39px|alt=2m]][[File:2m.png|27x39px|alt=2m]][[File:2m.png|27x39px|alt=2m]]　[[File:b.png|27x39px|alt=牌背]][[File:8p.png|27x39px|alt=8p]][[File:8p.png|27x39px|alt=8p]][[File:b.png|27x39px|alt=牌背]]　
+|}
+
+=参考文献=
+* [http://mjall.jp/t0001/]
+* [http://tenhou.net/sc/prof.html 天凤役统计]
