@@ -63,20 +63,16 @@ const updateShadow = () => {
           </div>
           <el-divider />
           <div class="preview-area">
-            <div 
-              class="mahjong-tile-preview"
+            <img 
+              :src="`/src/assets/mahjong/${selectedTile}.jpg`" 
+              class="preview-image"
               :style="{
                 borderRadius: borderRadius + 'px',
                 borderWidth: borderWidth + 'px',
                 borderColor: borderColor,
                 boxShadow: shadow ? '0 2px 12px rgba(0,0,0,0.15)' : 'none'
               }"
-            >
-              <img 
-                :src="`/src/assets/mahjong/${selectedTile}.jpg`" 
-                class="preview-image"
-              />
-            </div>
+            />
             <div class="preview-code">
               <code>border-radius: {{ borderRadius }}px</code><br/>
               <code>border: {{ borderWidth }}px solid {{ borderColor }}</code><br/>
