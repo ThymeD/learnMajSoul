@@ -178,6 +178,8 @@ const selectYaku = (id: string) => {
 
 .han-tabs :deep(.el-radio-button__inner) {
   width: 100%;
+  min-width: 100px;
+  padding: 8px 20px;
 }
 
 .category-tabs {
@@ -190,6 +192,8 @@ const selectYaku = (id: string) => {
 
 .category-tabs :deep(.el-radio-button__inner) {
   width: 100%;
+  min-width: 100px;
+  padding: 8px 20px;
 }
 
 .yaku-list {
