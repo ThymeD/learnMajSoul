@@ -7,7 +7,8 @@ const yakuList = [
     name: '立直',
     han: 1,
     tiles: ['w1', 'w2', 'w3', 's4', 's5', 's6', 'w7'],
-    desc: '听牌后宣言并打出振听棒'
+    desc: '听牌后宣言并打出振听棒',
+    condition: '门前清限定'
   }
 ]
 </script>
@@ -23,6 +24,7 @@ const yakuList = [
       <div class="yaku-top">
         <span class="yaku-name">{{ yaku.name }}</span>
         <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
+        <el-tag v-if="yaku.condition" type="info" size="small">{{ yaku.condition }}</el-tag>
       </div>
       <div class="yaku-middle">
         {{ yaku.desc }}
