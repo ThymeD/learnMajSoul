@@ -186,7 +186,6 @@ const scrollToYaku = (id: string) => {
 
 .yaku-row.active {
   background: #ecf5ff;
-  box-shadow: 0 0 0 2px #409eff;
 }
 
 .yaku-info {
