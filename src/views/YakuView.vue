@@ -8,6 +8,7 @@ interface YakuItem {
   han: number
   tiles: string[]
   desc: string
+  condition?: string
 }
 
 const yakuList: YakuItem[] = [
@@ -16,21 +17,24 @@ const yakuList: YakuItem[] = [
     name: '立直',
     han: 1,
     tiles: ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7'],
-    desc: '听牌后宣言并打出振听棒'
+    desc: '听牌后宣言并打出振听棒',
+    condition: '门前清限定'
   },
   {
     id: 'ippatsu',
     name: '一发',
     han: 1,
     tiles: ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7'],
-    desc: '立直后一轮内自摸或荣和'
+    desc: '立直后一轮内自摸或荣和',
+    condition: '门前清限定'
   },
   {
     id: 'tsumo',
     name: '门前清自摸和',
     han: 1,
     tiles: ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7'],
-    desc: '门前清状态下自摸和牌'
+    desc: '门前清状态下自摸和牌',
+    condition: '门前清限定'
   },
   {
     id: 'tanyao',
@@ -79,7 +83,8 @@ const yakuList: YakuItem[] = [
     name: '平和',
     han: 1,
     tiles: ['w1', 'w2', 'w3', 's4', 's5', 's6', 'b7'],
-    desc: '门前清、手牌全顺子、雀头非役牌'
+    desc: '门前清、手牌全顺子、雀头非役牌',
+    condition: '门前清限定'
   }
 ]
 
@@ -107,30 +112,31 @@ const scrollToYaku = (id: string) => {
           <el-tab-pane label="一番"></el-tab-pane>
         </el-tabs>
       </div>
-      <div class="yaku-list">
-        <div 
-          v-for="yaku in yakuList" 
-          :key="yaku.id" 
-          :id="`yaku-${yaku.id}`"
-          class="yaku-row"
-          :class="{ active: activeId === yaku.id }"
-          @click="selectYaku(yaku.id)"
-        >
-          <div class="yaku-info">
-            <span class="yaku-name">{{ yaku.name }}</span>
-            <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
+        <div class="yaku-list">
+          <div 
+            v-for="yaku in yakuList" 
+            :key="yaku.id" 
+            :id="`yaku-${yaku.id}`"
+            class="yaku-card"
+            :class="{ active: activeId === yaku.id }"
+            @click="selectYaku(yaku.id)"
+          >
+            <div class="yaku-top">
+              <span class="yaku-name">{{ yaku.name }}</span>
+              <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
+              <span v-if="yaku.condition" class="yaku-condition">{{ yaku.condition }}</span>
+            </div>
+            <div class="yaku-middle">{{ yaku.desc }}</div>
+            <div class="yaku-bottom">
+              <MahjongTile 
+                v-for="(tile, index) in yaku.tiles" 
+                :key="index" 
+                :tile-id="tile" 
+                :width="60"
+              />
+            </div>
           </div>
-          <div class="yaku-tiles">
-            <MahjongTile 
-              v-for="(tile, index) in yaku.tiles" 
-              :key="index" 
-              :tile-id="tile" 
-              :width="80"
-            />
-          </div>
-          <div class="yaku-desc">{{ yaku.desc }}</div>
         </div>
-      </div>
     </div>
     <div class="nav-area">
       <el-affix :offset="80">
@@ -199,32 +205,31 @@ const scrollToYaku = (id: string) => {
   background: #fff;
 }
 
-.yaku-row {
-  display: flex;
-  align-items: center;
-  padding: 20px 24px;
+.yaku-card {
   background: #fff;
   border-radius: 8px;
+  padding: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  gap: 24px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.yaku-row:hover {
+.yaku-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.yaku-row.active {
+.yaku-card.active {
   background: #ecf5ff;
 }
 
-.yaku-info {
+.yaku-top {
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 160px;
-  flex-shrink: 0;
+  margin-bottom: 12px;
+  background: #ecf5ff;
+  padding: 12px 16px;
+  border-radius: 4px;
 }
 
 .yaku-name {
@@ -233,20 +238,22 @@ const scrollToYaku = (id: string) => {
   color: #303133;
 }
 
-.yaku-tiles {
-  display: flex;
-  gap: 4px;
-  flex: 1;
+.yaku-condition {
+  margin-left: auto;
+  font-size: 14px;
+  color: #909399;
 }
 
-.yaku-desc {
-  width: 200px;
-  font-size: 15px;
-  font-weight: 500;
-  color: #303133;
+.yaku-middle {
+  font-size: 14px;
+  color: #606266;
   line-height: 1.6;
-  text-align: right;
-  flex-shrink: 0;
+  margin-bottom: 16px;
+}
+
+.yaku-bottom {
+  display: flex;
+  gap: 8px;
 }
 
 .nav-card {
