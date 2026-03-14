@@ -268,7 +268,7 @@ export const yakuData: Yaku[] = [
     category: '无限制',
     difficulty: '超难',
     desc: '字牌组成的七对子或对对和',
-    tiles: ['z1', 'z1', 'z1', 'z2', 'z2', 'z2', 'z5', 'z5', 'z5', 'z6', 'z6', 'z3', 'z3']
+    tiles: ['z1', 'z1', 'z1', 'z2', 'z2', 'z2', 'z1', 'z1', 'z1', 'z2', 'z2', 'z3', 'z3']
   },
   {
     id: 'ryuuiisou',
@@ -277,7 +277,7 @@ export const yakuData: Yaku[] = [
     category: '无限制',
     difficulty: '超难',
     desc: '由2s3s4s6s8s6z组成的和牌',
-    tiles: ['s2', 's3', 's4', 'z6', 'z6', 's3', 's2', 's4', 's6', 's6', 's6', 's8', 's8']
+    tiles: ['s2', 's3', 's4', 'z2', 'z2', 's3', 's2', 's4', 's6', 's6', 's6', 's8', 's8']
   },
   {
     id: 'chinrooto',
@@ -296,7 +296,7 @@ export const yakuData: Yaku[] = [
     category: '门前清',
     difficulty: '难',
     desc: '13种幺九牌各一枚再加其中任何一枚和牌',
-    tiles: ['w1', 'w9', 'b1', 'b9', 's1', 's9', 'z2', 'z2', 'z3', 'z4', 'z5', 'z6', 'z7']
+    tiles: ['w1', 'w9', 'b1', 'b9', 's1', 's9', 'z2', 'z2', 'z3', 'z4', 'z1', 'z2', 'z3']
   },
   {
     id: 'kokushimusou13',
@@ -305,7 +305,7 @@ export const yakuData: Yaku[] = [
     category: '门前清',
     difficulty: '最难',
     desc: '幺九种类=13，9面听',
-    tiles: ['w1', 'w9', 'b1', 'b9', 's1', 's9', 'z1', 'z2', 'z3', 'z4', 'z5', 'z6', 'z7']
+    tiles: ['w1', 'w9', 'b1', 'b9', 's1', 's9', 'z1', 'z2', 'z3', 'z4', 'z1', 'z2', 'z3']
   },
   {
     id: 'suanko',
