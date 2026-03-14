@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import { yakuData } from '../data/yaku'
 import MahjongTile from '../components/MahjongTile.vue'
 
+const searchText = ref('')
+
 const hanGroups = [
   { han: 1, label: '一番' },
   { han: 2, label: '二番' },
@@ -22,10 +24,18 @@ const activeHan = ref(1)
 const activeCategory = ref<string>('')
 
 const filteredYaku = computed(() => {
-  if (!activeCategory.value) {
-    return yakuData.filter(y => y.han === activeHan.value)
+  let result = yakuData.filter(y => y.han === activeHan.value)
+  if (activeCategory.value) {
+    result = result.filter(y => y.category === activeCategory.value)
   }
-  return yakuData.filter(y => y.han === activeHan.value && y.category === activeCategory.value)
+  if (searchText.value) {
+    const keyword = searchText.value.toLowerCase()
+    result = result.filter(y => 
+      y.name.toLowerCase().includes(keyword) || 
+      y.desc.toLowerCase().includes(keyword)
+    )
+  }
+  return result
 })
 
 const getCategoryOptions = (han: number) => {
@@ -62,6 +72,12 @@ const selectYaku = (id: string) => {
       <div class="main-col">
         <div class="sticky-header">
           <h2>役种一览</h2>
+          <el-input 
+            v-model="searchText" 
+            placeholder="搜索役种名称或描述" 
+            clearable 
+            class="search-input"
+          />
           <div class="han-tabs">
             <el-radio-group :model-value="activeHan" @update:model-value="selectHan">
               <el-radio-button v-for="g in hanGroups" :key="g.han" :value="g.han">
@@ -166,6 +182,11 @@ const selectYaku = (id: string) => {
 .yaku-page h2 {
   margin: 0 0 16px;
   color: #303133;
+}
+
+.search-input {
+  margin-bottom: 16px;
+  max-width: 300px;
 }
 
 .han-tabs {
