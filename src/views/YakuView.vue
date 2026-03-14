@@ -98,7 +98,7 @@ const scrollToYaku = (id: string) => {
   <div class="yaku-page">
     <h2>役种一览</h2>
     <el-row :gutter="24">
-      <el-col :span="20">
+      <el-col :span="21">
         <el-tabs type="border-card">
           <el-tab-pane label="一番">
             <div class="yaku-list">
@@ -126,7 +126,7 @@ const scrollToYaku = (id: string) => {
           </el-tab-pane>
         </el-tabs>
       </el-col>
-      <el-col :span="4">
+      <el-col :span="3">
         <el-affix :offset="80">
           <el-card class="nav-card" shadow="never">
             <template #header>
