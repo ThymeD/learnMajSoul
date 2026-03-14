@@ -75,7 +75,6 @@ const selectYaku = (id: string) => {
           <el-input 
             v-model="searchText" 
             placeholder="搜索役种名称或描述" 
-            clearable
             class="search-input"
           >
             <template #append>
