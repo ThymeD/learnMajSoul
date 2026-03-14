@@ -45,6 +45,11 @@ const routes: RouteRecordRaw[] = [
     path: '/draft/yaku-layout-test',
     name: 'yakuLayoutTest',
     component: () => import('../views/draft/YakuLayoutTest.vue')
+  },
+  {
+    path: '/draft/yaku-data-test',
+    name: 'yakuDataTest',
+    component: () => import('../views/draft/YakuDataTest.vue')
   }
 ]
 
