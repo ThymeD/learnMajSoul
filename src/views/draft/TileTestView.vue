@@ -65,7 +65,7 @@ const updateShadow = () => {
               class="preview-image"
               :style="{
                 width: tileWidth + 'px',
-                height: Math.round(tileWidth * 4 / 3) + 'px',
+                height: Math.round(tileWidth * 13 / 8) + 'px',
                 borderRadius: borderRadius + 'px',
                 borderWidth: borderWidth + 'px',
                 borderStyle: 'solid',
@@ -75,7 +75,7 @@ const updateShadow = () => {
             />
             <div class="preview-code">
               <code>width: {{ tileWidth }}px</code><br/>
-              <code>height: {{ Math.round(tileWidth * 4 / 3) }}px</code><br/>
+              <code>height: {{ Math.round(tileWidth * 13 / 8) }}px</code><br/>
               <code>border-radius: {{ borderRadius }}px</code><br/>
               <code>border: {{ borderWidth }}px solid {{ borderColor }}</code><br/>
               <code>box-shadow: {{ shadow ? '0 2px 12px rgba(0,0,0,0.15)' : 'none' }}</code>

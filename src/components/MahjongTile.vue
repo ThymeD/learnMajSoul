@@ -71,16 +71,16 @@ const sizeClass = computed(() => {
 
 .small .tile-image {
   width: 40px;
-  height: 53px;
+  height: 65px;
 }
 
 .medium .tile-image {
   width: 60px;
-  height: 80px;
+  height: 98px;
 }
 
 .large .tile-image {
   width: 80px;
-  height: 107px;
+  height: 130px;
 }
 </style>
