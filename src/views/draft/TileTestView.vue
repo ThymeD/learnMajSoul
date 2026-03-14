@@ -33,7 +33,7 @@ const updateShadow = () => {
         <el-card header="样式调整">
           <el-form label-width="80px">
             <el-form-item label="圆角">
-              <el-slider v-model="borderRadius" :min="0" :max="20" show-input />
+              <el-slider v-model="borderRadius" :min="0" :max="200" show-input />
             </el-form-item>
             <el-form-item label="边框宽度">
               <el-slider v-model="borderWidth" :min="0" :max="10" show-input />
