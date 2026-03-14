@@ -6,7 +6,7 @@ const borderWidth = ref(1)
 const borderColor = ref('#ebeef5')
 const shadow = ref('')
 const selectedTile = ref('w1')
-const size = ref<'small' | 'medium' | 'large'>('medium')
+const tileWidth = ref(60)
 
 const tileOptions = [
   'w1', 'w5', 'w9',
@@ -45,11 +45,7 @@ const updateShadow = () => {
               <el-switch v-model="shadow" @change="updateShadow" />
             </el-form-item>
             <el-form-item label="尺寸">
-              <el-radio-group v-model="size">
-                <el-radio-button value="small">小</el-radio-button>
-                <el-radio-button value="medium">中</el-radio-button>
-                <el-radio-button value="large">大</el-radio-button>
-              </el-radio-group>
+              <el-slider v-model="tileWidth" :min="20" :max="200" show-input />
             </el-form-item>
           </el-form>
         </el-card>
@@ -67,6 +63,8 @@ const updateShadow = () => {
               :src="`/src/assets/mahjong/${selectedTile}.jpg`" 
               class="preview-image"
               :style="{
+                width: tileWidth + 'px',
+                height: Math.round(tileWidth * 4 / 3) + 'px',
                 borderRadius: borderRadius + 'px',
                 borderWidth: borderWidth + 'px',
                 borderStyle: 'solid',
@@ -75,6 +73,8 @@ const updateShadow = () => {
               }"
             />
             <div class="preview-code">
+              <code>width: {{ tileWidth }}px</code><br/>
+              <code>height: {{ Math.round(tileWidth * 4 / 3) }}px</code><br/>
               <code>border-radius: {{ borderRadius }}px</code><br/>
               <code>border: {{ borderWidth }}px solid {{ borderColor }}</code><br/>
               <code>box-shadow: {{ shadow ? '0 2px 12px rgba(0,0,0,0.15)' : 'none' }}</code>
@@ -110,21 +110,6 @@ const updateShadow = () => {
 
 .preview-image {
   display: block;
-}
-
-.small .preview-image {
-  width: 40px;
-  height: 53px;
-}
-
-.medium .preview-image {
-  width: 60px;
-  height: 80px;
-}
-
-.large .preview-image {
-  width: 80px;
-  height: 107px;
 }
 
 .preview-code {
