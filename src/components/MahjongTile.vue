@@ -3,8 +3,12 @@ import { computed } from 'vue'
 
 const props = defineProps<{
   tileId: string
-  size?: 'small' | 'medium' | 'large'
+  width?: number
 }>()
+
+const tileWidth = computed(() => props.width || 100)
+const tileHeight = computed(() => Math.round(tileWidth.value * 13 / 8))
+const borderRadius = computed(() => Math.round(tileWidth.value / 10))
 
 interface TileInfo {
   name: string
@@ -38,15 +42,20 @@ const tileInfo = computed(() => tileData[props.tileId] || { name: '', category: 
 const imageUrl = computed(() => {
   return new URL(`../assets/mahjong/${props.tileId}.jpg`, import.meta.url).href
 })
-
-const sizeClass = computed(() => {
-  return props.size || 'medium'
-})
 </script>
 
 <template>
-  <div class="mahjong-tile" :class="sizeClass">
-    <img :src="imageUrl" :alt="tileInfo.name" class="tile-image" />
+  <div class="mahjong-tile">
+    <img 
+      :src="imageUrl" 
+      :alt="tileInfo.name" 
+      class="tile-image"
+      :style="{
+        width: tileWidth + 'px',
+        height: tileHeight + 'px',
+        borderRadius: borderRadius + 'px'
+      }"
+    />
     <div v-if="tileInfo.name" class="tile-name">{{ tileInfo.name }}</div>
   </div>
 </template>
@@ -59,7 +68,6 @@ const sizeClass = computed(() => {
 }
 
 .tile-image {
-  border-radius: 4px;
   border: 1px solid #ebeef5;
 }
 
@@ -67,20 +75,5 @@ const sizeClass = computed(() => {
   margin-top: 8px;
   font-size: 14px;
   color: #606266;
-}
-
-.small .tile-image {
-  width: 40px;
-  height: 65px;
-}
-
-.medium .tile-image {
-  width: 60px;
-  height: 98px;
-}
-
-.large .tile-image {
-  width: 80px;
-  height: 130px;
 }
 </style>
