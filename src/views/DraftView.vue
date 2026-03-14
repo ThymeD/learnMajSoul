@@ -6,12 +6,19 @@ const router = useRouter()
 const goToTileTest = () => {
   router.push('/draft/tile-test')
 }
+
+const goToHandPatterns = () => {
+  router.push('/draft/hand-patterns')
+}
 </script>
 
 <template>
   <div class="page">
     <h2>草稿区</h2>
-    <el-button type="primary" @click="goToTileTest">测试 MahjongTile 组件</el-button>
+    <el-space direction="vertical" :size="16">
+      <el-button type="primary" @click="goToTileTest">测试 MahjongTile 组件</el-button>
+      <el-button type="success" @click="goToHandPatterns">役种一览</el-button>
+    </el-space>
   </div>
 </template>
 
