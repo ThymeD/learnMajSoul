@@ -100,60 +100,58 @@ const scrollToYaku = (id: string) => {
 
 <template>
   <div class="yaku-page">
-    <el-row :gutter="24">
-      <el-col :span="23" class="main-col">
-        <div class="sticky-header">
-          <h2>役种一览</h2>
-          <el-tabs type="border-card" class="yaku-tabs">
-            <el-tab-pane label="一番"></el-tab-pane>
-          </el-tabs>
-        </div>
-        <div class="yaku-list">
-          <div 
-            v-for="yaku in yakuList" 
-            :key="yaku.id" 
-            :id="`yaku-${yaku.id}`"
-            class="yaku-row"
-            :class="{ active: activeId === yaku.id }"
-            @click="selectYaku(yaku.id)"
-          >
-            <div class="yaku-info">
-              <span class="yaku-name">{{ yaku.name }}</span>
-              <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
-            </div>
-            <div class="yaku-tiles">
-              <MahjongTile 
-                v-for="(tile, index) in yaku.tiles" 
-                :key="index" 
-                :tile-id="tile" 
-                :width="80"
-              />
-            </div>
-            <div class="yaku-desc">{{ yaku.desc }}</div>
+    <div class="main-col">
+      <div class="sticky-header">
+        <h2>役种一览</h2>
+        <el-tabs type="border-card" class="yaku-tabs">
+          <el-tab-pane label="一番"></el-tab-pane>
+        </el-tabs>
+      </div>
+      <div class="yaku-list">
+        <div 
+          v-for="yaku in yakuList" 
+          :key="yaku.id" 
+          :id="`yaku-${yaku.id}`"
+          class="yaku-row"
+          :class="{ active: activeId === yaku.id }"
+          @click="selectYaku(yaku.id)"
+        >
+          <div class="yaku-info">
+            <span class="yaku-name">{{ yaku.name }}</span>
+            <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
           </div>
+          <div class="yaku-tiles">
+            <MahjongTile 
+              v-for="(tile, index) in yaku.tiles" 
+              :key="index" 
+              :tile-id="tile" 
+              :width="80"
+            />
+          </div>
+          <div class="yaku-desc">{{ yaku.desc }}</div>
         </div>
-      </el-col>
-      <el-col :span="1">
-        <el-affix :offset="80">
-          <el-card class="nav-card" shadow="never">
-            <template #header>
-              <span class="nav-title">导航</span>
-            </template>
-            <div class="nav-list">
-              <div 
-                v-for="yaku in yakuList" 
-                :key="yaku.id"
-                class="nav-item"
-                :class="{ active: activeId === yaku.id }"
-                @click="scrollToYaku(yaku.id)"
-              >
-                {{ yaku.name }}
-              </div>
+      </div>
+    </div>
+    <div class="nav-area">
+      <el-affix :offset="80">
+        <el-card class="nav-card" shadow="never">
+          <template #header>
+            <span class="nav-title">导航</span>
+          </template>
+          <div class="nav-list">
+            <div 
+              v-for="yaku in yakuList" 
+              :key="yaku.id"
+              class="nav-item"
+              :class="{ active: activeId === yaku.id }"
+              @click="scrollToYaku(yaku.id)"
+            >
+              {{ yaku.name }}
             </div>
-          </el-card>
-        </el-affix>
-      </el-col>
-    </el-row>
+          </div>
+        </el-card>
+      </el-affix>
+    </div>
   </div>
 </template>
 
@@ -164,9 +162,15 @@ const scrollToYaku = (id: string) => {
 }
 
 .main-col {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-width: 0;
+}
+
+.nav-area {
+  width: 120px;
+  flex-shrink: 0;
 }
 
 .yaku-page h2 {
@@ -246,10 +250,7 @@ const scrollToYaku = (id: string) => {
 }
 
 .nav-card {
-  position: sticky;
-  top: 80px;
-  width: 100px;
-  margin-left: auto;
+  width: 120px;
 }
 
 .nav-card :deep(.el-card__header) {
