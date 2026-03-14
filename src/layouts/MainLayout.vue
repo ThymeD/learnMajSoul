@@ -7,6 +7,7 @@ const route = useRoute()
 const menuItems = [
   { path: '/home', label: '首页', icon: 'House' },
   { path: '/hand', label: '手牌分析', icon: 'Grid' },
+  { path: '/tiles', label: '素材验证', icon: 'Picture' },
   { path: '/strategy', label: '策略指南', icon: 'Reading' }
 ]
 
