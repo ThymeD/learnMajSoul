@@ -100,38 +100,38 @@ const scrollToYaku = (id: string) => {
 
 <template>
   <div class="yaku-page">
-    <div class="sticky-header">
-      <h2>役种一览</h2>
-      <el-tabs type="border-card" class="yaku-tabs">
-        <el-tab-pane label="一番"></el-tab-pane>
-      </el-tabs>
-    </div>
     <el-row :gutter="24">
       <el-col :span="21">
+        <div class="sticky-header">
+          <h2>役种一览</h2>
+          <el-tabs type="border-card" class="yaku-tabs">
+            <el-tab-pane label="一番"></el-tab-pane>
+          </el-tabs>
+        </div>
         <div class="yaku-list">
-              <div 
-                v-for="yaku in yakuList" 
-                :key="yaku.id" 
-                :id="`yaku-${yaku.id}`"
-                class="yaku-row"
-                :class="{ active: activeId === yaku.id }"
-                @click="selectYaku(yaku.id)"
-              >
-                <div class="yaku-info">
-                  <span class="yaku-name">{{ yaku.name }}</span>
-                  <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
-                </div>
-                <div class="yaku-tiles">
-                  <MahjongTile 
-                    v-for="(tile, index) in yaku.tiles" 
-                    :key="index" 
-                    :tile-id="tile" 
-                    :width="80"
-                  />
-                </div>
-                <div class="yaku-desc">{{ yaku.desc }}</div>
-              </div>
+          <div 
+            v-for="yaku in yakuList" 
+            :key="yaku.id" 
+            :id="`yaku-${yaku.id}`"
+            class="yaku-row"
+            :class="{ active: activeId === yaku.id }"
+            @click="selectYaku(yaku.id)"
+          >
+            <div class="yaku-info">
+              <span class="yaku-name">{{ yaku.name }}</span>
+              <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
             </div>
+            <div class="yaku-tiles">
+              <MahjongTile 
+                v-for="(tile, index) in yaku.tiles" 
+                :key="index" 
+                :tile-id="tile" 
+                :width="80"
+              />
+            </div>
+            <div class="yaku-desc">{{ yaku.desc }}</div>
+          </div>
+        </div>
       </el-col>
       <el-col :span="3">
         <el-affix :offset="80">
