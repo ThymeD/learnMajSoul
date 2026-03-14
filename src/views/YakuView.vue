@@ -169,7 +169,7 @@ const scrollToYaku = (id: string) => {
 }
 
 .nav-area {
-  width: 120px;
+  width: 240px;
   flex-shrink: 0;
 }
 
@@ -250,7 +250,7 @@ const scrollToYaku = (id: string) => {
 }
 
 .nav-card {
-  width: 120px;
+  width: 220px;
 }
 
 .nav-card :deep(.el-card__header) {
