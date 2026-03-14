@@ -101,7 +101,7 @@ const scrollToYaku = (id: string) => {
 <template>
   <div class="yaku-page">
     <el-row :gutter="24">
-      <el-col :span="21" class="main-col">
+      <el-col :span="23" class="main-col">
         <div class="sticky-header">
           <h2>役种一览</h2>
           <el-tabs type="border-card" class="yaku-tabs">
@@ -133,7 +133,7 @@ const scrollToYaku = (id: string) => {
           </div>
         </div>
       </el-col>
-      <el-col :span="3">
+      <el-col :span="1">
         <el-affix :offset="80">
           <el-card class="nav-card" shadow="never">
             <template #header>
@@ -248,6 +248,8 @@ const scrollToYaku = (id: string) => {
 .nav-card {
   position: sticky;
   top: 80px;
+  width: 100px;
+  margin-left: auto;
 }
 
 .nav-card :deep(.el-card__header) {
