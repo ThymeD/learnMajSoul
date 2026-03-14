@@ -37,9 +37,9 @@ const categories: TileCategory[] = [
     name: 'fa',
     label: '三元牌',
     tiles: [
-      { id: 'z1', name: '中' },
-      { id: 'z2', name: '发' },
-      { id: 'z3', name: '白' }
+      { id: 'z1', name: '白' },
+      { id: 'z2', name: '中' },
+      { id: 'z3', name: '发' }
     ]
   }
 ]
