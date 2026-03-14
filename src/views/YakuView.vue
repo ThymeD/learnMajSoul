@@ -101,7 +101,7 @@ const scrollToYaku = (id: string) => {
 <template>
   <div class="yaku-page">
     <el-row :gutter="24">
-      <el-col :span="21">
+      <el-col :span="21" class="main-col">
         <div class="sticky-header">
           <h2>役种一览</h2>
           <el-tabs type="border-card" class="yaku-tabs">
@@ -158,6 +158,17 @@ const scrollToYaku = (id: string) => {
 </template>
 
 <style scoped>
+.yaku-page {
+  display: flex;
+  height: calc(100vh - 64px);
+}
+
+.main-col {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .yaku-page h2 {
   margin: 0 0 16px;
   color: #303133;
@@ -169,16 +180,19 @@ const scrollToYaku = (id: string) => {
   background: #fafafa;
   z-index: 10;
   padding-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.yaku-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .yaku-tabs {
   background: #fff;
-}
-
-.yaku-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
 }
 
 .yaku-row {
