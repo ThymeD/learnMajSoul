@@ -75,9 +75,13 @@ const selectYaku = (id: string) => {
           <el-input 
             v-model="searchText" 
             placeholder="搜索役种名称或描述" 
-            clearable 
+            clearable
             class="search-input"
-          />
+          >
+            <template #append>
+              <el-button @click="searchText = ''">清除</el-button>
+            </template>
+          </el-input>
           <div class="han-tabs">
             <el-radio-group :model-value="activeHan" @update:model-value="selectHan">
               <el-radio-button v-for="g in hanGroups" :key="g.han" :value="g.han">
