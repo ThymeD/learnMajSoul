@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
-const borderRadius = ref(4)
+const borderRadius = computed(() => Math.round(tileWidth.value / 10))
 const borderWidth = ref(1)
 const borderColor = ref('#ebeef5')
 const shadow = ref('')
@@ -33,7 +33,8 @@ const updateShadow = () => {
         <el-card header="样式调整">
           <el-form label-width="80px">
             <el-form-item label="圆角">
-              <el-slider v-model="borderRadius" :min="0" :max="200" show-input />
+              <el-input-number v-model="borderRadius" :min="0" :max="200" disabled />
+              <span style="margin-left: 12px; color: #909399; font-size: 12px;">（自动根据尺寸计算：圆角 = 尺寸 / 10）</span>
             </el-form-item>
             <el-form-item label="边框宽度">
               <el-slider v-model="borderWidth" :min="0" :max="200" show-input />
