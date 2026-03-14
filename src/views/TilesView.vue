@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { } from 'vue'
+import MahjongTile from '../components/MahjongTile.vue'
 
 interface TileCategory {
   name: string
@@ -43,10 +43,6 @@ const categories: TileCategory[] = [
     ]
   }
 ]
-
-const getTileImage = (id: string) => {
-  return new URL(`../assets/mahjong/${id}.jpg`, import.meta.url).href
-}
 </script>
 
 <template>
@@ -56,13 +52,7 @@ const getTileImage = (id: string) => {
       <el-tab-pane v-for="cat in categories" :key="cat.name" :label="cat.label">
         <div class="tiles-grid">
           <div v-for="tile in cat.tiles" :key="tile.id" class="tile-item">
-            <el-image 
-              :src="getTileImage(tile.id)" 
-              :alt="tile.name"
-              class="tile-image"
-              fit="contain"
-            />
-            <div class="tile-name">{{ tile.name }}</div>
+            <MahjongTile :tile-id="tile.id" />
           </div>
         </div>
       </el-tab-pane>
@@ -89,20 +79,6 @@ const getTileImage = (id: string) => {
 
 .tile-item {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.tile-image {
-  width: 60px;
-  height: 80px;
-  border-radius: 4px;
-  border: 1px solid #ebeef5;
-}
-
-.tile-name {
-  margin-top: 8px;
-  font-size: 14px;
-  color: #606266;
+  justify-content: center;
 }
 </style>
