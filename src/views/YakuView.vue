@@ -24,16 +24,16 @@ const activeHan = ref(1)
 const activeCategory = ref<string>('')
 
 const filteredYaku = computed(() => {
-  let result = yakuData.filter(y => y.han === activeHan.value)
-  if (activeCategory.value) {
-    result = result.filter(y => y.category === activeCategory.value)
-  }
   if (searchText.value) {
     const keyword = searchText.value.toLowerCase()
-    result = result.filter(y => 
+    return yakuData.filter(y => 
       y.name.toLowerCase().includes(keyword) || 
       y.desc.toLowerCase().includes(keyword)
     )
+  }
+  let result = yakuData.filter(y => y.han === activeHan.value)
+  if (activeCategory.value) {
+    result = result.filter(y => y.category === activeCategory.value)
   }
   return result
 })
