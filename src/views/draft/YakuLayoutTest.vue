@@ -24,7 +24,7 @@ const yakuList = [
       <div class="yaku-top">
         <span class="yaku-name">{{ yaku.name }}</span>
         <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
-        <el-tag v-if="yaku.condition" type="info" size="small">{{ yaku.condition }}</el-tag>
+        <span v-if="yaku.condition" class="yaku-condition">{{ yaku.condition }}</span>
       </div>
       <div class="yaku-middle">
         {{ yaku.desc }}
@@ -66,6 +66,12 @@ const yakuList = [
   background: #ecf5ff;
   padding: 12px 16px;
   border-radius: 4px;
+}
+
+.yaku-condition {
+  margin-left: auto;
+  font-size: 14px;
+  color: #909399;
 }
 
 .yaku-name {
