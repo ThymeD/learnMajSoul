@@ -172,8 +172,26 @@ const selectYaku = (id: string) => {
   margin-bottom: 12px;
 }
 
+.han-tabs :deep(.el-radio-group) {
+  display: flex;
+  width: 100%;
+}
+
+.han-tabs :deep(.el-radio-button) {
+  flex: 1;
+}
+
 .category-tabs {
   margin-bottom: 12px;
+}
+
+.category-tabs :deep(.el-radio-group) {
+  display: flex;
+  width: 100%;
+}
+
+.category-tabs :deep(.el-radio-button) {
+  flex: 1;
 }
 
 .yaku-list {
