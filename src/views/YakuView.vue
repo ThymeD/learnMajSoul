@@ -100,12 +100,15 @@ const scrollToYaku = (id: string) => {
 
 <template>
   <div class="yaku-page">
-    <h2>役种一览</h2>
+    <div class="sticky-header">
+      <h2>役种一览</h2>
+      <el-tabs type="border-card" class="yaku-tabs">
+        <el-tab-pane label="一番"></el-tab-pane>
+      </el-tabs>
+    </div>
     <el-row :gutter="24">
       <el-col :span="21">
-        <el-tabs type="border-card">
-          <el-tab-pane label="一番">
-            <div class="yaku-list">
+        <div class="yaku-list">
               <div 
                 v-for="yaku in yakuList" 
                 :key="yaku.id" 
@@ -129,8 +132,6 @@ const scrollToYaku = (id: string) => {
                 <div class="yaku-desc">{{ yaku.desc }}</div>
               </div>
             </div>
-          </el-tab-pane>
-        </el-tabs>
       </el-col>
       <el-col :span="3">
         <el-affix :offset="80">
@@ -158,8 +159,20 @@ const scrollToYaku = (id: string) => {
 
 <style scoped>
 .yaku-page h2 {
-  margin-bottom: 24px;
+  margin: 0 0 16px;
   color: #303133;
+}
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  background: #f5f6fa;
+  z-index: 10;
+  padding-bottom: 16px;
+}
+
+.yaku-tabs {
+  background: #fff;
 }
 
 .yaku-list {
