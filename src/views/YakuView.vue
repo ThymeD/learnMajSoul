@@ -49,6 +49,10 @@ const activeId = ref('')
 
 const selectYaku = (id: string) => {
   activeId.value = id
+  const el = document.getElementById(`yaku-${id}`)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 }
 </script>
 
