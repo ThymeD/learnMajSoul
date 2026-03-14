@@ -85,6 +85,10 @@ const yakuList: YakuItem[] = [
 
 const activeId = ref(yakuList[0].id)
 
+const selectYaku = (id: string) => {
+  activeId.value = id
+}
+
 const scrollToYaku = (id: string) => {
   activeId.value = id
   const el = document.getElementById(`yaku-${id}`)
@@ -107,6 +111,8 @@ const scrollToYaku = (id: string) => {
                 :key="yaku.id" 
                 :id="`yaku-${yaku.id}`"
                 class="yaku-row"
+                :class="{ active: activeId === yaku.id }"
+                @click="selectYaku(yaku.id)"
               >
                 <div class="yaku-info">
                   <span class="yaku-name">{{ yaku.name }}</span>
@@ -170,6 +176,17 @@ const scrollToYaku = (id: string) => {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   gap: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.yaku-row:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.yaku-row.active {
+  background: #ecf5ff;
+  border: 2px solid #409eff;
 }
 
 .yaku-info {
