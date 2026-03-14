@@ -219,7 +219,7 @@ const scrollToYaku = (id: string) => {
 }
 
 .yaku-card.active {
-  background: #f0f9ff;
+  background: #fef9e6;
 }
 
 .yaku-top {
