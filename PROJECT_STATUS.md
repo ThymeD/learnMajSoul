@@ -19,13 +19,12 @@ Vue3 + TypeScript + Vite + Element Plus 麻将游戏攻略系统
   - 比例：8:13
   - 圆角：自动 width/10
 
+## 数据
+- `src/data/yaku.ts` - 役种数据（35+种役种）
+- 素材本地化：z1=白、z2=中、z3=发，d1-d4=东南西北
+
 ## 素材
 - `src/assets/mahjong/` - 34张麻将牌
-  - w1-w9: 万子
-  - b1-b9: 筒子
-  - s1-s9: 条子
-  - d1-d4: 东南西北风
-  - z1-z3: 白中发
 - `src/assets/hand-patterns/` - 17张役种图
 
 ## 技术规范
@@ -33,11 +32,11 @@ Vue3 + TypeScript + Vite + Element Plus 麻将游戏攻略系统
 - 文档：https://element-plus.org/zh-CN/
 - 构建命令：npm run build
 - 开发命令：npm run dev
+- 测试命令：npm run test:run
 
 ## 待开发
 - 手牌分析功能
 - 策略指南功能
-- 二番及以上役种
 
 ## 规则
 - 草稿区开发：覆盖前需确认，旧内容备份
