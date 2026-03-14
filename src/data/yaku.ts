@@ -85,7 +85,7 @@ export const yakuData: Yaku[] = [
   },
   {
     id: 'ipeikou',
-    name: '一盃口',
+    name: '一杯口',
     han: 1,
     category: '门前清',
     difficulty: '容易',
@@ -216,7 +216,7 @@ export const yakuData: Yaku[] = [
   // 三番役 - 门前清
   {
     id: 'ryanpeikou',
-    name: '二盃口',
+    name: '二杯口',
     han: 3,
     category: '门前清',
     difficulty: '难',
