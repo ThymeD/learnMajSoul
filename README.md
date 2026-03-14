@@ -21,9 +21,12 @@ npm run build
 src/
 ├── assets/
 │   ├── mahjong/          # 麻将牌素材（34张）
-│   └── hand-patterns/    # 役种素材图
+│   ├── hand-patterns/    # 役种素材图
+│   └── 日麻规则.txt      # 日麻役种规则参考
 ├── components/
 │   └── MahjongTile.vue   # 麻将牌组件
+├── data/
+│   └── yaku.ts          # 役种数据
 ├── layouts/
 │   └── MainLayout.vue    # 左侧菜单布局
 ├── router/
