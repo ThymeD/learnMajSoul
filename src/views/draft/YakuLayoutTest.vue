@@ -61,6 +61,9 @@ const yakuList = [
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+  background: #ecf5ff;
+  padding: 12px 16px;
+  border-radius: 4px;
 }
 
 .yaku-name {
@@ -74,9 +77,6 @@ const yakuList = [
   color: #606266;
   line-height: 1.6;
   margin-bottom: 16px;
-  padding: 12px;
-  background: #f5f7fa;
-  border-radius: 4px;
 }
 
 .yaku-bottom {
