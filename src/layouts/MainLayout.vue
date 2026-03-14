@@ -20,7 +20,7 @@ const handleMenuSelect = (index: string) => {
 
 <template>
   <el-container class="layout">
-    <el-aside width="220px">
+    <el-aside width="220px" class="fixed-aside">
       <div class="logo">
         <h1>雀魂攻略</h1>
       </div>
@@ -46,9 +46,20 @@ const handleMenuSelect = (index: string) => {
   min-height: 100vh;
 }
 
-.el-aside {
+.fixed-aside {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
   background: #fff;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+}
+
+.main-content {
+  margin-left: 220px;
+  padding: 32px;
+  background: #fafafa;
+  min-height: 100vh;
 }
 
 .logo {
@@ -80,10 +91,5 @@ const handleMenuSelect = (index: string) => {
   background: #ecf5ff;
   color: #409eff;
   font-weight: 500;
-}
-
-.main-content {
-  padding: 32px;
-  background: #fafafa;
 }
 </style>
