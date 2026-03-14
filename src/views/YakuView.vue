@@ -253,7 +253,7 @@ const selectYaku = (id: string) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 400px;
+  max-height: calc(100vh - 200px);
   overflow-y: auto;
 }
 
