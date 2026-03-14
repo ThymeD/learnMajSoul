@@ -44,42 +44,43 @@ const handleMenuSelect = (index: string) => {
 }
 
 .el-aside {
-  background: #304157;
+  background: #fff;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
 }
 
 .logo {
   padding: 24px 16px;
-  border-bottom: 1px solid #3d4f68;
+  border-bottom: 1px solid #ebeef5;
 }
 
 .logo h1 {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
-  color: #fff;
+  color: #303133;
 }
 
 .menu {
   border-right: none;
-  background: #304157;
 }
 
 .menu :deep(.el-menu-item) {
-  color: #bdc3c7;
+  color: #606266;
 }
 
 .menu :deep(.el-menu-item:hover) {
-  background: #3d4f68;
-  color: #fff;
+  background: #f5f7fa;
+  color: #409eff;
 }
 
 .menu :deep(.el-menu-item.is-active) {
-  background: #409eff;
-  color: #fff;
+  background: #ecf5ff;
+  color: #409eff;
+  font-weight: 500;
 }
 
 .main-content {
   padding: 32px;
-  background: #f5f6fa;
+  background: #fafafa;
 }
 </style>
