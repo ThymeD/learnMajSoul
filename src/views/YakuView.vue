@@ -173,13 +173,11 @@ const selectYaku = (id: string) => {
 }
 
 .han-tabs :deep(.el-radio-group) {
-  display: flex;
   width: 100%;
 }
 
-.han-tabs :deep(.el-radio-button) {
-  flex: 1;
-  min-width: 80px;
+.han-tabs :deep(.el-radio-button__inner) {
+  width: 100%;
 }
 
 .category-tabs {
@@ -187,13 +185,11 @@ const selectYaku = (id: string) => {
 }
 
 .category-tabs :deep(.el-radio-group) {
-  display: flex;
   width: 100%;
 }
 
-.category-tabs :deep(.el-radio-button) {
-  flex: 1;
-  min-width: 80px;
+.category-tabs :deep(.el-radio-button__inner) {
+  width: 100%;
 }
 
 .yaku-list {
