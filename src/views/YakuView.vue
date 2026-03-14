@@ -137,17 +137,18 @@ const yakuList: YakuItem[] = [
 .yaku-row {
   display: flex;
   align-items: center;
-  padding: 16px;
+  padding: 20px 24px;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  gap: 24px;
 }
 
 .yaku-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 180px;
+  gap: 12px;
+  width: 200px;
   flex-shrink: 0;
 }
 
@@ -169,10 +170,10 @@ const yakuList: YakuItem[] = [
 }
 
 .yaku-desc {
-  width: 200px;
+  width: 220px;
   font-size: 13px;
   color: #606266;
-  line-height: 1.5;
+  line-height: 1.6;
   text-align: right;
   flex-shrink: 0;
 }
