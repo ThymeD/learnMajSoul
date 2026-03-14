@@ -1,120 +1,77 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { yakuData } from '../data/yaku'
 import MahjongTile from '../components/MahjongTile.vue'
 
-interface YakuItem {
-  id: string
-  name: string
-  han: number
-  tiles: string[]
-  desc: string
-  condition?: string
-}
-
-const yakuList: YakuItem[] = [
-  {
-    id: 'reach',
-    name: '立直',
-    han: 1,
-    tiles: ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7'],
-    desc: '听牌后宣言并打出振听棒',
-    condition: '门前清限定'
-  },
-  {
-    id: 'ippatsu',
-    name: '一发',
-    han: 1,
-    tiles: ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7'],
-    desc: '立直后一轮内自摸或荣和',
-    condition: '门前清限定'
-  },
-  {
-    id: 'tsumo',
-    name: '门前清自摸和',
-    han: 1,
-    tiles: ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7'],
-    desc: '门前清状态下自摸和牌',
-    condition: '门前清限定'
-  },
-  {
-    id: 'tanyao',
-    name: '断幺九',
-    han: 1,
-    tiles: ['s2', 's3', 's4', 'b5', 'b6', 'b7', 's8'],
-    desc: '不含一九字牌的和牌'
-  },
-  {
-    id: 'yakuhai1',
-    name: '役牌(白)',
-    han: 1,
-    tiles: ['z1', 'z1', 'z1', 's2', 's3', 's4', 'z1'],
-    desc: '碰或明杠白板'
-  },
-  {
-    id: 'yakuhai2',
-    name: '役牌(发)',
-    han: 1,
-    tiles: ['z3', 'z3', 'z3', 's2', 's3', 's4', 'z3'],
-    desc: '碰或明杠发牌'
-  },
-  {
-    id: 'yakuhai3',
-    name: '役牌(中)',
-    han: 1,
-    tiles: ['z2', 'z2', 'z2', 's2', 's3', 's4', 'z2'],
-    desc: '碰或明杠中牌'
-  },
-  {
-    id: 'haitei',
-    name: '海底捞月',
-    han: 1,
-    tiles: ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7'],
-    desc: '海底牌自摸'
-  },
-  {
-    id: 'houtei',
-    name: '河底摸鱼',
-    han: 1,
-    tiles: ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7'],
-    desc: '河底牌荣和'
-  },
-  {
-    id: 'pinfu',
-    name: '平和',
-    han: 1,
-    tiles: ['w1', 'w2', 'w3', 's4', 's5', 's6', 'b7'],
-    desc: '门前清、手牌全顺子、雀头非役牌',
-    condition: '门前清限定'
-  }
+const hanGroups = [
+  { han: 1, label: '一番' },
+  { han: 2, label: '二番' },
+  { han: 3, label: '三番' },
+  { han: 6, label: '六番' },
+  { han: -1, label: '役满' }
 ]
 
-const activeId = ref(yakuList[0].id)
+const categoryGroups = [
+  { key: '无限制', label: '无限制' },
+  { key: '副露后', label: '副露后' },
+  { key: '门前清', label: '门前清' }
+]
+
+const activeHan = ref(1)
+const activeCategory = ref<string>('无限制')
+
+const filteredYaku = computed(() => {
+  return yakuData.filter(y => y.han === activeHan.value && y.category === activeCategory.value)
+})
+
+const getCategoryOptions = (han: number) => {
+  const categories = new Set(yakuData.filter(y => y.han === han).map(y => y.category as string))
+  return categoryGroups.filter(c => categories.has(c.key))
+}
+
+const currentCategoryOptions = computed(() => {
+  return getCategoryOptions(activeHan.value)
+})
+
+const selectHan = (han: number) => {
+  activeHan.value = han
+  const options = getCategoryOptions(han)
+  if (options.length > 0 && !options.some(o => o.key === activeCategory.value)) {
+    activeCategory.value = options[0].key as '无限制' | '门前清' | '副露后'
+  }
+}
+
+const activeId = ref('')
 
 const selectYaku = (id: string) => {
   activeId.value = id
-}
-
-const scrollToYaku = (id: string) => {
-  activeId.value = id
-  const el = document.getElementById(`yaku-${id}`)
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }
 }
 </script>
 
 <template>
   <div class="yaku-page">
-    <div class="main-col">
-      <div class="sticky-header">
-        <h2>役种一览</h2>
-        <el-tabs type="border-card" class="yaku-tabs">
-          <el-tab-pane label="一番"></el-tab-pane>
-        </el-tabs>
-      </div>
+    <el-row :gutter="24">
+      <el-col :span="21" class="main-col">
+        <div class="sticky-header">
+          <h2>役种一览</h2>
+          <div class="han-tabs">
+            <el-radio-group :model-value="activeHan" @update:model-value="selectHan">
+              <el-radio-button v-for="g in hanGroups" :key="g.han" :value="g.han">
+                {{ g.label }}
+              </el-radio-button>
+            </el-radio-group>
+          </div>
+          <div v-if="currentCategoryOptions.length > 1" class="category-tabs">
+            <el-radio-group v-model="activeCategory">
+              <el-radio-button v-for="c in currentCategoryOptions" :key="c.key" :value="c.key">
+                {{ c.label }}
+              </el-radio-button>
+            </el-radio-group>
+          </div>
+        </div>
         <div class="yaku-list">
           <div 
-            v-for="yaku in yakuList" 
+            v-for="yaku in filteredYaku" 
             :key="yaku.id" 
             :id="`yaku-${yaku.id}`"
             class="yaku-card"
@@ -123,8 +80,9 @@ const scrollToYaku = (id: string) => {
           >
             <div class="yaku-top">
               <span class="yaku-name">{{ yaku.name }}</span>
-              <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
-              <span v-if="yaku.condition" class="yaku-condition">{{ yaku.condition }}</span>
+              <el-tag type="warning" size="small">{{ yaku.han > 0 ? yaku.han + '番' : '役满' }}</el-tag>
+              <span class="yaku-difficulty">{{ yaku.difficulty }}</span>
+              <span v-if="yaku.category === '门前清'" class="yaku-condition">门前清限定</span>
             </div>
             <div class="yaku-middle">{{ yaku.desc }}</div>
             <div class="yaku-bottom">
@@ -137,27 +95,28 @@ const scrollToYaku = (id: string) => {
             </div>
           </div>
         </div>
-    </div>
-    <div class="nav-area">
-      <el-affix :offset="80">
-        <el-card class="nav-card" shadow="never">
-          <template #header>
-            <span class="nav-title">导航</span>
-          </template>
-          <div class="nav-list">
-            <div 
-              v-for="yaku in yakuList" 
-              :key="yaku.id"
-              class="nav-item"
-              :class="{ active: activeId === yaku.id }"
-              @click="scrollToYaku(yaku.id)"
-            >
-              {{ yaku.name }}
+      </el-col>
+      <el-col :span="3" class="nav-area">
+        <el-affix :offset="80">
+          <el-card class="nav-card" shadow="never">
+            <template #header>
+              <span class="nav-title">导航</span>
+            </template>
+            <div class="nav-list">
+              <div 
+                v-for="yaku in filteredYaku" 
+                :key="yaku.id"
+                class="nav-item"
+                :class="{ active: activeId === yaku.id }"
+                @click="selectYaku(yaku.id)"
+              >
+                {{ yaku.name }}
+              </div>
             </div>
-          </div>
-        </el-card>
-      </el-affix>
-    </div>
+          </el-card>
+        </el-affix>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -175,13 +134,8 @@ const scrollToYaku = (id: string) => {
 }
 
 .nav-area {
-  width: 240px;
+  width: 200px;
   flex-shrink: 0;
-}
-
-.yaku-page h2 {
-  margin: 0 0 16px;
-  color: #303133;
 }
 
 .sticky-header {
@@ -193,16 +147,25 @@ const scrollToYaku = (id: string) => {
   flex-shrink: 0;
 }
 
+.yaku-page h2 {
+  margin: 0 0 16px;
+  color: #303133;
+}
+
+.han-tabs {
+  margin-bottom: 12px;
+}
+
+.category-tabs {
+  margin-bottom: 12px;
+}
+
 .yaku-list {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.yaku-tabs {
-  background: #fff;
 }
 
 .yaku-card {
@@ -238,8 +201,13 @@ const scrollToYaku = (id: string) => {
   color: #303133;
 }
 
-.yaku-condition {
+.yaku-difficulty {
   margin-left: auto;
+  font-size: 14px;
+  color: #909399;
+}
+
+.yaku-condition {
   font-size: 14px;
   color: #909399;
 }
@@ -257,7 +225,7 @@ const scrollToYaku = (id: string) => {
 }
 
 .nav-card {
-  width: 220px;
+  width: 180px;
 }
 
 .nav-card :deep(.el-card__header) {
@@ -273,6 +241,8 @@ const scrollToYaku = (id: string) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .nav-item {
