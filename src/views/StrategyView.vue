@@ -4,7 +4,7 @@
 <template>
   <div class="page">
     <h2>策略指南</h2>
-    <p>功能开发中...</p>
+    <el-empty description="功能开发中..." />
   </div>
 </template>
 

@@ -1,98 +1,85 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+
+const router = useRouter()
+const route = useRoute()
 
 const menuItems = [
-  { path: '/home', label: '首页', icon: '🏠' },
-  { path: '/hand', label: '手牌分析', icon: '🀄' },
-  { path: '/strategy', label: '策略指南', icon: '📖' }
+  { path: '/home', label: '首页', icon: 'House' },
+  { path: '/hand', label: '手牌分析', icon: 'Grid' },
+  { path: '/strategy', label: '策略指南', icon: 'Reading' }
 ]
+
+const handleMenuSelect = (index: string) => {
+  router.push(index)
+}
 </script>
 
 <template>
-  <div class="layout">
-    <aside class="sidebar">
+  <el-container class="layout">
+    <el-aside width="220px">
       <div class="logo">
         <h1>雀魂攻略</h1>
       </div>
-      <nav class="menu">
-        <RouterLink
-          v-for="item in menuItems"
-          :key="item.path"
-          :to="item.path"
-          class="menu-item"
-          active-class="active"
-        >
-          <span class="icon">{{ item.icon }}</span>
-          <span class="label">{{ item.label }}</span>
-        </RouterLink>
-      </nav>
-    </aside>
-    <main class="main-content">
+      <el-menu
+        :default-active="route.path"
+        class="menu"
+        @select="handleMenuSelect"
+      >
+        <el-menu-item v-for="item in menuItems" :key="item.path" :index="item.path">
+          <el-icon><component :is="item.icon" /></el-icon>
+          <span>{{ item.label }}</span>
+        </el-menu-item>
+      </el-menu>
+    </el-aside>
+    <el-main class="main-content">
       <RouterView />
-    </main>
-  </div>
+    </el-main>
+  </el-container>
 </template>
 
 <style scoped>
 .layout {
-  display: flex;
   min-height: 100vh;
 }
 
-.sidebar {
-  width: 220px;
-  background: #2c3e50;
-  color: #fff;
-  flex-shrink: 0;
+.el-aside {
+  background: #304157;
 }
 
 .logo {
   padding: 24px 16px;
-  border-bottom: 1px solid #34495e;
+  border-bottom: 1px solid #3d4f68;
 }
 
 .logo h1 {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
+  color: #fff;
 }
 
 .menu {
-  padding: 16px 0;
+  border-right: none;
+  background: #304157;
 }
 
-.menu-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
+.menu :deep(.el-menu-item) {
   color: #bdc3c7;
-  text-decoration: none;
-  transition: all 0.2s;
 }
 
-.menu-item:hover {
-  background: #34495e;
+.menu :deep(.el-menu-item:hover) {
+  background: #3d4f68;
   color: #fff;
 }
 
-.menu-item.active {
-  background: #3498db;
+.menu :deep(.el-menu-item.is-active) {
+  background: #409eff;
   color: #fff;
-}
-
-.icon {
-  margin-right: 12px;
-  font-size: 18px;
-}
-
-.label {
-  font-size: 15px;
 }
 
 .main-content {
-  flex: 1;
   padding: 32px;
   background: #f5f6fa;
-  overflow-y: auto;
 }
 </style>

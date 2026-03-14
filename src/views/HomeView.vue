@@ -1,20 +1,27 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const cards = [
+  { path: '/hand', title: '手牌分析', desc: '分析当前手牌的各种进张和改良', icon: 'Grid' },
+  { path: '/strategy', title: '策略指南', desc: '学习各种麻将策略和技巧', icon: 'Reading' }
+]
 </script>
 
 <template>
   <div class="home">
     <h2>欢迎使用雀魂麻将攻略</h2>
     <p>这是一个帮助您提升雀魂麻将水平的工具。</p>
-    <div class="cards">
-      <router-link to="/hand" class="card">
-        <h3>🀄 手牌分析</h3>
-        <p>分析当前手牌的各种进张和改良</p>
-      </router-link>
-      <router-link to="/strategy" class="card">
-        <h3>📖 策略指南</h3>
-        <p>学习各种麻将策略和技巧</p>
-      </router-link>
-    </div>
+    <el-row :gutter="24" class="cards">
+      <el-col :span="12" v-for="card in cards" :key="card.path">
+        <el-card class="card" shadow="hover" @click="router.push(card.path)">
+          <el-icon class="card-icon" :size="32"><component :is="card.icon" /></el-icon>
+          <h3>{{ card.title }}</h3>
+          <p>{{ card.desc }}</p>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -25,30 +32,25 @@
 }
 
 .cards {
-  display: flex;
-  gap: 24px;
   margin-top: 32px;
 }
 
 .card {
-  flex: 1;
-  max-width: 300px;
-  padding: 24px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  transition: transform 0.2s;
 }
 
 .card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.card-icon {
+  color: #409eff;
+  margin-bottom: 12px;
 }
 
 .card h3 {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   font-size: 18px;
 }
 

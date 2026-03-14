@@ -4,7 +4,7 @@
 <template>
   <div class="page">
     <h2>手牌分析</h2>
-    <p>功能开发中...</p>
+    <el-empty description="功能开发中..." />
   </div>
 </template>
 
