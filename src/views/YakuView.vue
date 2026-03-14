@@ -99,15 +99,13 @@ const yakuList: YakuItem[] = [
     <h2>役种一览</h2>
     <el-tabs type="border-card">
       <el-tab-pane label="一番">
-        <div class="yaku-grid">
-          <el-card v-for="yaku in yakuList" :key="yaku.id" class="yaku-card">
-            <template #header>
-              <div class="yaku-header">
-                <span class="yaku-name">{{ yaku.name }}</span>
-                <span class="yaku-kana">{{ yaku.kana }}</span>
-                <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
-              </div>
-            </template>
+        <div class="yaku-list">
+          <div v-for="yaku in yakuList" :key="yaku.id" class="yaku-row">
+            <div class="yaku-info">
+              <span class="yaku-name">{{ yaku.name }}</span>
+              <span class="yaku-kana">{{ yaku.kana }}</span>
+              <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
+            </div>
             <div class="yaku-tiles">
               <MahjongTile 
                 v-for="(tile, index) in yaku.tiles" 
@@ -117,7 +115,7 @@ const yakuList: YakuItem[] = [
               />
             </div>
             <div class="yaku-desc">{{ yaku.desc }}</div>
-          </el-card>
+          </div>
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -130,20 +128,27 @@ const yakuList: YakuItem[] = [
   color: #303133;
 }
 
-.yaku-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+.yaku-list {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
-.yaku-card :deep(.el-card__header) {
-  padding: 12px 16px;
+.yaku-row {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.yaku-header {
+.yaku-info {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 180px;
+  flex-shrink: 0;
 }
 
 .yaku-name {
@@ -159,14 +164,16 @@ const yakuList: YakuItem[] = [
 
 .yaku-tiles {
   display: flex;
-  flex-wrap: wrap;
   gap: 4px;
-  margin-bottom: 12px;
+  flex: 1;
 }
 
 .yaku-desc {
+  width: 200px;
   font-size: 13px;
   color: #606266;
   line-height: 1.5;
+  text-align: right;
+  flex-shrink: 0;
 }
 </style>
