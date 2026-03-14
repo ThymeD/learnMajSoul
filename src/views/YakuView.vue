@@ -132,7 +132,7 @@ const scrollToYaku = (id: string) => {
                 v-for="(tile, index) in yaku.tiles" 
                 :key="index" 
                 :tile-id="tile" 
-                :width="60"
+                :width="80"
               />
             </div>
           </div>
