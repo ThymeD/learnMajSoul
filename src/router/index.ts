@@ -27,6 +27,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/TilesView.vue')
   },
   {
+    path: '/yaku',
+    name: 'yaku',
+    component: () => import('../views/YakuView.vue')
+  },
+  {
     path: '/draft',
     name: 'draft',
     component: () => import('../views/DraftView.vue')
@@ -35,11 +40,6 @@ const routes: RouteRecordRaw[] = [
     path: '/draft/tile-test',
     name: 'tileTest',
     component: () => import('../views/draft/TileTestView.vue')
-  },
-  {
-    path: '/draft/hand-patterns',
-    name: 'handPatterns',
-    component: () => import('../views/draft/HandPatternsView.vue')
   }
 ]
 

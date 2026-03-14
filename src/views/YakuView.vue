@@ -3,7 +3,7 @@
 
 <template>
   <div class="page">
-    <h2>役种一览 - 草稿区</h2>
+    <h2>役种一览</h2>
     <el-empty description="功能开发中..." />
   </div>
 </template>
