@@ -27,18 +27,19 @@ const categories: TileCategory[] = [
     name: 'zi',
     label: '字牌',
     tiles: [
-      { id: 'z1', name: '东风' },
-      { id: 'z2', name: '南风' },
-      { id: 'z3', name: '北风' }
+      { id: 'f1', name: '东风' },
+      { id: 'f2', name: '南风' },
+      { id: 'f3', name: '西风' },
+      { id: 'f4', name: '北风' }
     ]
   },
   {
     name: 'fa',
     label: '三元牌',
     tiles: [
-      { id: 'f1', name: '中' },
-      { id: 'f2', name: '发' },
-      { id: 'f3', name: '白' }
+      { id: 'z1', name: '中' },
+      { id: 'z2', name: '发' },
+      { id: 'z3', name: '白' }
     ]
   }
 ]
