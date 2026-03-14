@@ -117,7 +117,7 @@ const scrollToYaku = (id: string) => {
                     v-for="(tile, index) in yaku.tiles" 
                     :key="index" 
                     :tile-id="tile" 
-                    :width="40"
+                    :width="80"
                   />
                 </div>
                 <div class="yaku-desc">{{ yaku.desc }}</div>
@@ -194,8 +194,9 @@ const scrollToYaku = (id: string) => {
 
 .yaku-desc {
   width: 200px;
-  font-size: 13px;
-  color: #606266;
+  font-size: 15px;
+  font-weight: 500;
+  color: #303133;
   line-height: 1.6;
   text-align: right;
   flex-shrink: 0;
