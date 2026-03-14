@@ -27,10 +27,10 @@ const categories: TileCategory[] = [
     name: 'zi',
     label: '字牌',
     tiles: [
-      { id: 'f1', name: '东风' },
-      { id: 'f2', name: '南风' },
-      { id: 'f3', name: '西风' },
-      { id: 'f4', name: '北风' }
+      { id: 'd1', name: '东风' },
+      { id: 'd2', name: '南风' },
+      { id: 'd3', name: '西风' },
+      { id: 'd4', name: '北风' }
     ]
   },
   {
