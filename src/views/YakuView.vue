@@ -12,21 +12,25 @@ const hanGroups = [
 ]
 
 const categoryGroups = [
+  { key: '', label: '全部' },
   { key: '无限制', label: '无限制' },
   { key: '副露后', label: '副露后' },
   { key: '门前清', label: '门前清' }
 ]
 
 const activeHan = ref(1)
-const activeCategory = ref<string>('无限制')
+const activeCategory = ref<string>('')
 
 const filteredYaku = computed(() => {
+  if (!activeCategory.value) {
+    return yakuData.filter(y => y.han === activeHan.value)
+  }
   return yakuData.filter(y => y.han === activeHan.value && y.category === activeCategory.value)
 })
 
 const getCategoryOptions = (han: number) => {
   const categories = new Set(yakuData.filter(y => y.han === han).map(y => y.category as string))
-  return categoryGroups.filter(c => categories.has(c.key))
+  return categoryGroups.filter(c => c.key === '' || categories.has(c.key))
 }
 
 const currentCategoryOptions = computed(() => {
@@ -37,7 +41,7 @@ const selectHan = (han: number) => {
   activeHan.value = han
   const options = getCategoryOptions(han)
   if (options.length > 0 && !options.some(o => o.key === activeCategory.value)) {
-    activeCategory.value = options[0].key as '无限制' | '门前清' | '副露后'
+    activeCategory.value = options[0].key
   }
 }
 
@@ -61,7 +65,7 @@ const selectYaku = (id: string) => {
               </el-radio-button>
             </el-radio-group>
           </div>
-          <div v-if="currentCategoryOptions.length > 1" class="category-tabs">
+          <div class="category-tabs">
             <el-radio-group v-model="activeCategory">
               <el-radio-button v-for="c in currentCategoryOptions" :key="c.key" :value="c.key">
                 {{ c.label }}
