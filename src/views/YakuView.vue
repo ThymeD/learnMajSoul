@@ -166,7 +166,7 @@ const scrollToYaku = (id: string) => {
 .sticky-header {
   position: sticky;
   top: 0;
-  background: #f5f6fa;
+  background: #fafafa;
   z-index: 10;
   padding-bottom: 16px;
 }
