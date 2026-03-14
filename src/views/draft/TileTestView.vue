@@ -36,7 +36,7 @@ const updateShadow = () => {
               <el-slider v-model="borderRadius" :min="0" :max="200" show-input />
             </el-form-item>
             <el-form-item label="边框宽度">
-              <el-slider v-model="borderWidth" :min="0" :max="10" show-input />
+              <el-slider v-model="borderWidth" :min="0" :max="200" show-input />
             </el-form-item>
             <el-form-item label="边框颜色">
               <el-color-picker v-model="borderColor" />
@@ -69,6 +69,7 @@ const updateShadow = () => {
               :style="{
                 borderRadius: borderRadius + 'px',
                 borderWidth: borderWidth + 'px',
+                borderStyle: 'solid',
                 borderColor: borderColor,
                 boxShadow: shadow ? '0 2px 12px rgba(0,0,0,0.15)' : 'none'
               }"
