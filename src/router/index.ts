@@ -40,6 +40,11 @@ const routes: RouteRecordRaw[] = [
     path: '/draft/tile-test',
     name: 'tileTest',
     component: () => import('../views/draft/TileTestView.vue')
+  },
+  {
+    path: '/draft/scroll-test',
+    name: 'scrollTest',
+    component: () => import('../views/draft/ScrollTestView.vue')
   }
 ]
 
