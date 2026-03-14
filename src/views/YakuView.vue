@@ -50,8 +50,8 @@ const selectYaku = (id: string) => {
 
 <template>
   <div class="yaku-page">
-    <el-row :gutter="24">
-      <el-col :span="21" class="main-col">
+    <div class="main-area">
+      <div class="main-col">
         <div class="sticky-header">
           <h2>役种一览</h2>
           <div class="han-tabs">
@@ -95,8 +95,8 @@ const selectYaku = (id: string) => {
             </div>
           </div>
         </div>
-      </el-col>
-      <el-col :span="3" class="nav-area">
+      </div>
+      <div class="nav-area">
         <el-affix :offset="80">
           <el-card class="nav-card" shadow="never">
             <template #header>
@@ -115,8 +115,8 @@ const selectYaku = (id: string) => {
             </div>
           </el-card>
         </el-affix>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -124,6 +124,12 @@ const selectYaku = (id: string) => {
 .yaku-page {
   display: flex;
   height: calc(100vh - 64px);
+}
+
+.main-area {
+  flex: 1;
+  display: flex;
+  min-width: 0;
 }
 
 .main-col {
@@ -134,8 +140,10 @@ const selectYaku = (id: string) => {
 }
 
 .nav-area {
-  width: 200px;
+  width: 180px;
   flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .sticky-header {
