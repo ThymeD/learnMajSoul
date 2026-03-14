@@ -10,6 +10,10 @@ const goToTileTest = () => {
 const goToScrollTest = () => {
   router.push('/draft/scroll-test')
 }
+
+const goToYakuLayoutTest = () => {
+  router.push('/draft/yaku-layout-test')
+}
 </script>
 
 <template>
@@ -18,6 +22,7 @@ const goToScrollTest = () => {
     <el-space direction="vertical" :size="16">
       <el-button type="primary" @click="goToTileTest">测试 MahjongTile 组件</el-button>
       <el-button type="success" @click="goToScrollTest">测试滚动固定</el-button>
+      <el-button type="warning" @click="goToYakuLayoutTest">测试役种布局</el-button>
     </el-space>
   </div>
 </template>
