@@ -29,7 +29,6 @@ const filteredYaku = computed(() => {
         <div class="yaku-top">
           <span class="yaku-name">{{ yaku.name }}</span>
           <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
-          <span class="yaku-difficulty">{{ yaku.difficulty }}</span>
           <span v-if="yaku.category === '门前清'" class="yaku-condition">门前清限定</span>
         </div>
         <div class="yaku-middle">{{ yaku.desc }}</div>

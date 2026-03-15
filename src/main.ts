@@ -6,6 +6,9 @@ import pinia from './stores'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import { loadMastery, setYakuMastery, clearAllMastery } from './data/yaku'
+
+loadMastery()
 
 const app = createApp(App)
 
@@ -18,3 +21,5 @@ app.use(pinia)
 app.use(ElementPlus)
 
 app.mount('#app')
+
+;(window as any).yakuUtils = { setYakuMastery, clearAllMastery }

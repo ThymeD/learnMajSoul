@@ -60,3 +60,44 @@
 2. 测试用例通过
 3. 代码符合项目规范
 4. 构建通过（npm run build）
+
+## 麻将规则
+
+- 正常胡牌14张牌（13张手牌+1张听牌）
+- 开杠比正常胡牌多一张，每个杠多一张（杠=4张相同的牌）
+- 听牌位置应在牌组左边有空隙，便于区分
+
+## 全局工具方法
+
+### 浏览器控制台调试方法
+
+项目在全局暴露了 `yakuUtils` 对象，可在浏览器控制台直接调用：
+
+```js
+// 设置某个牌型已胡次数
+yakuUtils.setYakuMastery('reach', 5)  // id 为牌型唯一标识
+
+// 清理所有已胡次数缓存
+yakuUtils.clearAllMastery()
+```
+
+可用牌型 id：reach, tanyao, tsumo, yakuhai-jikaze, yakuhai-bakaze, yakuhai-sangen, pinfu, ipeikou, haitei, houtei, ippatsu, rinshan, double-reach, sanshoku-douko, sandangatsu, toitoi, sanankei, shousangen, honroutou, chitoitsu, honchantaiyaochuu, ikkititsuan, sanshoku-doushun
+
+### splitAt 自动计算
+
+在 `src/data/yaku.ts` 中提供了 `autoCalculateSplitAt` 函数，可自动计算牌型的分割位置：
+
+```ts
+import { autoCalculateSplitAt } from './data/yaku'
+
+// 示例
+const tiles = ['w1', 'w2', 'w3', 'b4', 'b4', 'b4', 's5', 's6', 's7', 'd1', 'd1', 'd1', 'd2', 'd2']
+const splitAt = autoCalculateSplitAt(tiles)
+// 返回 [2, 5, 8, 11, 12, 13]
+```
+
+算法规则：
+- 刻子/杠结束后分隔
+- 顺子结束后分隔（如果后面接雀头或听牌）
+- 单独一张的牌（作为雀头）左右都分隔
+- 听牌左边分隔

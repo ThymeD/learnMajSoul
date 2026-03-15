@@ -2,7 +2,6 @@
 import { ref, computed, onMounted, watch, reactive } from 'vue'
 import { yakuData as originYakuData, type Yaku } from '../data/yaku'
 import MahjongTile from '../components/MahjongTile.vue'
-import MasteryStars from '../components/MasteryStars.vue'
 
 const searchText = ref('')
 
@@ -41,7 +40,10 @@ const hanGroups = [
   { han: 2, label: '二番' },
   { han: 3, label: '三番' },
   { han: 6, label: '六番' },
-  { han: -1, label: '役满' }
+  { han: 5, label: '满贯' },
+  { han: 8, label: '役满' },
+  { han: -2, label: '双倍役满' },
+  { han: -3, label: '流局' }
 ]
 
 const categoryGroups = [
@@ -53,6 +55,23 @@ const categoryGroups = [
 
 const activeHan = ref(1)
 const activeCategory = ref<string>('')
+
+const YAKU_FILTER_KEY = 'yaku-filter'
+
+onMounted(() => {
+  const stored = localStorage.getItem(YAKU_FILTER_KEY)
+  if (stored) {
+    try {
+      const { han, category } = JSON.parse(stored)
+      activeHan.value = han
+      activeCategory.value = category || ''
+    } catch (e) {}
+  }
+})
+
+watch([activeHan, activeCategory], () => {
+  localStorage.setItem(YAKU_FILTER_KEY, JSON.stringify({ han: activeHan.value, category: activeCategory.value }))
+})
 
 const filteredYaku = computed(() => {
   if (searchText.value) {
@@ -92,7 +111,15 @@ const selectYaku = (id: string) => {
   activeId.value = id
   const el = document.getElementById(`yaku-${id}`)
   if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const rect = el.getBoundingClientRect()
+    const parent = el.parentElement
+    if (parent) {
+      const parentRect = parent.getBoundingClientRect()
+      const isFullyVisible = rect.top >= parentRect.top && rect.bottom <= parentRect.bottom
+      if (!isFullyVisible) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
   }
 }
 
@@ -101,37 +128,40 @@ const pressingYakuId = ref<string>('')
 const incrementingYakuId = ref<string>('')
 const decrementingYakuId = ref<string>('')
 const isDecrementZone = ref(false)
+const LONG_PRESS_DELAY = 1000
+const ANIMATION_DURATION = 500
 
 const startLongPress = (yaku: any, isDecrement: boolean) => {
   if (incrementingYakuId.value || decrementingYakuId.value) return
+  if (!yaku.isHu) return
   if (isDecrement && (yaku.mastery === undefined || yaku.mastery <= 0)) return
   
   const timerKey = `${yaku.id}-${isDecrement}`
-  if (longPressTimers[timerKey]) return
-  
-  if (isDecrement) {
-    pressingYakuId.value = yaku.id + '-decrement'
-  } else {
-    if (isDecrementZone.value) return
-    pressingYakuId.value = yaku.id
+  if (longPressTimers[timerKey]) {
+    clearTimeout(longPressTimers[timerKey])
   }
+  
+  const delay = LONG_PRESS_DELAY
+  
+  pressingYakuId.value = isDecrement ? yaku.id + '-decrement' : yaku.id
   
   longPressTimers[timerKey] = setTimeout(() => {
     if (isDecrement) {
       yaku.mastery = Math.max(0, (yaku.mastery || 0) - 1)
     } else {
+      if (isDecrementZone.value) return
       yaku.mastery = (yaku.mastery || 0) + 1
     }
     delete longPressTimers[timerKey]
-    pressingYakuId.value = ''
+    setTimeout(() => { pressingYakuId.value = '' }, 100)
     if (isDecrement) {
       decrementingYakuId.value = yaku.id
-      setTimeout(() => { decrementingYakuId.value = '' }, 500)
+      setTimeout(() => { decrementingYakuId.value = '' }, ANIMATION_DURATION)
     } else {
       incrementingYakuId.value = yaku.id
-      setTimeout(() => { incrementingYakuId.value = '' }, 500)
+      setTimeout(() => { incrementingYakuId.value = '' }, ANIMATION_DURATION)
     }
-  }, 500)
+  }, delay)
 }
 
 const endLongPress = (yakuId: string, isDecrement: boolean) => {
@@ -187,18 +217,19 @@ watch(() => yakuData.map(y => y.mastery), () => {
             class="yaku-card"
             :class="{ active: activeId === yaku.id, pressing: pressingYakuId === yaku.id || pressingYakuId === yaku.id + '-decrement', incrementing: incrementingYakuId === yaku.id, decrementing: decrementingYakuId === yaku.id }"
             @click="selectYaku(yaku.id)"
-            @mousedown.prevent="startLongPress(yaku, false)"
+            @mousedown.prevent="activeId === yaku.id && !pressingYakuId && startLongPress(yaku, false)"
             @mouseup="endLongPress(yaku.id, false)"
             @mouseleave="endLongPress(yaku.id, false)"
           >
-            <div v-if="pressingYakuId === yaku.id" class="press-progress"></div>
+            <div v-if="pressingYakuId === yaku.id || pressingYakuId === yaku.id + '-decrement'" class="press-progress" :class="{ decrement: pressingYakuId === yaku.id + '-decrement' }" :style="{ '--press-duration': LONG_PRESS_DELAY + 'ms' }"></div>
             <div class="yaku-top">
               <span class="yaku-name">{{ yaku.name }}</span>
               <span class="han-text">{{ yaku.han > 0 ? yaku.han + '番' : '役满' }}</span>
               <span v-if="yaku.category === '门前清'" class="yaku-condition">门前清限定</span>
               <span 
+                v-if="yaku.isHu"
                 class="yaku-count"
-                @mousedown.prevent="isDecrementZone = true; startLongPress(yaku, true)"
+                @mousedown.prevent.stop="isDecrementZone = true; startLongPress(yaku, true)"
                 @mouseup="isDecrementZone = false; endLongPress(yaku.id, true)"
                 @mouseleave="isDecrementZone = false; endLongPress(yaku.id, true)"
               >已胡：{{ yaku.mastery || 0 }}</span>
@@ -365,7 +396,16 @@ watch(() => yakuData.map(y => y.mastery), () => {
     rgba(64, 158, 255, 0.8) 100%
   );
   transform-origin: left;
-  animation: chargeWave 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: chargeWave var(--press-duration, 0.5s) cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+.press-progress.decrement::before {
+  background: linear-gradient(90deg, 
+    rgba(255, 107, 107, 0.1) 0%, 
+    rgba(255, 107, 107, 0.3) 30%,
+    rgba(255, 107, 107, 0.5) 60%, 
+    rgba(255, 107, 107, 0.8) 100%
+  );
 }
 
 @keyframes chargeWave {
@@ -484,7 +524,7 @@ watch(() => yakuData.map(y => y.mastery), () => {
 .yaku-bottom {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0px;
   position: relative;
   z-index: 1;
 }
