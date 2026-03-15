@@ -73,6 +73,7 @@ const imageUrl = computed(() => {
 
 .tile-image {
   border: 1px solid #ebeef5;
+  filter: brightness(1.1);
 }
 
 .tile-name {
