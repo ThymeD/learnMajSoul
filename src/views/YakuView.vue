@@ -39,7 +39,7 @@
           class="yaku-card"
           :class="{ active: activeId === yaku.id, pressing: pressingYakuId === yaku.id || pressingYakuId === yaku.id + '-decrement', incrementing: incrementingYakuId === yaku.id, decrementing: decrementingYakuId === yaku.id }"
           @click="selectYaku(yaku.id)"
-          @mousedown.prevent="activeId === yaku.id && !pressingYakuId && startLongPress(yaku, false)"
+          @mousedown.prevent="activeId === yaku.id && !pressingYakuId && yaku.isHu && startLongPress(yaku, false)"
           @mouseup="endLongPress(yaku.id, false)"
           @mouseleave="endLongPress(yaku.id, false)"
         >
@@ -80,7 +80,7 @@
         <el-card class="nav-card" shadow="never">
           <template #header>
             <div class="nav-header">
-              <span class="nav-title">导航</span>
+              <span class="nav-title">牌型</span>
               <span class="nav-count">{{ filteredYaku.length }}</span>
             </div>
           </template>
@@ -115,7 +115,6 @@ const incrementingYakuId = ref('')
 const decrementingYakuId = ref('')
 const isDecrementZone = ref(false)
 let longPressTimer: ReturnType<typeof setTimeout> | null = null
-let intervalTimer: ReturnType<typeof setInterval> | null = null
 
 const YAKU_FILTER_KEY = 'yaku-filter'
 
@@ -230,6 +229,10 @@ const selectYaku = (id: string) => {
 }
 
 const startLongPress = (yaku: Yaku, isDecrement: boolean) => {
+  if (isDecrement && (yaku.mastery === undefined || yaku.mastery <= 0)) {
+    return
+  }
+  
   pressingYakuId.value = isDecrement ? `${yaku.id}-decrement` : yaku.id
   
   longPressTimer = setTimeout(() => {
@@ -238,12 +241,7 @@ const startLongPress = (yaku: Yaku, isDecrement: boolean) => {
     } else {
       incrementingYakuId.value = yaku.id
     }
-    
     updateMastery(yaku.id, isDecrement ? -1 : 1)
-    
-    intervalTimer = setInterval(() => {
-      updateMastery(yaku.id, isDecrement ? -1 : 1)
-    }, 100)
   }, LONG_PRESS_DELAY)
 }
 
@@ -255,10 +253,6 @@ const endLongPress = (_id: string, _isDecrement: boolean) => {
   if (longPressTimer) {
     clearTimeout(longPressTimer)
     longPressTimer = null
-  }
-  if (intervalTimer) {
-    clearInterval(intervalTimer)
-    intervalTimer = null
   }
 }
 
@@ -551,10 +545,19 @@ const updateMastery = (id: string, delta: number) => {
   padding: 4px 8px;
   border-radius: 4px;
   user-select: none;
+  transition: background 0.2s;
 }
 
 .yaku-count:hover {
   background: rgba(64, 158, 255, 0.2);
+}
+
+.yaku-count:active {
+  background: rgba(255, 107, 107, 0.5) !important;
+}
+
+.yaku-card.decrementing .yaku-count {
+  background: rgba(255, 107, 107, 0.5) !important;
 }
 
 .increment-text {
