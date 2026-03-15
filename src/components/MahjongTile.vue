@@ -4,6 +4,8 @@ import { computed } from 'vue'
 const props = defineProps<{
   tileId: string
   width?: number
+  showName?: boolean
+  split?: boolean
 }>()
 
 const tileWidth = computed(() => props.width || 100)
@@ -34,7 +36,9 @@ const tileData: Record<string, TileInfo> = {
   d1: { name: '东风', category: 'zi' }, d2: { name: '南风', category: 'zi' },
   d3: { name: '西风', category: 'zi' }, d4: { name: '北风', category: 'zi' },
   z1: { name: '白', category: 'fa' }, z2: { name: '中', category: 'fa' },
-  z3: { name: '发', category: 'fa' }
+  z3: { name: '发', category: 'fa' },
+  rw5: { name: '赤五万', category: 'red' }, rb5: { name: '赤五筒', category: 'red' },
+  rs5: { name: '赤五索', category: 'red' }, bg: { name: '牌背', category: 'back' }
 }
 
 const tileInfo = computed(() => tileData[props.tileId] || { name: '', category: '' })
@@ -45,7 +49,7 @@ const imageUrl = computed(() => {
 </script>
 
 <template>
-  <div class="mahjong-tile">
+  <div class="mahjong-tile" :style="{ marginRight: props.split ? '24px' : undefined }">
     <img 
       :src="imageUrl" 
       :alt="tileInfo.name" 
@@ -56,7 +60,7 @@ const imageUrl = computed(() => {
         borderRadius: borderRadius + 'px'
       }"
     />
-    <div v-if="tileInfo.name" class="tile-name">{{ tileInfo.name }}</div>
+    <div v-if="props.showName !== false && tileInfo.name" class="tile-name">{{ tileInfo.name }}</div>
   </div>
 </template>
 

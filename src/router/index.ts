@@ -42,6 +42,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/draft/TileTestView.vue')
   },
   {
+    path: '/draft/scroll-test',
+    name: 'scrollTest',
+    component: () => import('../views/draft/ScrollTestView.vue')
+  },
+  {
     path: '/draft/yaku-layout-test',
     name: 'yakuLayoutTest',
     component: () => import('../views/draft/YakuLayoutTest.vue')
