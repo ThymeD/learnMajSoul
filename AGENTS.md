@@ -81,7 +81,7 @@ yakuUtils.setYakuMastery('reach', 5)  // id 为牌型唯一标识
 yakuUtils.clearAllMastery()
 ```
 
-可用牌型 id：reach, tanyao, tsumo, yakuhai-jikaze, yakuhai-bakaze, yakuhai-sangen, pinfu, ipeikou, haitei, houtei, ippatsu, rinshan, double-reach, sanshoku-douko, sandangatsu, toitoi, sanankei, shousangen, honroutou, chitoitsu, honchantaiyaochuu, ikkititsuan, sanshoku-doushun
+可用牌型 id：reach, tanyao, tsumo, yakuhai-jikaze, yakuhai-bakaze, yakuhai-sangen, pinfu, ipeikou, haitei, houtei, ippatsu, rinshan, double-reach, sanshoku-douko, sandangatsu, toitoi, sanankei, shousangen, honroutou, chitoitsu, honchantaiyaochuu, ikkititsuan, sanshoku-doushun, ryanpeikou, junhonchantaiyaochuu, hunyisoku, chinitsu, nagashimangan, tenhou, chihou, daisangen, suuankou, tsuuiisou, ryuuiisou, chinroutou, kokushimusou, shousuushii, suukantsu, chuurenpuutou, suuankoutanki, kokushimusoujuusanmen, chuurenpuutoujyun, daisuushii, sufonrenda, suukansan, kyushokujun, sikazero
 
 ### splitAt 自动计算
 
@@ -101,3 +101,13 @@ const splitAt = autoCalculateSplitAt(tiles)
 - 顺子结束后分隔（如果后面接雀头或听牌）
 - 单独一张的牌（作为雀头）左右都分隔
 - 听牌左边分隔
+- 特殊牌型：国士无双（全部幺九牌）、九莲宝灯（万字1112345678999）、三杠及以上只显示听牌间隔
+
+### 番数分类
+
+- han: 1-3：一番到三番
+- han: 5：满贯
+- han: 6：六番
+- han: 8：役满
+- han: -2：双倍役满
+- han: -3：流局
