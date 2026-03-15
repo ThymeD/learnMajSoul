@@ -102,13 +102,48 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { yakuData, type Yaku } from '../data/yaku'
+import { ref, computed, onMounted, watch, reactive } from 'vue'
+import { yakuData as originYakuData, type Yaku } from '../data/yaku'
 import MahjongTile from '../components/MahjongTile.vue'
+
+const searchText = ref('')
+
+const yakuData = reactive<Yaku[]>(originYakuData.map(y => ({ ...y })))
+
+const STORAGE_KEY = 'yaku-mastery'
+
+const loadMastery = () => {
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (stored) {
+    const masteryMap = JSON.parse(stored)
+    yakuData.forEach(y => {
+      if (masteryMap[y.id] !== undefined) {
+        y.mastery = masteryMap[y.id]
+      }
+    })
+  }
+}
+
+const saveMastery = () => {
+  const masteryMap: Record<string, number> = {}
+  yakuData.forEach(y => {
+    if (y.mastery) {
+      masteryMap[y.id] = y.mastery
+    }
+  })
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(masteryMap))
+}
+
+onMounted(() => {
+  loadMastery()
+})
+
+watch(() => yakuData.map(y => y.mastery), () => {
+  saveMastery()
+}, { deep: true })
 
 const LONG_PRESS_DELAY = 800
 
-const searchText = ref('')
 const activeId = ref('')
 const pressingYakuId = ref('')
 const incrementingYakuId = ref('')
