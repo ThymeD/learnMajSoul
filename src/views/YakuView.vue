@@ -316,7 +316,7 @@ const updateMastery = (id: string, delta: number) => {
 
 .yaku-header h2 {
   margin: 0 0 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #409eff 0%, #3a8cd8 100%);
   color: #fff;
   padding: 16px 24px;
   border-radius: 8px;

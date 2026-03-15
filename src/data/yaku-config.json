@@ -504,6 +504,81 @@
       "desc": "在三人麻将中、北风在拔北操作后可以北当做宝牌（手牌中不算）",
       "tiles": ["d4"],
       "isEffectOnly": true
+    },
+    {
+      "id": "double-suuan",
+      "name": "四暗刻单骑",
+      "han": -2,
+      "category": "门前清",
+      "desc": "四暗刻最后单骑听牌和牌",
+      "tiles": ["w1", "w1", "w1", "b2", "b2", "b2", "b5", "b5", "b5", "s7", "s7", "s7", "d1", "d1"],
+      "splitAt": [2, 5, 8, 11, 12],
+      "isHu": true
+    },
+    {
+      "id": "double-kokushi",
+      "name": "国士无双十三面",
+      "han": -2,
+      "category": "门前清",
+      "desc": "国士无双最后13面听牌和牌",
+      "tiles": ["w1", "w9", "b1", "b9", "s1", "s9", "d1", "d2", "d3", "d4", "z1", "z2", "z3", "w1"],
+      "splitAt": [12],
+      "isHu": true
+    },
+    {
+      "id": "double-chuuren",
+      "name": "纯正九莲宝灯",
+      "han": -2,
+      "category": "门前清",
+      "desc": "九莲宝灯最后9面听牌和牌",
+      "tiles": ["w1", "w1", "w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8", "w9", "w9", "w9", "w5"],
+      "splitAt": [12],
+      "isHu": true
+    },
+    {
+      "id": "double-daisuushii",
+      "name": "大四喜",
+      "han": -2,
+      "category": "无限制",
+      "desc": "包含4种风牌的刻子",
+      "tiles": ["d1", "d1", "d1", "d2", "d2", "d2", "d3", "d3", "d3", "d4", "d4", "d4", "b5", "b5"],
+      "splitAt": [2, 5, 8, 11, 12],
+      "isHu": true
+    },
+    {
+      "id": "sufonrenda",
+      "name": "四风连打",
+      "han": -3,
+      "category": "无限制",
+      "desc": "无人鸣牌的情况下4人都在第一巡打出同一种风牌",
+      "tiles": ["d4", "d4", "d4", "d4"],
+      "splitAt": [0, 1, 2, 3]
+    },
+    {
+      "id": "suukansan",
+      "name": "四杠散了",
+      "han": -3,
+      "category": "无限制",
+      "desc": "2人以上合计开杠4次",
+      "tiles": ["w1", "w1", "w1", "w1", "b2", "b2", "b2", "b2", "b5", "b5", "b5", "b5", "s9", "s9", "s9", "s9"],
+      "splitAt": [3, 7, 11]
+    },
+    {
+      "id": "kyushokujun",
+      "name": "九种九牌",
+      "han": -3,
+      "category": "无限制",
+      "desc": "第一巡轮到自己之前无人鸣牌的状态下拥有9种及以上的幺九牌",
+      "tiles": ["w1", "w9", "b1", "b8", "b9", "s3", "s3", "s4", "s7", "s9", "d1", "d3", "z3", "z2"],
+      "splitAt": [12]
+    },
+    {
+      "id": "sikazero",
+      "name": "四家立直",
+      "han": -3,
+      "category": "无限制",
+      "desc": "4人全部宣告立直成功",
+      "tiles": []
     }
   ]
 }
