@@ -30,6 +30,7 @@ const filteredYaku = computed(() => {
           <span class="yaku-name">{{ yaku.name }}</span>
           <el-tag type="warning" size="small">{{ yaku.han }}番</el-tag>
           <span v-if="yaku.category === '门前清'" class="yaku-condition">门前清限定</span>
+          <span v-if="yaku.isEffectOnly" class="yaku-condition effect-only">不是役</span>
         </div>
         <div class="yaku-middle">{{ yaku.desc }}</div>
         <div class="yaku-bottom">

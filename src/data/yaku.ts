@@ -8,6 +8,10 @@ export interface Yaku {
   splitAt?: number[]
   mastery?: number
   isHu?: boolean
+  isEffectOnly?: boolean
+  isDealerOnly?: boolean
+  isNonDealerOnly?: boolean
+  note?: string
 }
 
 export const yakuData: Yaku[] = [
@@ -78,7 +82,7 @@ export const yakuData: Yaku[] = [
     name: '平和',
     han: 1,
     category: '门前清',
-    desc: '4组顺子+非役牌雀头+两面听',
+    desc: '4组顺子+非役牌的雀头+最后是顺子的两面听',
     tiles: ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'b2', 'b3', 'b4', 's6', 's7', 's9', 's9', 's5'],
     splitAt: [2, 5, 8, 10, 12],
     isHu: true
@@ -107,7 +111,7 @@ export const yakuData: Yaku[] = [
     name: '岭上开花',
     han: 1,
     category: '无限制',
-    desc: '杠后摸岭上牌自摸和牌',
+    desc: '用摸到的岭上牌和牌',
     tiles: ['w2', 'w3', 'w4', 'b5', 'b5', 'b5', 's3', 's4', 's5', 's6', 's8', 's8', 's8', 's8', 's3'],
     splitAt: [2, 5, 6, 9, 13, 14],
     isHu: true
@@ -136,7 +140,7 @@ export const yakuData: Yaku[] = [
     id: 'ippatsu',
     name: '一发',
     han: 1,
-    category: '门前清',
+    category: '无限制',
     desc: '立直后，无人鸣牌的状态下一巡内和牌',
     tiles: ['w1', 'w2', 'w3', 'b4', 'b4', 'b4', 's5', 's6', 's7', 'd1', 'd1', 'd1', 'd2', 'd2'],
     splitAt: [2, 5, 8, 11, 12, 13],
@@ -188,7 +192,7 @@ export const yakuData: Yaku[] = [
     han: 2,
     category: '无限制',
     desc: '拥有3组没有碰的刻子',
-    tiles: ['w1', 'w1', 'w1', 'b1', 'b1', 'b1', 's1', 's1', 's1', 's3', 's4', 's5', 'z1', 'z1'],
+    tiles: ['w1', 'w1', 'w1', 'b1', 'b1', 'b1', 's1', 's1', 's1', 's3', 's4', 's5', 'd1', 'd1'],
     splitAt: [2, 5, 8, 11, 12],
     isHu: true
   },
@@ -238,7 +242,7 @@ export const yakuData: Yaku[] = [
     han: 2,
     category: '副露后',
     desc: '同种数牌组成123，456，789的顺子',
-    tiles: ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9', 'b1', 'b1', 'b1', 'z1', 'z1'],
+    tiles: ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9', 'b1', 'b1', 'b1', 'd1', 'd1'],
     splitAt: [2, 5, 8, 11, 12],
     isHu: true
   },
@@ -278,7 +282,7 @@ export const yakuData: Yaku[] = [
     han: 3,
     category: '副露后',
     desc: '只包含1种数牌，并且含有字牌的刻子或者雀头',
-    tiles: ['w1', 'w1', 'w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7', 'z2', 'z2', 'z2', 'z1', 'z1'],
+    tiles: ['w1', 'w1', 'w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7', 'd2', 'd2', 'd2', 'z1', 'z1'],
     splitAt: [2, 5, 8, 11, 12],
     isHu: true
   },
@@ -298,7 +302,7 @@ export const yakuData: Yaku[] = [
     han: 5,
     category: '无限制',
     desc: '自己的舍张全是幺九牌并且没有被他家吃碰杠的状态下荒牌流局',
-    tiles: ['w1', 'w9', 'd1', 'd1', 'd2', 'z1', 'z3', 'd3', 'd3', 'd3', 'b9', 'b9', 'b9', 's9', 'z3', 'd4'],
+    tiles: ['w9', 'w1', 'd1', 'd1', 'd2', 'd2', 'z2', 'd2', 'd3', 'd3', 'd3', 'b9', 'b9', 'b9', 's9', 'z3', 'd4', 'w9'],
     isHu: true
   },
   {
@@ -309,7 +313,8 @@ export const yakuData: Yaku[] = [
     desc: '庄家配牌时，14张牌为和牌状态',
     tiles: ['w1', 'w2', 'w3', 'b4', 'b4', 'b4', 's5', 's6', 's7', 'd1', 'd1', 'd1', 'd2', 'd2'],
     splitAt: [2, 5, 8, 11, 12],
-    isHu: true
+    isHu: true,
+    isDealerOnly: true
   },
   {
     id: 'chihou',
@@ -319,7 +324,8 @@ export const yakuData: Yaku[] = [
     desc: '轮到自己之前无人鸣牌的状态下第一巡自摸和牌',
     tiles: ['w1', 'w2', 'w3', 'b4', 'b4', 'b4', 's5', 's6', 's7', 'd1', 'd1', 'd1', 'd2', 'd2'],
     splitAt: [2, 5, 8, 11, 12],
-    isHu: true
+    isHu: true,
+    isNonDealerOnly: true
   },
   {
     id: 'daisangen',
@@ -367,7 +373,7 @@ export const yakuData: Yaku[] = [
     han: -2,
     category: '门前清',
     desc: '九莲宝灯最后9面听牌和牌',
-    tiles: ['w1', 'w1', 'w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9', 'w9', 'w9', 'w1'],
+    tiles: ['w1', 'w1', 'w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9', 'w9', 'w9', 'w5'],
     splitAt: [12],
     isHu: true
   },
@@ -387,7 +393,7 @@ export const yakuData: Yaku[] = [
     han: -3,
     category: '无限制',
     desc: '无人鸣牌的情况下4人都在第一巡打出同一种风牌',
-    tiles: ['d1', 'd1', 'd1', 'd1'],
+    tiles: ['d4', 'd4', 'd4', 'd4'],
     splitAt: [0, 1, 2, 3]
   },
   {
@@ -405,7 +411,8 @@ export const yakuData: Yaku[] = [
     han: -3,
     category: '无限制',
     desc: '第一巡轮到自己之前无人鸣牌的状态下拥有9种及以上的幺九牌',
-    tiles: ['w1', 'w9', 'b1', 'b8', 'b9', 's3', 's3', 's4', 's7', 's9', 'd1', 'd2', 'z1', 'z2', 'z3']
+    tiles: ['w1', 'w9', 'b1', 'b8', 'b9', 's3', 's3', 's4', 's7', 's9', 'd1', 'd3', 'z3', 'z2'],
+    splitAt: [12]
   },
   {
     id: 'sikazero',
@@ -433,7 +440,8 @@ export const yakuData: Yaku[] = [
     desc: '只包含索子的23468以及发',
     tiles: ['s2', 's2', 's2', 's3', 's3', 's3', 's4', 's4', 's4', 's6', 's6', 's6', 'z3', 'z3'],
     splitAt: [2, 5, 8, 11, 12],
-    isHu: true
+    isHu: true,
+    note: '无发也可以'
   },
   {
     id: 'chinroutou',
@@ -451,7 +459,7 @@ export const yakuData: Yaku[] = [
     han: 8,
     category: '门前清',
     desc: '全部十三种幺九牌各1张外加其中一种再有1张',
-    tiles: ['w1', 'w9', 'b1', 'b9', 's1', 's9', 'd1', 'd2', 'd3', 'd4', 'z1', 'z2', 'z3', 'w1'],
+    tiles: ['w1', 'w9', 'b1', 'b9', 'b9', 's1', 's9', 'd1', 'd2', 'd3', 'd4', 'z1', 'z3', 'z2'],
     splitAt: [12],
     isHu: true
   },
@@ -481,7 +489,7 @@ export const yakuData: Yaku[] = [
     han: 8,
     category: '门前清',
     desc: '同种数牌1112345678993+其中任意一种再有1张',
-    tiles: ['w1', 'w1', 'w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9', 'w9', 'w9', 'w1'],
+    tiles: ['w1', 'w1', 'w1', 'w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9', 'w9', 'w9'],
     splitAt: [12],
     isHu: true
   },
@@ -490,9 +498,10 @@ export const yakuData: Yaku[] = [
     name: '宝牌',
     han: 1,
     category: '无限制',
-    desc: '宝牌指示牌的下一张牌（非役）',
+    desc: '宝牌指示牌的下一张牌',
     tiles: ['s3', 'bg', 'bg', 'bg', 'bg', 's4'],
-    splitAt: [4]
+    splitAt: [4],
+    isEffectOnly: true
   },
   {
     id: 'red-dora',
@@ -501,7 +510,8 @@ export const yakuData: Yaku[] = [
     category: '无限制',
     desc: '红5，红5筒，红5索',
     tiles: ['rw5', 'rb5', 'rs5'],
-    splitAt: [0, 1]
+    splitAt: [0, 1],
+    isEffectOnly: true
   },
   {
     id: 'kita',
@@ -509,7 +519,8 @@ export const yakuData: Yaku[] = [
     han: 1,
     category: '无限制',
     desc: '在三人麻将中、北风在拔北操作后可以北当做宝牌（手牌中不算）',
-    tiles: ['d4']
+    tiles: ['d4'],
+    isEffectOnly: true
   }
 ]
 

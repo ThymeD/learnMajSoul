@@ -5,10 +5,10 @@ const router = useRouter()
 const route = useRoute()
 
 const menuItems = [
+  { path: '/yaku', label: '役种一览', icon: 'List' },
   { path: '/home', label: '首页', icon: 'House' },
   { path: '/hand', label: '手牌分析', icon: 'Grid' },
   { path: '/tiles', label: '素材验证', icon: 'Picture' },
-  { path: '/yaku', label: '役种一览', icon: 'List' },
   { path: '/draft', label: '草稿区', icon: 'Edit' },
   { path: '/strategy', label: '策略指南', icon: 'Reading' }
 ]
