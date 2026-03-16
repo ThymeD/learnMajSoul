@@ -24,11 +24,7 @@ const handleMenuSelect = (index: string) => {
       <div class="logo">
         <h1>雀魂攻略</h1>
       </div>
-      <el-menu
-        :default-active="route.path"
-        class="menu"
-        @select="handleMenuSelect"
-      >
+      <el-menu :default-active="route.path" class="menu" @select="handleMenuSelect">
         <el-menu-item v-for="item in menuItems" :key="item.path" :index="item.path">
           <el-icon><component :is="item.icon" /></el-icon>
           <span>{{ item.label }}</span>

@@ -21,5 +21,4 @@ app.use(pinia)
 app.use(ElementPlus)
 
 app.mount('#app')
-
 ;(window as any).yakuUtils = { setYakuMastery, clearAllMastery }
