@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount, shallowMount } from '@vue/test-utils'
+import { shallowMount } from '@vue/test-utils'
 
 vi.mock('../components/MahjongTile.vue', () => ({
   default: {
@@ -79,7 +79,9 @@ describe('YakuView 交互功能', () => {
     })
 
     it('切换到"全部"应显示全部役种', async () => {
-      const allRadio = wrapper.findAll('input[type="radio"]').find((el: any) => el.attributes('value') === '')
+      const allRadio = wrapper
+        .findAll('input[type="radio"]')
+        .find((el: any) => el.attributes('value') === '')
       if (allRadio) {
         await allRadio.setChecked()
         expect(wrapper.vm.activeHan).toBe('')
@@ -87,7 +89,9 @@ describe('YakuView 交互功能', () => {
     })
 
     it('切换到"一番"只显示 han=1 的役种', async () => {
-      const oneHanRadio = wrapper.findAll('input[type="radio"]').find((el: any) => el.attributes('value') === 1)
+      const oneHanRadio = wrapper
+        .findAll('input[type="radio"]')
+        .find((el: any) => el.attributes('value') === 1)
       if (oneHanRadio) {
         await oneHanRadio.setChecked()
         expect(wrapper.vm.activeHan).toBe(1)
@@ -98,7 +102,9 @@ describe('YakuView 交互功能', () => {
     })
 
     it('切换到"役满"只显示 han=8 的役种', async () => {
-      const yakumanRadio = wrapper.findAll('input[type="radio"]').find((el: any) => el.attributes('value') === 8)
+      const yakumanRadio = wrapper
+        .findAll('input[type="radio"]')
+        .find((el: any) => el.attributes('value') === 8)
       if (yakumanRadio) {
         await yakumanRadio.setChecked()
         expect(wrapper.vm.activeHan).toBe(8)
