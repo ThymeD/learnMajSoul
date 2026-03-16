@@ -19,11 +19,7 @@
             </el-radio-group>
           </div>
         </div>
-        <el-input 
-          v-model="searchText" 
-          placeholder="搜索役种名称或描述" 
-          class="search-input"
-        >
+        <el-input v-model="searchText" placeholder="搜索役种名称或描述" class="search-input">
           <template #append>
             <el-button @click="searchText = ''">清除</el-button>
           </template>
@@ -32,43 +28,69 @@
     </div>
     <div class="yaku-content">
       <div class="yaku-list">
-        <div 
-          v-for="yaku in filteredYaku" 
-          :key="yaku.id" 
+        <div
+          v-for="yaku in filteredYaku"
+          :key="yaku.id"
           :id="`yaku-${yaku.id}`"
           class="yaku-card"
-          :class="{ active: activeId === yaku.id, pressing: pressingYakuId === yaku.id || pressingYakuId === yaku.id + '-decrement', incrementing: incrementingYakuId === yaku.id, decrementing: decrementingYakuId === yaku.id }"
+          :class="{
+            active: activeId === yaku.id,
+            pressing: pressingYakuId === yaku.id || pressingYakuId === yaku.id + '-decrement',
+            incrementing: incrementingYakuId === yaku.id,
+            decrementing: decrementingYakuId === yaku.id
+          }"
           @click="selectYaku(yaku.id)"
-          @mousedown.prevent="activeId === yaku.id && !pressingYakuId && yaku.isHu && startLongPress(yaku, false)"
+          @mousedown.prevent="
+            activeId === yaku.id && !pressingYakuId && yaku.isHu && startLongPress(yaku, false)
+          "
           @mouseup="endLongPress(yaku.id, false)"
           @mouseleave="endLongPress(yaku.id, false)"
         >
-          <div v-if="pressingYakuId === yaku.id || pressingYakuId === yaku.id + '-decrement'" class="press-progress" :class="{ decrement: pressingYakuId === yaku.id + '-decrement' }" :style="{ '--press-duration': LONG_PRESS_DELAY + 'ms' }"></div>
+          <div
+            v-if="pressingYakuId === yaku.id || pressingYakuId === yaku.id + '-decrement'"
+            class="press-progress"
+            :class="{ decrement: pressingYakuId === yaku.id + '-decrement' }"
+            :style="{ '--press-duration': LONG_PRESS_DELAY + 'ms' }"
+          ></div>
           <div class="yaku-top">
             <span class="yaku-name">{{ yaku.name }}</span>
-            <span class="han-text">{{ yaku.han === 5 ? '满贯' : yaku.han === 8 ? '役满' : yaku.han > 0 ? yaku.han + '番' : yaku.han === -3 ? '流局' : yaku.han === -2 ? '双倍役满' : '役满' }}</span>
+            <span class="han-text">{{
+              yaku.han === 5
+                ? '满贯'
+                : yaku.han === 8
+                  ? '役满'
+                  : yaku.han > 0
+                    ? yaku.han + '番'
+                    : yaku.han === -3
+                      ? '流局'
+                      : yaku.han === -2
+                        ? '双倍役满'
+                        : '役满'
+            }}</span>
             <span v-if="yaku.category === '门前清'" class="yaku-condition">门前清限定</span>
             <span v-if="yaku.category === '副露后'" class="yaku-condition">副露减1番</span>
             <span v-if="yaku.isDealerOnly" class="yaku-condition">庄家限定</span>
             <span v-if="yaku.isNonDealerOnly" class="yaku-condition">子家限定</span>
             <span v-if="yaku.note" class="yaku-condition">{{ yaku.note }}</span>
             <span v-if="yaku.isEffectOnly" class="yaku-condition effect-only">不是役</span>
-            <span 
+            <span
               v-if="yaku.isHu"
               class="yaku-count"
-              @mousedown.prevent.stop="isDecrementZone = true; startLongPress(yaku, true)"
-              @mouseup="isDecrementZone = false; endLongPress(yaku.id, true)"
-              @mouseleave="isDecrementZone = false; endLongPress(yaku.id, true)"
-            >已胡：{{ yaku.mastery || 0 }}</span>
+              @mousedown.prevent.stop="handleCountMouseDown(yaku)"
+              @mouseup="handleCountMouseUp(yaku.id)"
+              @mouseleave="handleCountMouseUp(yaku.id)"
+              >已胡：{{ yaku.mastery || 0 }}</span
+            >
+            >
             <span v-if="incrementingYakuId === yaku.id" class="increment-text">+1</span>
             <span v-if="decrementingYakuId === yaku.id" class="decrement-text">-1</span>
           </div>
           <div class="yaku-middle">{{ yaku.desc }}</div>
           <div class="yaku-bottom">
-            <MahjongTile 
-              v-for="(tile, index) in yaku.tiles" 
-              :key="index" 
-              :tile-id="tile" 
+            <MahjongTile
+              v-for="(tile, index) in yaku.tiles"
+              :key="index"
+              :tile-id="tile"
               :width="80"
               :show-name="false"
               :split="yaku.splitAt?.includes(index)"
@@ -85,8 +107,8 @@
             </div>
           </template>
           <div class="nav-list">
-            <div 
-              v-for="yaku in filteredYaku" 
+            <div
+              v-for="yaku in filteredYaku"
               :key="yaku.id"
               class="nav-item"
               :class="{ active: activeId === yaku.id, pressing: pressingYakuId === yaku.id }"
@@ -108,7 +130,7 @@ import MahjongTile from '../components/MahjongTile.vue'
 
 const searchText = ref('')
 
-const yakuData = reactive<Yaku[]>(originYakuData.map(y => ({ ...y })))
+const yakuData = reactive<Yaku[]>(originYakuData.map((y) => ({ ...y })))
 
 const STORAGE_KEY = 'yaku-mastery'
 
@@ -117,7 +139,7 @@ const loadMastery = () => {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
       const masteryMap = JSON.parse(stored)
-      yakuData.forEach(y => {
+      yakuData.forEach((y) => {
         if (masteryMap[y.id] !== undefined) {
           y.mastery = masteryMap[y.id]
         }
@@ -130,7 +152,7 @@ const loadMastery = () => {
 
 const saveMastery = () => {
   const masteryMap: Record<string, number> = {}
-  yakuData.forEach(y => {
+  yakuData.forEach((y) => {
     if (y.mastery !== undefined && y.mastery !== null) {
       masteryMap[y.id] = y.mastery
     }
@@ -152,9 +174,13 @@ onMounted(() => {
   }
 })
 
-watch(() => yakuData.map(y => y.mastery), () => {
-  saveMastery()
-}, { deep: true })
+watch(
+  () => yakuData.map((y) => y.mastery),
+  () => {
+    saveMastery()
+  },
+  { deep: true }
+)
 
 onUnmounted(() => {
   if (longPressTimer) {
@@ -206,32 +232,36 @@ onMounted(() => {
 })
 
 watch([activeHan, activeCategory], () => {
-  localStorage.setItem(YAKU_FILTER_KEY, JSON.stringify({ han: activeHan.value, category: activeCategory.value }))
+  localStorage.setItem(
+    YAKU_FILTER_KEY,
+    JSON.stringify({ han: activeHan.value, category: activeCategory.value })
+  )
 })
 
 const filteredYaku = computed(() => {
   let result = yakuData
-  
+
   if (searchText.value) {
     const keyword = searchText.value.toLowerCase()
-    result = result.filter(y => 
-      y.name.toLowerCase().includes(keyword) || 
-      y.desc.toLowerCase().includes(keyword)
+    result = result.filter(
+      (y) => y.name.toLowerCase().includes(keyword) || y.desc.toLowerCase().includes(keyword)
     )
   }
-  
+
   if (activeHan.value !== '') {
-    result = result.filter(y => y.han === activeHan.value)
+    result = result.filter((y) => y.han === activeHan.value)
   }
-  
+
   if (activeCategory.value === 'notYaku') {
-    result = result.filter(y => y.isEffectOnly)
+    result = result.filter((y) => y.isEffectOnly)
   } else if (activeCategory.value === '无限制') {
-    result = result.filter(y => (y.category === '无限制' || y.category === '副露后') && !y.isEffectOnly)
+    result = result.filter(
+      (y) => (y.category === '无限制' || y.category === '副露后') && !y.isEffectOnly
+    )
   } else if (activeCategory.value) {
-    result = result.filter(y => y.category === activeCategory.value)
+    result = result.filter((y) => y.category === activeCategory.value)
   }
-  
+
   return result
 })
 
@@ -244,23 +274,30 @@ const getCategoryOptions = (han: number | string) => {
   if (han === '') {
     return baseOptions
   }
-  const categories = new Set(yakuData.filter(y => y.han === han).map(y => y.category as string))
-  const hasFulong = yakuData.some(y => y.han === han && y.category === '副露后')
-  const hasMenqian = yakuData.some(y => y.han === han && y.category === '门前清')
-  let options = baseOptions.filter(c => c.key === '' || categories.has(c.key))
-  
+  const categories = new Set(yakuData.filter((y) => y.han === han).map((y) => y.category as string))
+  const hasFulong = yakuData.some((y) => y.han === han && y.category === '副露后')
+  const hasMenqian = yakuData.some((y) => y.han === han && y.category === '门前清')
+  let options = baseOptions.filter((c) => c.key === '' || categories.has(c.key))
+
   if (han === 8) {
     if (hasFulong && hasMenqian) {
-      options = [{ key: '', label: '全部' }, { key: '无限制', label: '无限制' }, { key: '门前清', label: '门前清' }]
+      options = [
+        { key: '', label: '全部' },
+        { key: '无限制', label: '无限制' },
+        { key: '门前清', label: '门前清' }
+      ]
     } else if (hasFulong) {
-      options = [{ key: '', label: '全部' }, { key: '无限制', label: '无限制' }]
+      options = [
+        { key: '', label: '全部' },
+        { key: '无限制', label: '无限制' }
+      ]
     }
   } else if (han !== 1 && hasFulong) {
-    options = options.filter(o => o.key !== '无限制')
+    options = options.filter((o) => o.key !== '无限制')
     options.splice(1, 0, { key: '无限制', label: '无限制' })
   }
-  
-  if (han === 1 && yakuData.some(y => y.han === 1 && y.isEffectOnly)) {
+
+  if (han === 1 && yakuData.some((y) => y.han === 1 && y.isEffectOnly)) {
     options.push({ key: 'notYaku', label: '不是役' })
   }
   return options
@@ -289,13 +326,23 @@ const selectYaku = (id: string) => {
   }
 }
 
+const handleCountMouseDown = (yaku: Yaku) => {
+  isDecrementZone.value = true
+  startLongPress(yaku, true)
+}
+
+const handleCountMouseUp = (id: string) => {
+  isDecrementZone.value = false
+  endLongPress(id, true)
+}
+
 const startLongPress = (yaku: Yaku, isDecrement: boolean) => {
   if (isDecrement && (yaku.mastery === undefined || yaku.mastery <= 0)) {
     return
   }
-  
+
   pressingYakuId.value = isDecrement ? `${yaku.id}-decrement` : yaku.id
-  
+
   // 等待 LONG_PRESS_DELAY 后开始连续触发
   longPressTimer = setTimeout(() => {
     // 首次触发
@@ -321,7 +368,7 @@ const endLongPress = (_id: string, _isDecrement: boolean) => {
   pressingYakuId.value = ''
   incrementingYakuId.value = ''
   decrementingYakuId.value = ''
-  
+
   if (longPressTimer) {
     clearTimeout(longPressTimer)
     longPressTimer = null
@@ -333,7 +380,7 @@ const endLongPress = (_id: string, _isDecrement: boolean) => {
 }
 
 const updateMastery = (id: string, delta: number) => {
-  const yaku = yakuData.find(y => y.id === id)
+  const yaku = yakuData.find((y) => y.id === id)
   if (yaku) {
     yaku.mastery = (yaku.mastery || 0) + delta
     if (yaku.mastery < 0) yaku.mastery = 0
@@ -345,21 +392,22 @@ const updateMastery = (id: string, delta: number) => {
 .yaku-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 64px);
+  height: calc(100vh - 68px);
   background: #fafafa;
+  padding-top: 0;
 }
 
 .yaku-header {
   flex-shrink: 0;
   background: #fafafa;
-  padding: 16px 32px;
+  padding: 0 16px;
 }
 
 .yaku-header h2 {
-  margin: 0 0 16px;
+  margin: 0;
   background: linear-gradient(135deg, #409eff 0%, #3a8cd8 100%);
   color: #fff;
-  padding: 16px 24px;
+  padding: 12px 24px;
   border-radius: 8px;
 }
 
@@ -510,13 +558,23 @@ const updateMastery = (id: string, delta: number) => {
 }
 
 @keyframes pulse-green {
-  0%, 100% { background: rgba(255, 255, 255, 0.7); }
-  50% { background: rgba(76, 175, 80, 0.3); }
+  0%,
+  100% {
+    background: rgba(255, 255, 255, 0.7);
+  }
+  50% {
+    background: rgba(76, 175, 80, 0.3);
+  }
 }
 
 @keyframes pulse-red {
-  0%, 100% { background: rgba(255, 255, 255, 0.7); }
-  50% { background: rgba(244, 67, 54, 0.3); }
+  0%,
+  100% {
+    background: rgba(255, 255, 255, 0.7);
+  }
+  50% {
+    background: rgba(244, 67, 54, 0.3);
+  }
 }
 
 .press-progress {
@@ -537,10 +595,11 @@ const updateMastery = (id: string, delta: number) => {
   top: 0;
   height: 100%;
   width: 100%;
-  background: linear-gradient(90deg, 
-    rgba(64, 158, 255, 0.1) 0%, 
+  background: linear-gradient(
+    90deg,
+    rgba(64, 158, 255, 0.1) 0%,
     rgba(64, 158, 255, 0.3) 30%,
-    rgba(64, 158, 255, 0.5) 60%, 
+    rgba(64, 158, 255, 0.5) 60%,
     rgba(64, 158, 255, 0.8) 100%
   );
   transform-origin: left;
@@ -548,10 +607,11 @@ const updateMastery = (id: string, delta: number) => {
 }
 
 .press-progress.decrement::before {
-  background: linear-gradient(90deg, 
-    rgba(255, 107, 107, 0.1) 0%, 
+  background: linear-gradient(
+    90deg,
+    rgba(255, 107, 107, 0.1) 0%,
     rgba(255, 107, 107, 0.3) 30%,
-    rgba(255, 107, 107, 0.5) 60%, 
+    rgba(255, 107, 107, 0.5) 60%,
     rgba(255, 107, 107, 0.8) 100%
   );
 }

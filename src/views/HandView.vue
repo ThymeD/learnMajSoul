@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
 import draggable from 'vuedraggable'
 import TileSelector from '../components/TileSelector.vue'
 import MahjongTile from '../components/MahjongTile.vue'
@@ -12,6 +13,7 @@ const store = useHandStore()
 // 本地状态（用于双向绑定）
 const localTiles = ref<string[]>([])
 const localDrawTile = ref<string | null>(null)
+const tileSearchText = ref('')
 
 // 风牌选项
 const windOptions = [
@@ -128,6 +130,11 @@ const handleSelfWindChange = (val: Wind) => {
 // 切换场风
 const handleFieldWindChange = (val: Wind) => {
   store.setFieldWind(val)
+}
+
+// 素材搜索
+const handleTileSearch = () => {
+  // 搜索逻辑在 TileSelector 组件内部处理
 }
 
 // 选中的牌列表（用于控制 TileSelector 的显示）
@@ -335,16 +342,8 @@ const checkDragMove = (_evt: any) => {
 
 <template>
   <div class="hand-view">
-    <!-- 标题栏 -->
-    <div class="header">
+    <div class="hand-header">
       <h2>手牌分析</h2>
-      <el-checkbox
-        :model-value="store.isLiqi"
-        :disabled="!store.canLiqi || liqiDisabled"
-        @change="handleLiqiChange"
-      >
-        立直
-      </el-checkbox>
     </div>
 
     <!-- 主内容区 -->
@@ -353,9 +352,25 @@ const checkDragMove = (_evt: any) => {
       <div class="left-panel">
         <el-card shadow="hover">
           <template #header>
-            <span class="panel-title">素材选择区</span>
+            <div class="tile-selector-header">
+              <span class="panel-title">素材选择区</span>
+              <el-input
+                v-model="tileSearchText"
+                placeholder="搜索牌型"
+                :prefix-icon="Search"
+                clearable
+                style="width: 180px"
+                @input="handleTileSearch"
+                @clear="handleTileSearch"
+              />
+            </div>
           </template>
-          <TileSelector :selected-tiles="selectedTiles" :max-count="4" @select="handleTileAdd" />
+          <TileSelector
+            :selected-tiles="selectedTiles"
+            :max-count="4"
+            :search-text="tileSearchText"
+            @select="handleTileAdd"
+          />
         </el-card>
       </div>
 
@@ -364,47 +379,63 @@ const checkDragMove = (_evt: any) => {
         <!-- 役种设置 -->
         <el-card shadow="hover" class="settings-card">
           <template #header>
-            <span class="panel-title">役种设置</span>
+            <div class="settings-header-row">
+              <span class="panel-title">役种设置</span>
+              <div class="setting-item">
+                <el-checkbox
+                  :model-value="store.isLiqi"
+                  :disabled="!store.canLiqi || liqiDisabled"
+                  @change="handleLiqiChange"
+                >
+                  立直
+                </el-checkbox>
+              </div>
+              <div class="setting-item">
+                <el-checkbox :model-value="store.dealer" @change="handleDealerChange">
+                  庄家
+                </el-checkbox>
+              </div>
+              <div class="setting-item">
+                <span class="setting-label">自风：</span>
+                <el-select
+                  :model-value="store.selfWind"
+                  size="small"
+                  style="width: 100px"
+                  @change="handleSelfWindChange"
+                >
+                  <el-option
+                    v-for="wind in windOptions"
+                    :key="wind.value"
+                    :label="wind.label"
+                    :value="wind.value"
+                  />
+                </el-select>
+              </div>
+              <div class="setting-item">
+                <span class="setting-label">场风：</span>
+                <el-select
+                  :model-value="store.fieldWind"
+                  size="small"
+                  style="width: 100px"
+                  @change="handleFieldWindChange"
+                >
+                  <el-option
+                    v-for="wind in windOptions"
+                    :key="wind.value"
+                    :label="wind.label"
+                    :value="wind.value"
+                  />
+                </el-select>
+              </div>
+              <div class="setting-actions">
+                <span class="panel-title">操作</span>
+                <el-button size="small" @click="handleClear">清空</el-button>
+                <el-button size="small" type="primary" @click="handleRandom">随机生成</el-button>
+                <el-button size="small" type="success" @click="handleAnalyze">分析</el-button>
+              </div>
+            </div>
           </template>
-          <div class="settings-content">
-            <div class="setting-item">
-              <el-checkbox :model-value="store.dealer" @change="handleDealerChange">
-                庄家
-              </el-checkbox>
-            </div>
-            <div class="setting-item">
-              <span class="setting-label">自风：</span>
-              <el-select
-                :model-value="store.selfWind"
-                size="small"
-                style="width: 100px"
-                @change="handleSelfWindChange"
-              >
-                <el-option
-                  v-for="wind in windOptions"
-                  :key="wind.value"
-                  :label="wind.label"
-                  :value="wind.value"
-                />
-              </el-select>
-            </div>
-            <div class="setting-item">
-              <span class="setting-label">场风：</span>
-              <el-select
-                :model-value="store.fieldWind"
-                size="small"
-                style="width: 100px"
-                @change="handleFieldWindChange"
-              >
-                <el-option
-                  v-for="wind in windOptions"
-                  :key="wind.value"
-                  :label="wind.label"
-                  :value="wind.value"
-                />
-              </el-select>
-            </div>
-          </div>
+          <div class="settings-body"></div>
         </el-card>
 
         <!-- 副露区 -->
@@ -631,13 +662,6 @@ const checkDragMove = (_evt: any) => {
           </div>
         </el-card>
 
-        <!-- 操作按钮 -->
-        <div class="action-buttons">
-          <el-button @click="handleClear">清空</el-button>
-          <el-button type="primary" @click="handleRandom">随机生成</el-button>
-          <el-button type="success" @click="handleAnalyze">分析</el-button>
-        </div>
-
         <!-- 分析结果 -->
         <el-card v-if="store.analysis" shadow="hover" class="result-card">
           <template #header>
@@ -685,31 +709,77 @@ const checkDragMove = (_evt: any) => {
 
 <style scoped>
 .hand-view {
-  padding: 20px;
-  height: 100%;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 68px);
+  background: #fafafa;
+  padding: 0;
+  padding-top: 0;
+}
+
+.hand-header {
+  flex-shrink: 0;
+  margin-bottom: 0;
+  padding: 0 16px;
+  background: #fafafa;
+}
+
+.hand-header h2 {
+  margin: 0;
+  background: linear-gradient(135deg, #409eff 0%, #3a8cd8 100%);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
 }
 
 .header {
+  flex-shrink: 0;
+  margin-bottom: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
 }
 
 .header h2 {
   margin: 0;
-  color: #2c3e50;
+  background: linear-gradient(135deg, #409eff 0%, #3a8cd8 100%);
+  color: #fff;
+  padding: 16px 24px;
+  border-radius: 8px;
+}
+
+.hand-header h2 {
+  margin: 0;
+  background: linear-gradient(135deg, #409eff 0%, #3a8cd8 100%);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
 }
 
 .main-content {
   display: flex;
   gap: 20px;
+  padding: 0 32px 16px;
+  margin-top: 16px;
 }
 
 .left-panel {
   width: 400px;
   flex-shrink: 0;
+}
+
+.left-panel :deep(.el-card__header) {
+  padding: 12px 20px;
+}
+
+.settings-card :deep(.el-card__header) {
+  padding: 12px 20px;
+}
+
+.tile-selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .right-panel {
@@ -724,17 +794,55 @@ const checkDragMove = (_evt: any) => {
   color: #303133;
 }
 
-.settings-card .settings-content {
+.settings-header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+  justify-content: space-between;
   align-items: center;
+  width: 100%;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.settings-card .settings-content {
+  display: none;
+}
+
+.settings-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.settings-body {
+  display: none;
+  padding: 0;
+  margin: 0;
+}
+
+.settings-card :deep(.el-card__body) {
+  padding: 0;
+  margin: 0;
 }
 
 .setting-item {
   display: flex;
   align-items: center;
+  gap: 4px;
+}
+
+.setting-actions {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  margin-left: auto;
+}
+
+.setting-actions .panel-title {
+  margin-right: 4px;
 }
 
 .setting-label {
@@ -884,12 +992,6 @@ const checkDragMove = (_evt: any) => {
   display: inline-block;
   margin-left: 12px;
   color: #e6a23c;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
 }
 
 .result-card {

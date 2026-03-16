@@ -53,7 +53,7 @@ const handleMenuSelect = (index: string) => {
 
 .main-content {
   margin-left: 220px;
-  padding: 32px;
+  padding: 16px;
   background: #fafafa;
   min-height: 100vh;
 }

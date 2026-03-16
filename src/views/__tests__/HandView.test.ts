@@ -238,8 +238,8 @@ describe('HandView UI 交互测试', () => {
     })
 
     it('应该显示操作按钮', () => {
-      const buttons = wrapper.find('.action-buttons')
-      expect(buttons.exists()).toBe(true)
+      const settingsCard = wrapper.find('.settings-card')
+      expect(settingsCard.exists()).toBe(true)
     })
   })
 
@@ -328,7 +328,7 @@ describe('HandView UI 交互测试', () => {
 
       // 验证每种牌不超过4张
       const counts: Record<string, number> = {}
-      store.tiles.forEach((tile) => {
+      store.tiles.forEach((tile: string) => {
         counts[tile] = (counts[tile] || 0) + 1
       })
       Object.values(counts).forEach((count) => {

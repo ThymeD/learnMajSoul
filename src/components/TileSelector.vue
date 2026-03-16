@@ -2,7 +2,6 @@
 import { ref, computed, watch } from 'vue'
 import draggable from 'vuedraggable'
 import MahjongTile from './MahjongTile.vue'
-import { Search } from '@element-plus/icons-vue'
 
 // Types
 interface TileInfo {
@@ -110,11 +109,6 @@ watch(
   }
 )
 
-// Emit search event
-const handleSearch = () => {
-  emit('search', localSearchText.value)
-}
-
 // All tabs including "all"
 const tabs = computed(() => [{ key: 'all', label: '全部' }, ...categories])
 
@@ -176,19 +170,6 @@ const cloneTile = (tile: TileInfo): TileInfo => {
 
 <template>
   <div class="tile-selector" :class="{ 'is-disabled': disabled }">
-    <!-- Search Box -->
-    <div class="search-box">
-      <el-input
-        v-model="localSearchText"
-        placeholder="搜索牌型（名称或编号）"
-        :prefix-icon="Search"
-        clearable
-        :disabled="disabled"
-        @input="handleSearch"
-        @clear="handleSearch"
-      />
-    </div>
-
     <!-- Category Tabs -->
     <div class="category-tabs">
       <el-tabs v-model="activeTab" :disabled="disabled">
@@ -215,7 +196,7 @@ const cloneTile = (tile: TileInfo): TileInfo => {
             }"
             @click="handleTileClick(element.id)"
           >
-            <MahjongTile :tile-id="element.id" :width="60" :show-name="true" />
+            <MahjongTile :tile-id="element.id" :width="50" :show-name="true" />
             <div class="tile-count" :class="{ 'is-full': getRemainingCount(element.id) === 0 }">
               {{ getRemainingCount(element.id) }}
             </div>
@@ -263,14 +244,15 @@ const cloneTile = (tile: TileInfo): TileInfo => {
 }
 
 .tile-grid-container {
-  max-height: 400px;
+  max-height: 700px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .tile-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
   justify-items: center;
 }
 
