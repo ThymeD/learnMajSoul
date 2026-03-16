@@ -11,9 +11,12 @@ const emit = defineEmits<{
 
 const count = ref(props.modelValue ?? 0)
 
-watch(() => props.modelValue, (val) => {
-  count.value = val ?? 0
-})
+watch(
+  () => props.modelValue,
+  (val) => {
+    count.value = val ?? 0
+  }
+)
 
 const getCount = () => count.value
 const setCount = (val: number) => {

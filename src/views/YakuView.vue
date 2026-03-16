@@ -102,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, reactive } from 'vue'
+import { ref, computed, onMounted, watch, reactive, onUnmounted } from 'vue'
 import { yakuData as originYakuData, type Yaku } from '../data/yaku'
 import MahjongTile from '../components/MahjongTile.vue'
 
@@ -113,21 +113,25 @@ const yakuData = reactive<Yaku[]>(originYakuData.map(y => ({ ...y })))
 const STORAGE_KEY = 'yaku-mastery'
 
 const loadMastery = () => {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    const masteryMap = JSON.parse(stored)
-    yakuData.forEach(y => {
-      if (masteryMap[y.id] !== undefined) {
-        y.mastery = masteryMap[y.id]
-      }
-    })
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      const masteryMap = JSON.parse(stored)
+      yakuData.forEach(y => {
+        if (masteryMap[y.id] !== undefined) {
+          y.mastery = masteryMap[y.id]
+        }
+      })
+    }
+  } catch (e) {
+    console.warn('Failed to load mastery from localStorage:', e)
   }
 }
 
 const saveMastery = () => {
   const masteryMap: Record<string, number> = {}
   yakuData.forEach(y => {
-    if (y.mastery) {
+    if (y.mastery !== undefined && y.mastery !== null) {
       masteryMap[y.id] = y.mastery
     }
   })
@@ -136,11 +140,30 @@ const saveMastery = () => {
 
 onMounted(() => {
   loadMastery()
+  try {
+    const stored = localStorage.getItem(YAKU_FILTER_KEY)
+    if (stored) {
+      const { han, category } = JSON.parse(stored)
+      activeHan.value = han
+      activeCategory.value = category || ''
+    }
+  } catch (e) {
+    console.warn('Failed to load filter from localStorage:', e)
+  }
 })
 
 watch(() => yakuData.map(y => y.mastery), () => {
   saveMastery()
 }, { deep: true })
+
+onUnmounted(() => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+  }
+  if (longPressInterval) {
+    clearInterval(longPressInterval)
+  }
+})
 
 const LONG_PRESS_DELAY = 800
 
@@ -150,6 +173,7 @@ const incrementingYakuId = ref('')
 const decrementingYakuId = ref('')
 const isDecrementZone = ref(false)
 let longPressTimer: ReturnType<typeof setTimeout> | null = null
+let longPressInterval: ReturnType<typeof setInterval> | null = null
 
 const YAKU_FILTER_KEY = 'yaku-filter'
 
@@ -169,13 +193,15 @@ const activeHan = ref<number | string>(1)
 const activeCategory = ref<string>('')
 
 onMounted(() => {
-  const stored = localStorage.getItem(YAKU_FILTER_KEY)
-  if (stored) {
-    try {
+  try {
+    const stored = localStorage.getItem(YAKU_FILTER_KEY)
+    if (stored) {
       const { han, category } = JSON.parse(stored)
       activeHan.value = han
       activeCategory.value = category || ''
-    } catch (e) {}
+    }
+  } catch (e) {
+    console.warn('Failed to load filter from localStorage:', e)
   }
 })
 
@@ -270,13 +296,24 @@ const startLongPress = (yaku: Yaku, isDecrement: boolean) => {
   
   pressingYakuId.value = isDecrement ? `${yaku.id}-decrement` : yaku.id
   
+  // 等待 LONG_PRESS_DELAY 后开始连续触发
   longPressTimer = setTimeout(() => {
+    // 首次触发
+    updateMastery(yaku.id, isDecrement ? -1 : 1)
     if (isDecrement) {
       decrementingYakuId.value = yaku.id
     } else {
       incrementingYakuId.value = yaku.id
     }
-    updateMastery(yaku.id, isDecrement ? -1 : 1)
+    // 之后每隔 200ms 连续触发
+    longPressInterval = setInterval(() => {
+      updateMastery(yaku.id, isDecrement ? -1 : 1)
+      if (isDecrement) {
+        decrementingYakuId.value = yaku.id
+      } else {
+        incrementingYakuId.value = yaku.id
+      }
+    }, 200)
   }, LONG_PRESS_DELAY)
 }
 
@@ -288,6 +325,10 @@ const endLongPress = (_id: string, _isDecrement: boolean) => {
   if (longPressTimer) {
     clearTimeout(longPressTimer)
     longPressTimer = null
+  }
+  if (longPressInterval) {
+    clearInterval(longPressInterval)
+    longPressInterval = null
   }
 }
 

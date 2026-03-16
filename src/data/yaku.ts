@@ -16,7 +16,7 @@ export interface Yaku {
   note?: string
 }
 
-export const yakuData: Yaku[] = (yakuConfig.yaku as Yaku[]).map(y => ({
+export const yakuData: Yaku[] = (yakuConfig.yaku as Yaku[]).map((y) => ({
   ...y,
   mastery: 0
 }))
@@ -24,7 +24,7 @@ export const yakuData: Yaku[] = (yakuConfig.yaku as Yaku[]).map(y => ({
 const STORAGE_KEY = 'yaku-mastery'
 
 export const setYakuMastery = (id: string, count: number) => {
-  const yaku = yakuData.find(y => y.id === id)
+  const yaku = yakuData.find((y) => y.id === id)
   if (yaku) {
     yaku.mastery = count
     saveMastery()
@@ -34,7 +34,7 @@ export const setYakuMastery = (id: string, count: number) => {
 }
 
 export const clearAllMastery = () => {
-  yakuData.forEach(y => {
+  yakuData.forEach((y) => {
     y.mastery = 0
   })
   localStorage.removeItem(STORAGE_KEY)
@@ -42,7 +42,7 @@ export const clearAllMastery = () => {
 
 const saveMastery = () => {
   const masteryMap: Record<string, number> = {}
-  yakuData.forEach(y => {
+  yakuData.forEach((y) => {
     if (y.mastery) {
       masteryMap[y.id] = y.mastery
     }
@@ -51,28 +51,43 @@ const saveMastery = () => {
 }
 
 export const loadMastery = () => {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    const masteryMap = JSON.parse(stored)
-    yakuData.forEach(y => {
-      if (masteryMap[y.id] !== undefined) {
-        y.mastery = masteryMap[y.id]
-      }
-    })
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      const masteryMap = JSON.parse(stored)
+      yakuData.forEach((y) => {
+        if (masteryMap[y.id] !== undefined) {
+          y.mastery = masteryMap[y.id]
+        }
+      })
+    }
+  } catch (e) {
+    console.warn('Failed to load mastery from localStorage:', e)
   }
+}
+
+const getTileNumber = (tile: string): number => {
+  const match = tile.match(/\d+/)
+  return match ? parseInt(match[0], 10) : -1
 }
 
 export const autoCalculateSplitAt = (tiles: string[]): number[] => {
   if (tiles.length === 4) return []
 
-  if (tiles.filter(t => 'w19b19s19d1234z123'.includes(t)).length === 13) {
+  if (tiles.filter((t) => 'w19b19s19d1234z123'.includes(t)).length === 13) {
     return [12]
   }
 
-  if (tiles[0] === tiles[1] && tiles[1] === tiles[2] && 
-      tiles[3] === tiles[4] && tiles[4] === tiles[5] && 
-      tiles[6] === tiles[7] && tiles[7] === tiles[8] && 
-      tiles[9] === tiles[10] && tiles[10] === tiles[11]) {
+  if (
+    tiles[0] === tiles[1] &&
+    tiles[1] === tiles[2] &&
+    tiles[3] === tiles[4] &&
+    tiles[4] === tiles[5] &&
+    tiles[6] === tiles[7] &&
+    tiles[7] === tiles[8] &&
+    tiles[9] === tiles[10] &&
+    tiles[10] === tiles[11]
+  ) {
     if (tiles[12] === tiles[13]) {
       return [2, 5, 8, 11, 12]
     }
@@ -82,7 +97,7 @@ export const autoCalculateSplitAt = (tiles: string[]): number[] => {
   const getTingSplitIndex = (t: string[]): number => {
     if (t.length < 13) return -1
     const counts: Record<string, number> = {}
-    t.forEach(tile => counts[tile] = (counts[tile] || 0) + 1)
+    t.forEach((tile) => (counts[tile] = (counts[tile] || 0) + 1))
     const pairs = Object.entries(counts).filter(([_, c]) => c === 2)
     if (pairs.length === 0) return -1
     return t.indexOf(pairs[0][0])
@@ -91,31 +106,35 @@ export const autoCalculateSplitAt = (tiles: string[]): number[] => {
   const splitAt: number[] = []
   let i = 0
   while (i < tiles.length) {
-    if (i + 2 < tiles.length && 
-        tiles[i] === tiles[i+1] && tiles[i+1] === tiles[i+2]) {
+    if (i + 2 < tiles.length && tiles[i] === tiles[i + 1] && tiles[i + 1] === tiles[i + 2]) {
       i += 3
       if (i < tiles.length) splitAt.push(i)
-    } else if (i + 2 < tiles.length &&
-        tiles[i+1] === tiles[i+2] && 
-        Number(tiles[i][0]) + 1 === Number(tiles[i+1][0]) &&
-        tiles[i][0] === tiles[i+1][0]) {
+    } else if (
+      i + 2 < tiles.length &&
+      tiles[i + 1] === tiles[i + 2] &&
+      getTileNumber(tiles[i]) + 1 === getTileNumber(tiles[i + 1]) &&
+      tiles[i][0] === tiles[i + 1][0]
+    ) {
       i += 3
       if (i < tiles.length) splitAt.push(i)
-    } else if (i + 2 < tiles.length &&
-               Number(tiles[i][0]) + 1 === Number(tiles[i+1][0]) &&
-               Number(tiles[i+1][0]) + 1 === Number(tiles[i+2][0]) &&
-               tiles[i][0] === tiles[i+1][0] && tiles[i+1][0] === tiles[i+2][0]) {
+    } else if (
+      i + 2 < tiles.length &&
+      getTileNumber(tiles[i]) + 1 === getTileNumber(tiles[i + 1]) &&
+      getTileNumber(tiles[i + 1]) + 1 === getTileNumber(tiles[i + 2]) &&
+      tiles[i][0] === tiles[i + 1][0] &&
+      tiles[i + 1][0] === tiles[i + 2][0]
+    ) {
       i += 3
       if (i < tiles.length) splitAt.push(i)
     } else {
       i++
     }
   }
-  
+
   const tingSplit = getTingSplitIndex(tiles)
   if (!splitAt.includes(tingSplit)) {
     splitAt.push(tingSplit)
   }
-  
+
   return [...new Set(splitAt)].sort((a, b) => a - b)
 }
