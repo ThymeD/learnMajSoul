@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.opencode
+.poc
+*.ico
+*.svg
+*.png
+*.jpg
+*.jpeg
