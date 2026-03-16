@@ -22,7 +22,7 @@ describe('MahjongTile', () => {
 
   it('renders correct tile name', () => {
     const wrapper = mount(MahjongTile, {
-      props: { tileId: 'd1' }
+      props: { tileId: 'd1', showName: true }
     })
     expect(wrapper.text()).toContain('东风')
   })
