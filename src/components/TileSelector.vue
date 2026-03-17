@@ -173,34 +173,49 @@ const getRemainingCount = (tileId: string): number => {
 }
 
 // For drag and drop
-let isDraggingTile: string | null = null
-let dragDropHappened = false
+let mouseDownPos: { x: number; y: number } | null = null
+let isDragging = false
+
+// Handle mouse down - 记录鼠标按下位置
+const handleMouseDown = (event: MouseEvent, _tileId: string) => {
+  mouseDownPos = { x: event.clientX, y: event.clientY }
+  isDragging = false
+}
+
+// Handle mouse up - 判断是拖拽还是点击
+const handleMouseUp = (event: MouseEvent, _tileId: string) => {
+  if (!mouseDownPos) return
+
+  const dx = event.clientX - mouseDownPos.x
+  const dy = event.clientY - mouseDownPos.y
+  const distance = Math.sqrt(dx * dx + dy * dy)
+
+  // 如果移动距离超过5px，认为是拖拽
+  if (distance > 5) {
+    isDragging = true
+  } else {
+    isDragging = false
+  }
+
+  mouseDownPos = null
+}
 
 // Handle drag start - set data for HTML5 drag and drop
-const handleDragStart = (event: DragEvent, tileId: string) => {
-  isDraggingTile = tileId
-  dragDropHappened = false
+const handleDragStart = (event: DragEvent, _tileId: string) => {
+  isDragging = true
   if (event.dataTransfer) {
-    event.dataTransfer.setData('text/plain', tileId)
+    event.dataTransfer.setData('text/plain', _tileId)
     event.dataTransfer.effectAllowed = 'copy'
   }
 }
 
 // Handle drag end
 const handleDragEnd = () => {
-  // 如果发生了 drop 事件，忽略接下来的 click
-  if (dragDropHappened) {
-    setTimeout(() => {
-      isDraggingTile = null
-    }, 500) // 延迟清除，让 click 有机会被忽略
-  } else {
-    isDraggingTile = null
-  }
+  isDragging = false
 }
 
 // Handle tile drop from other areas (hand, river, fulu)
 const handleTileDrop = (event: Event) => {
-  dragDropHappened = true // 标记发生了 drop 事件
   const ev = event as DragEvent
   ev.preventDefault()
   const tileId = ev.dataTransfer?.getData('text/plain')
@@ -210,12 +225,9 @@ const handleTileDrop = (event: Event) => {
   }
 }
 
-// Handle tile click - ignore if it was a drag operation
+// Handle tile click - only trigger if not dragging
 const handleTileClick = (tileId: string) => {
-  // 如果这个 tileId 正在被拖拽，忽略 click
-  if (isDraggingTile === tileId) {
-    return
-  }
+  if (isDragging) return
 
   if (!isTileDisabled(tileId)) {
     emit('select', tileId)
@@ -249,6 +261,8 @@ const handleTileClick = (tileId: string) => {
           }"
           draggable="true"
           @click="handleTileClick(element.id)"
+          @mousedown="handleMouseDown($event, element.id)"
+          @mouseup="handleMouseUp($event, element.id)"
           @dragstart="handleDragStart($event, element.id)"
           @dragend="handleDragEnd"
         >
