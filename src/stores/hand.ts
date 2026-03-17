@@ -245,29 +245,130 @@ export const useHandStore = defineStore('hand', () => {
 
   /**
    * 随机生成一手牌
-   * 生成13张手牌（门清状态）
+   * 生成13张手牌（门清状态），可选择生成副露和牌河
+   * 保证所有区域的牌加起来不超过4张
    */
-  function randomHand(): void {
+  function randomHand(includeFulu = false, includeRiver = false): void {
     // 清空现有状态
     clear()
 
-    const availableTiles = [...ALL_POSSIBLE_TILES]
+    // 牌池：每种牌最多4张
+    const pool: Tile[] = []
+    for (let i = 0; i < 4; i++) {
+      pool.push(...ALL_POSSIBLE_TILES)
+    }
+
+    // 跟踪每种牌的数量
+    const tileCounts: Record<string, number> = {}
+
+    // 随机选择一张牌，确保不超过4张
+    const pickRandomTile = (): Tile | null => {
+      if (pool.length === 0) return null
+      const randomIndex = Math.floor(Math.random() * pool.length)
+      const tile = pool[randomIndex]
+      const currentCount = tileCounts[tile] || 0
+      if (currentCount >= 4) {
+        pool.splice(randomIndex, 1)
+        return pickRandomTile()
+      }
+      tileCounts[tile] = currentCount + 1
+      return tile
+    }
+
+    // 生成13张手牌
     const selected: string[] = []
-
-    // 随机选牌，确保每种牌不超过4张
     for (let i = 0; i < 13; i++) {
-      const randomIndex = Math.floor(Math.random() * availableTiles.length)
-      const tile = availableTiles[randomIndex]
-      selected.push(tile)
+      const tile = pickRandomTile()
+      if (tile) {
+        selected.push(tile)
+      }
+    }
+    tiles.value = sortTiles(selected)
 
-      // 移除这张牌（如果已选4张则完全移除）
-      const count = selected.filter((t) => t === tile).length
-      if (count >= 4) {
-        availableTiles.splice(randomIndex, 1)
+    // 可选：生成副露（0-4个）
+    if (includeFulu && pool.length >= 3) {
+      const numFulu = Math.floor(Math.random() * 5) // 0-4个副露
+      for (let i = 0; i < numFulu && pool.length >= 3; i++) {
+        // 尝试找到一个可以组成副露的牌
+        const fuluTypes: ('chi' | 'pon' | 'kan')[] = ['pon', 'kan', 'chi']
+        const chosenType = fuluTypes[Math.floor(Math.random() * fuluTypes.length)]
+
+        if (chosenType === 'kan' && pool.length >= 4) {
+          // 杠牌：需要4张
+          const tile = pickRandomTile()
+          if (tile) {
+            // 从 pool 中移除4张相同的牌
+            for (let j = 0; j < 4; j++) {
+              const idx = pool.lastIndexOf(tile)
+              if (idx !== -1) pool.splice(idx, 1)
+            }
+            const kanTiles = [tile, tile, tile, tile]
+            fulu.value.push({
+              type: 'kan',
+              tiles: kanTiles
+            })
+          }
+        } else if (chosenType === 'pon' && pool.length >= 3) {
+          // 碰牌：需要3张
+          const tile = pickRandomTile()
+          if (tile) {
+            // 从 pool 中移除3张相同的牌
+            for (let j = 0; j < 3; j++) {
+              const idx = pool.lastIndexOf(tile)
+              if (idx !== -1) pool.splice(idx, 1)
+            }
+            const ponTiles = [tile, tile, tile]
+            fulu.value.push({
+              type: 'pon',
+              tiles: ponTiles
+            })
+          }
+        } else if (chosenType === 'chi' && pool.length >= 3) {
+          // 吃牌：需要3张连续
+          const numberSuits = ['w', 'b', 's'] as const
+          const suit = numberSuits[Math.floor(Math.random() * numberSuits.length)]
+          const startNum = Math.floor(Math.random() * 7) + 1 // 1-7
+          const t1 = `${suit}${startNum}` as Tile
+          const t2 = `${suit}${startNum + 1}` as Tile
+          const t3 = `${suit}${startNum + 2}` as Tile
+
+          // 检查这些牌是否可用（在 pool 中存在且不超过4张）
+          const t1Count = tileCounts[t1] || 0
+          const t2Count = tileCounts[t2] || 0
+          const t3Count = tileCounts[t3] || 0
+
+          if (t1Count < 4 && t2Count < 4 && t3Count < 4) {
+            // 从 pool 中移除这3张牌
+            const removeFromPool = (t: Tile) => {
+              const idx = pool.indexOf(t)
+              if (idx !== -1) pool.splice(idx, 1)
+            }
+            removeFromPool(t1)
+            removeFromPool(t2)
+            removeFromPool(t3)
+
+            tileCounts[t1] = t1Count + 1
+            tileCounts[t2] = t2Count + 1
+            tileCounts[t3] = t3Count + 1
+            fulu.value.push({
+              type: 'chi',
+              tiles: [t1, t2, t3]
+            })
+          }
+        }
       }
     }
 
-    tiles.value = sortTiles(selected)
+    // 可选：生成牌河（0-6张）
+    if (includeRiver && pool.length > 0) {
+      const numRiver = Math.floor(Math.random() * 7) // 0-6张
+      for (let i = 0; i < numRiver && pool.length > 0; i++) {
+        const tile = pickRandomTile()
+        if (tile) {
+          river.value.push(tile)
+        }
+      }
+    }
   }
 
   /**

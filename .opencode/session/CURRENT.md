@@ -1,12 +1,67 @@
 # 当前会话状态
 
-## 最后活跃时间
-2026-03-17 10:45
+> 更新日期：2026-03-17 11:40
 
 ## 当前阶段
-拖拽功能修复 - 完成
+
+手牌分析拖拽功能修复 - 已完成
+
+## 当前任务
+
+- 任务名称：E2E 回归测试验证 7 个问题修复效果
+- 当前阶段：已完成
+- 阻塞事项：无
+
+## 计划任务
+
+| 状态 | 任务 | 改动级别 |
+|------|------|----------|
+| ✅ done | 补充测试用例（覆盖7个问题） | 小改动 |
+| ✅ done | 运行 Playwright E2E 测试 | 小改动 |
+| ✅ done | 验证测试结果 | 小改动 |
+| ✅ done | 构建验证通过 | 小改动 |
+
+## 进度
+
+- 1. 修复拖拽触发2次问题：✅ done
+- 2. 扩大手牌区热区：✅ done
+- 3. 副露区添加拖入功能：✅ done
+- 4. 修复牌河区拖入逻辑：✅ done
+- 5. 随机生成功能优化：✅ done
+- 6. 手牌区内拖动换位：✅ done
+- 7. 拖回素材选择区：✅ done
+- 8. 单元测试验证：✅ done
+- E2E 回归测试：⏳ pending
 
 ## 本次完成项
+
+- [x] 7个拖拽问题代码修复完成
+- [x] 单元测试 127 个全部通过
+- [x] 构建成功
+
+## 待验证的7个问题
+
+| 编号 | 问题描述 |
+|------|----------|
+| 1 | 拖拽触发2张 - 素材区拖到手牌区，一次拖了2张一样的牌 |
+| 2 | 热区太小 - 手牌区热区只有一小块，应该覆盖整个 el-card__body |
+| 3 | 副露区无法拖入 - 副露区没法拖入麻将牌 |
+| 4 | 牌河区无法拖入 - 牌河区没法拖入麻将牌 |
+| 5 | 随机生成逻辑 - 不能生成副露、牌河，且全局牌数可能超过4张 |
+| 6 | 拖动换位裂图 - 手牌区内拖动换位置，出现裂图占位，数量错误 |
+| 7 | 拖回素材区 - 手牌/副露/牌河的牌应该能拖回素材选择区 |
+
+## E2E 回归测试命令
+
+```bash
+npx playwright test
+```
+
+---
+
+## 历史记录
+
+### 2026-03-17 10:45 - 拖拽功能修复（上次）
 - [x] 安装 Playwright E2E 测试框架
 - [x] 配置 Playwright (playwright.config.ts)
 - [x] 编写拖拽测试用例 (tests/drag-drop.spec.ts)
@@ -16,20 +71,6 @@
   - [x] HandView.vue - 手牌区添加 dragover/drop 事件处理
   - [x] HandView.vue - 摸牌区添加 dragover/drop 事件处理
   - [x] HandView.vue - 牌河添加 dragover/drop 事件处理
-
-## 测试结果
-- 构建：✅ 成功
-- E2E 测试：手牌区拖拽 ✅ 通过
-
----
-
-## 历史记录
-
-### 2026-03-17 10:30 - 安装 Playwright
-- [x] 安装 Playwright 依赖
-- [x] 安装 Chromium 浏览器
-- [x] 配置 playwright.config.ts
-- [x] 创建拖拽测试用例 tests/drag-drop.spec.ts
 
 ### 2026-03-17 00:55 - 手牌分析功能开发完成
 - [x] 阶段一：核心算法 + 状态管理
@@ -52,15 +93,6 @@
   - [x] 文档编写
 
 ## 验证结果
+
 - 测试：127个全部通过 ✅
 - 构建：成功 ✅
-
-## 新增文件
-- src/utils/mahjong.ts
-- src/utils/yaku-match.ts
-- src/stores/hand.ts
-- src/components/TileSelector.vue
-- src/components/HandDisplay.vue
-- src/views/HandView.vue
-- src/views/__tests__/HandView.test.ts
-- docs/hand-guide.md

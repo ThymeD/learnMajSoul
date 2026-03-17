@@ -25,6 +25,7 @@ interface Props {
 interface Emits {
   (e: 'select', tile: string): void
   (e: 'search', text: string): void
+  (e: 'remove', tile: string, source: 'hand' | 'river' | 'fulu'): void
 }
 
 // Props with defaults
@@ -171,26 +172,57 @@ const getRemainingCount = (tileId: string): number => {
   return props.maxCount - getSelectedCount(tileId)
 }
 
-// Handle tile click
-const handleTileClick = (tileId: string) => {
-  if (!isTileDisabled(tileId)) {
-    emit('select', tileId)
-  }
-}
+// For drag and drop
+let isDragging = false
+let dragStartTime = 0
 
 // Handle drag start - set data for HTML5 drag and drop
 const handleDragStart = (event: DragEvent, tileId: string) => {
+  isDragging = true
+  dragStartTime = Date.now()
   if (event.dataTransfer) {
     event.dataTransfer.setData('text/plain', tileId)
     event.dataTransfer.effectAllowed = 'copy'
   }
 }
 
-// For drag and drop (保留但不使用)
+// Handle drag end
+const handleDragEnd = () => {
+  setTimeout(() => {
+    isDragging = false
+  }, 150)
+}
+
+// Handle tile drop from other areas (hand, river, fulu)
+const handleTileDrop = (event: DragEvent) => {
+  event.preventDefault()
+  const tileId = event.dataTransfer?.getData('text/plain')
+  const source = (event.dataTransfer?.getData('source') as 'hand' | 'river' | 'fulu') || 'hand'
+  if (tileId) {
+    emit('remove', tileId, source)
+  }
+}
+
+// Handle tile click - ignore if it was a drag operation
+const handleTileClick = (tileId: string) => {
+  // 如果是拖拽操作，或者距离拖拽开始时间太短，则忽略
+  if (isDragging) return
+  const timeSinceDrag = Date.now() - dragStartTime
+  if (timeSinceDrag < 200) return
+
+  if (!isTileDisabled(tileId)) {
+    emit('select', tileId)
+  }
+}
 </script>
 
 <template>
-  <div class="tile-selector" :class="{ 'is-disabled': disabled }">
+  <div
+    class="tile-selector"
+    :class="{ 'is-disabled': disabled }"
+    @dragover="(e) => e.preventDefault()"
+    @drop="handleTileDrop"
+  >
     <!-- Category Tabs -->
     <div class="category-tabs">
       <el-tabs v-model="activeTab" :disabled="disabled">
@@ -211,6 +243,7 @@ const handleDragStart = (event: DragEvent, tileId: string) => {
           draggable="true"
           @click="handleTileClick(element.id)"
           @dragstart="handleDragStart($event, element.id)"
+          @dragend="handleDragEnd"
         >
           <MahjongTile :tile-id="element.id" :width="50" :show-name="true" />
           <div class="tile-count" :class="{ 'is-full': getRemainingCount(element.id) === 0 }">
