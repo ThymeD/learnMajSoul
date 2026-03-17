@@ -56,6 +56,10 @@ const hasTing = computed(() => {
 
 // 处理牌添加（从素材选择区拖入或点击）
 const handleTileAdd = (tile: string) => {
+  // 如果牌已经在手牌区，不做任何操作
+  if (localTiles.value.includes(tile)) {
+    return
+  }
   if (localTiles.value.length + (localDrawTile.value ? 1 : 0) >= 14) {
     ElMessage.warning('手牌已满')
     return
