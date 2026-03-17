@@ -168,25 +168,8 @@ test.describe('拖拽功能测试', () => {
     for (let i = 0; i < 3; i++) {
       const beforeCount = await page.locator('.tiles-container .tile-wrapper').count()
 
-      // 使用原生 drag and drop API 模拟拖拽
-      await page.evaluate(() => {
-        const source = document.querySelector('.tile-grid .tile-item') as HTMLElement
-        const target = document.querySelector('.hand-display-area') as HTMLElement
-
-        if (source && target) {
-          const dataTransfer = new DataTransfer()
-          source.dispatchEvent(
-            new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer })
-          )
-          target.dispatchEvent(
-            new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer })
-          )
-          target.dispatchEvent(
-            new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer })
-          )
-        }
-      })
-
+      // 使用 Playwright 的 dragTo 方法进行真实的拖拽
+      await sourceTile.dragTo(handArea)
       await page.waitForTimeout(500)
 
       const afterCount = await page.locator('.tiles-container .tile-wrapper').count()

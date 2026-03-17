@@ -324,8 +324,21 @@ const handleDragOver = (event: DragEvent) => {
 const handleTileDrop = (event: DragEvent) => {
   event.preventDefault()
   const tileId = event.dataTransfer?.getData('text/plain')
+  const source = event.dataTransfer?.getData('source')
+
+  // 如果是手牌内部排序，不处理
+  if (source === 'hand') {
+    return
+  }
+
   if (tileId) {
-    handleTileAdd(tileId)
+    // 如果手牌已满，拒绝
+    if (localTiles.value.length >= 14) {
+      ElMessage.warning('手牌已满')
+      return
+    }
+    // 直接添加到手牌
+    store.addTile(tileId)
   }
 }
 
