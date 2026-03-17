@@ -173,12 +173,13 @@ const getRemainingCount = (tileId: string): number => {
 }
 
 // For drag and drop
-let lastDragId: string | null = null
+let isDraggingTile: string | null = null
+let dragDropHappened = false
 
 // Handle drag start - set data for HTML5 drag and drop
 const handleDragStart = (event: DragEvent, tileId: string) => {
-  // 生成唯一标识
-  lastDragId = `${tileId}-${Date.now()}`
+  isDraggingTile = tileId
+  dragDropHappened = false
   if (event.dataTransfer) {
     event.dataTransfer.setData('text/plain', tileId)
     event.dataTransfer.effectAllowed = 'copy'
@@ -187,17 +188,23 @@ const handleDragStart = (event: DragEvent, tileId: string) => {
 
 // Handle drag end
 const handleDragEnd = () => {
-  // 延迟清除，让 click 有机会检测到
-  setTimeout(() => {
-    lastDragId = null
-  }, 200)
+  // 如果发生了 drop 事件，忽略接下来的 click
+  if (dragDropHappened) {
+    setTimeout(() => {
+      isDraggingTile = null
+    }, 500) // 延迟清除，让 click 有机会被忽略
+  } else {
+    isDraggingTile = null
+  }
 }
 
 // Handle tile drop from other areas (hand, river, fulu)
-const handleTileDrop = (event: DragEvent) => {
-  event.preventDefault()
-  const tileId = event.dataTransfer?.getData('text/plain')
-  const source = (event.dataTransfer?.getData('source') as 'hand' | 'river' | 'fulu') || 'hand'
+const handleTileDrop = (event: Event) => {
+  dragDropHappened = true // 标记发生了 drop 事件
+  const ev = event as DragEvent
+  ev.preventDefault()
+  const tileId = ev.dataTransfer?.getData('text/plain')
+  const source = (ev.dataTransfer?.getData('source') as 'hand' | 'river' | 'fulu') || 'hand'
   if (tileId) {
     emit('remove', tileId, source)
   }
@@ -205,10 +212,8 @@ const handleTileDrop = (event: DragEvent) => {
 
 // Handle tile click - ignore if it was a drag operation
 const handleTileClick = (tileId: string) => {
-  // 检查这个 tileId 是否刚刚被拖拽过
-  if (lastDragId && lastDragId.startsWith(tileId)) {
-    // 刚被拖拽过，忽略这次点击
-    lastDragId = null
+  // 如果这个 tileId 正在被拖拽，忽略 click
+  if (isDraggingTile === tileId) {
     return
   }
 
