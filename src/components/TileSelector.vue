@@ -173,13 +173,12 @@ const getRemainingCount = (tileId: string): number => {
 }
 
 // For drag and drop
-let isDragging = false
-let ignoreClickUntil = 0
+let lastDragId: string | null = null
 
 // Handle drag start - set data for HTML5 drag and drop
 const handleDragStart = (event: DragEvent, tileId: string) => {
-  isDragging = true
-  ignoreClickUntil = Date.now() + 300 // 接下来300ms内的click都忽略
+  // 生成唯一标识
+  lastDragId = `${tileId}-${Date.now()}`
   if (event.dataTransfer) {
     event.dataTransfer.setData('text/plain', tileId)
     event.dataTransfer.effectAllowed = 'copy'
@@ -188,10 +187,10 @@ const handleDragStart = (event: DragEvent, tileId: string) => {
 
 // Handle drag end
 const handleDragEnd = () => {
-  // 延迟重置，避免 dragend 在 click 之前触发
+  // 延迟清除，让 click 有机会检测到
   setTimeout(() => {
-    isDragging = false
-  }, 100)
+    lastDragId = null
+  }, 200)
 }
 
 // Handle tile drop from other areas (hand, river, fulu)
@@ -206,9 +205,10 @@ const handleTileDrop = (event: DragEvent) => {
 
 // Handle tile click - ignore if it was a drag operation
 const handleTileClick = (tileId: string) => {
-  const now = Date.now()
-  // 如果正在拖拽，或者在忽略时间范围内，则忽略
-  if (isDragging || now < ignoreClickUntil) {
+  // 检查这个 tileId 是否刚刚被拖拽过
+  if (lastDragId && lastDragId.startsWith(tileId)) {
+    // 刚被拖拽过，忽略这次点击
+    lastDragId = null
     return
   }
 
