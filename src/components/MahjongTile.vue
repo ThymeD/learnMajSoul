@@ -6,6 +6,7 @@ const props = defineProps<{
   width?: number
   showName?: boolean
   split?: boolean
+  isBack?: boolean
 }>()
 
 const tileWidth = computed(() => props.width || 100)
@@ -66,8 +67,13 @@ const imageUrl = computed(() => {
 </script>
 
 <template>
-  <div class="mahjong-tile" :style="{ marginRight: props.split ? '24px' : undefined }">
+  <div
+    class="mahjong-tile"
+    :class="{ 'is-back': props.isBack }"
+    :style="{ marginRight: props.split ? '24px' : undefined }"
+  >
     <img
+      v-if="!props.isBack"
       :src="imageUrl"
       :alt="tileInfo.name"
       class="tile-image"
@@ -77,7 +83,18 @@ const imageUrl = computed(() => {
         borderRadius: borderRadius + 'px'
       }"
     />
-    <div v-if="props.showName !== false && tileInfo.name" class="tile-name">
+    <div
+      v-else
+      class="tile-back"
+      :style="{
+        width: tileWidth + 'px',
+        height: tileHeight + 'px',
+        borderRadius: borderRadius + 'px'
+      }"
+    >
+      <span>牌背</span>
+    </div>
+    <div v-if="props.showName !== false && tileInfo.name && !props.isBack" class="tile-name">
       {{ tileInfo.name }}
     </div>
   </div>
@@ -93,6 +110,20 @@ const imageUrl = computed(() => {
 .tile-image {
   border: 1px solid #ebeef5;
   filter: brightness(1.1);
+}
+
+.tile-back {
+  background: linear-gradient(135deg, #1a5c1a 0%, #0d3a0d 100%);
+  border: 2px solid #ffd700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tile-back span {
+  color: #ffd700;
+  font-size: 12px;
+  transform: rotate(-45deg);
 }
 
 .tile-name {

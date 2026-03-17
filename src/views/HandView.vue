@@ -12,6 +12,7 @@ const store = useHandStore()
 // 本地状态（用于双向绑定）
 const localTiles = ref<string[]>([])
 const localDrawTile = ref<string | null>(null)
+const isRiverDragOver = ref(false)
 const tileSearchText = ref('')
 
 // 风牌选项
@@ -56,11 +57,8 @@ const hasTing = computed(() => {
 
 // 处理牌添加（从素材选择区拖入或点击）
 const handleTileAdd = (tile: string) => {
-  // 如果牌已经在手牌区，不做任何操作
-  if (localTiles.value.includes(tile)) {
-    return
-  }
-  if (localTiles.value.length + (localDrawTile.value ? 1 : 0) >= 14) {
+  // 手牌最多13张，摸牌单独计算
+  if (localTiles.value.length >= 13) {
     ElMessage.warning('手牌已满')
     return
   }
@@ -68,7 +66,10 @@ const handleTileAdd = (tile: string) => {
 }
 
 // 从各区域移除牌（拖回素材选择区）
-const handleTileRemoveFromArea = (tile: string, source: 'hand' | 'river' | 'fulu') => {
+const handleTileRemoveFromArea = (
+  tile: string,
+  source: 'hand' | 'river' | 'fulu' | 'draw' | 'fulu-temp'
+) => {
   if (source === 'hand') {
     const idx = localTiles.value.indexOf(tile)
     if (idx !== -1) {
@@ -76,10 +77,25 @@ const handleTileRemoveFromArea = (tile: string, source: 'hand' | 'river' | 'fulu
       store.tiles = [...localTiles.value]
       ElMessage.success('已从手牌移除')
     }
+  } else if (source === 'draw') {
+    // 从摸牌区拖到素材区
+    if (localDrawTile.value === tile) {
+      store.setDrawTile(null)
+      localDrawTile.value = null
+      ElMessage.success('已从摸牌区移除')
+    }
+  } else if (source === 'fulu-temp') {
+    // 从副露暂存区拖到素材区
+    const idx = fuluDropTiles.value.indexOf(tile)
+    if (idx !== -1) {
+      fuluDropTiles.value.splice(idx, 1)
+      ElMessage.success('已从副露暂存区移除')
+    }
   } else if (source === 'river') {
+    // 从牌河拖到素材区
     const idx = store.river.indexOf(tile)
     if (idx !== -1) {
-      store.removeFromRiver(idx)
+      store.river.splice(idx, 1)
       ElMessage.success('已从牌河移除')
     }
   } else if (source === 'fulu') {
@@ -99,19 +115,157 @@ const handleTileRemove = (tile: string, index: number) => {
   store.removeTile(tile, index)
 }
 
-// 处理设置摸牌（从手牌末尾拖入）
+// 摸牌区拖入处理
+const handleDrawTileDrop = (event: DragEvent) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  const tileId = event.dataTransfer?.getData('text/plain')
+  const source = event.dataTransfer?.getData('source')
+
+  if (tileId) {
+    // 如果从手牌区来，需要先移除手牌
+    if (source === 'hand') {
+      const idx = localTiles.value.indexOf(tileId)
+      if (idx !== -1) {
+        localTiles.value.splice(idx, 1)
+        store.tiles = [...localTiles.value]
+      }
+    } else if (source === 'fulu-temp') {
+      // 从副露暂存区来，需要先移除暂存区的牌
+      const idx = fuluDropTiles.value.indexOf(tileId)
+      if (idx !== -1) {
+        fuluDropTiles.value.splice(idx, 1)
+      }
+    }
+    handleSetDrawTile(tileId)
+  }
+}
+
+// 手牌区拖入处理
+const handleHandDrop = (event: DragEvent) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  const tileId = event.dataTransfer?.getData('text/plain')
+  const source = event.dataTransfer?.getData('source')
+
+  if (!tileId) return
+
+  // 如果是手牌内部拖拽，不处理
+  if (source === 'hand') return
+
+  // 从素材区来
+  if (source === 'source') {
+    handleTileAdd(tileId)
+  } else if (source === 'draw') {
+    // 从摸牌区来，清除摸牌并添加到到手牌
+    if (localDrawTile.value === tileId) {
+      store.setDrawTile(null)
+      localDrawTile.value = null
+    }
+    handleTileAdd(tileId)
+  } else if (source === 'river') {
+    // 从牌河来，回收到手牌
+    const idx = store.river.indexOf(tileId)
+    if (idx !== -1) {
+      // 直接操作 store.river 移除
+      store.river.splice(idx, 1)
+      // 添加到手牌
+      store.tiles.push(tileId)
+      store.tiles = [...store.tiles]
+      // 同步本地
+      localTiles.value = [...store.tiles]
+    }
+  } else if (source === 'fulu-temp') {
+    // 从副露暂存区来，移除暂存区的牌选手牌
+    const tempIdx = fuluDropTiles.value.indexOf(tileId)
+    if (tempIdx !== -1) {
+      fuluDropTiles.value.splice(tempIdx, 1)
+    }
+    handleTileAdd(tileId)
+  }
+}
+
+// 手牌区拖拽开始
+const handleHandTileDragStart = (event: DragEvent, tile: string, index: number) => {
+  if (event.dataTransfer) {
+    event.dataTransfer.setData('text/plain', tile)
+    event.dataTransfer.setData('source', 'hand')
+    event.dataTransfer.setData('index', String(index))
+    event.dataTransfer.effectAllowed = 'move'
+  }
+}
+
+// 牌河拖入处理
+const handleRiverDrop = (event: DragEvent) => {
+  event.preventDefault()
+  event.stopPropagation()
+  isRiverDragOver.value = false
+
+  const tileId = event.dataTransfer?.getData('text/plain')
+  const source = event.dataTransfer?.getData('source')
+
+  if (!tileId) return
+
+  // 如果是牌河内部排序，不处理
+  if (source === 'river') return
+
+  // 从手牌拖到牌河
+  if (source === 'hand') {
+    // 直接添加到牌河
+    store.river.push(tileId)
+    // 从手牌移除
+    const idx = localTiles.value.indexOf(tileId)
+    if (idx !== -1) {
+      localTiles.value.splice(idx, 1)
+      store.tiles = [...localTiles.value]
+    }
+  } else if (source === 'draw') {
+    // 从摸牌区拖到牌河
+    if (localDrawTile.value === tileId) {
+      store.setDrawTile(null)
+      localDrawTile.value = null
+      store.river.push(tileId)
+    }
+  } else if (source === 'fulu-temp') {
+    // 从副露暂存区拖到牌河
+    const tempIdx = fuluDropTiles.value.indexOf(tileId)
+    if (tempIdx !== -1) {
+      fuluDropTiles.value.splice(tempIdx, 1)
+      store.river.push(tileId)
+    }
+  } else if (source === 'source') {
+    // 从素材区直接拖到牌河
+    store.river.push(tileId)
+  }
+}
+
+// 牌河拖拽开始
+const handleRiverTileDragStart = (event: DragEvent, tile: string, index: number) => {
+  if (event.dataTransfer) {
+    event.dataTransfer.setData('text/plain', tile)
+    event.dataTransfer.setData('source', 'river')
+    event.dataTransfer.setData('index', String(index))
+    event.dataTransfer.effectAllowed = 'move'
+  }
+}
+
+// 处理设置摸牌
 const handleSetDrawTile = (tile: string) => {
-  // 如果已经有摸牌，先把摸牌加入手牌
   if (localDrawTile.value) {
     store.addTile(localDrawTile.value)
   }
   store.setDrawTile(tile)
+  localDrawTile.value = tile
 }
 
 // 处理摸牌移除（点击摸牌将其加入手牌）
 const handleDrawTileClick = () => {
   if (localDrawTile.value) {
     store.addTile(localDrawTile.value)
+    store.setDrawTile(null)
+    localDrawTile.value = null
   }
 }
 
@@ -120,6 +274,7 @@ const handleClear = () => {
   store.clear()
   localTiles.value = []
   localDrawTile.value = null
+  fuluDropTiles.value = []
 }
 
 // 随机生成
@@ -160,6 +315,19 @@ const handleTileSearch = () => {
 // 选中的牌列表（用于控制 TileSelector 的显示）
 const selectedTiles = computed(() => {
   return [...localTiles.value, localDrawTile.value].filter(Boolean) as string[]
+})
+
+// 已使用的牌列表（用于计算素材区剩余数量）
+const usedTiles = computed(() => {
+  const used: string[] = [...localTiles.value]
+  if (localDrawTile.value) used.push(localDrawTile.value)
+  used.push(...store.river)
+  for (const fulu of store.fulu) {
+    used.push(...fulu.tiles)
+  }
+  // 副露暂存区的牌也算已使用
+  used.push(...fuluDropTiles.value)
+  return used
 })
 
 // ==================== 副露操作相关 ====================
@@ -292,15 +460,29 @@ const handleKan = (tile: string) => {
   ElMessage.success('杠牌成功')
 }
 
-// 移除副露
+// 移除副露 - 把牌还到素材区
 const handleRemoveFulu = (index: number) => {
   const fuluItem = store.fulu[index]
   if (!fuluItem) return
 
-  // 将副露中的牌返还到手牌
-  for (const tile of fuluItem.tiles) {
-    store.addTile(tile)
-  }
+  // 通知素材区增加数量（通过触发 remove 事件让 TileSelector 增加计数）
+  // 素材区通过 handleSourceDrop 接收拖入时执行 sourceTiles.value[tileId]++
+  // 这里我们需要一种方式让 TileSelector 知道牌被释放了
+  // 最简单的方式是：直接修改 props 传入的 usedTiles，但我们需要触发更新
+
+  // 由于素材区是通过 usedTiles 计算剩余数量的，我们需要一种方式通知素材区
+  // 目前的设计是：牌从素材区拖出 -> usedTiles 增加 -> 剩余数量减少
+  // 删除时应该减少 usedTiles 中的计数
+
+  // 方案：通过 emit 事件通知父组件，父组件更新 selectedTiles/usedTiles
+  // 但更简单的方式是：让删除的牌直接"消失"，素材区会根据新的 usedTiles 自动计算
+
+  // 当前实现：不做任何操作，素材区会根据新的手牌/副露/牌河状态自动计算剩余数量
+  // 因为 usedTiles 是 computed，从 localTiles.value, store.river, store.fulu, fuluDropTiles.value 计算
+  // 当我们移除副露时，这些牌不再出现在 usedTiles 中，素材区会自动显示剩余数量+1
+
+  // 但我们需要确保删除副露后，这些牌不会自动回到手牌
+  // 只需要移除副露记录即可
 
   // 移除副露
   store.removeFulu(index)
@@ -317,192 +499,165 @@ const handleRiverRecover = (index: number) => {
   localTiles.value = [...store.tiles]
 }
 
-// 原生 HTML5 drag and drop 处理
-const handleDragOver = (event: DragEvent) => {
-  event.preventDefault()
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'copy'
-  }
-}
+// 副露数据（用于原生 drag/drop 接收拖入）
+const fuluDropTiles = ref<string[]>([])
 
-const handleTileDrop = (event: DragEvent) => {
-  event.preventDefault()
-  const tileId = event.dataTransfer?.getData('text/plain')
-  const source = event.dataTransfer?.getData('source')
+// 检查暂存区是否能和指定牌形成顺子（吃）
+const checkChiInTemp = (newTile: string): string[] | null => {
+  const tempTiles = [...fuluDropTiles.value, newTile]
 
-  // 如果是手牌内部排序，不处理
-  if (source === 'hand') {
-    return
+  // 牌编号处理
+  const getTileNumber = (tile: string): number | null => {
+    const match = tile.match(/^([wbsr])(\d+)$/)
+    if (!match) return null
+    return parseInt(match[2], 10)
   }
 
-  if (tileId) {
-    // 如果手牌已满，拒绝
-    if (localTiles.value.length >= 14) {
-      ElMessage.warning('手牌已满')
-      return
-    }
-    // 直接添加到手牌
-    store.addTile(tileId)
-  }
-}
-
-const handleDrawTileDrop = (event: DragEvent) => {
-  event.preventDefault()
-  const tileId = event.dataTransfer?.getData('text/plain')
-  if (tileId) {
-    handleSetDrawTile(tileId)
-  }
-}
-
-const handleRiverDrop = (event: DragEvent) => {
-  event.preventDefault()
-  const tileId = event.dataTransfer?.getData('text/plain')
-  const source = event.dataTransfer?.getData('source')
-
-  // 如果是牌河内部排序
-  if (source === 'river') {
-    return // 排序由 handleRiverSortDrop 处理
+  const getTileSuit = (tile: string): string | null => {
+    const match = tile.match(/^([wbsr])\d+$/)
+    if (!match) return null
+    return match[1]
   }
 
-  if (tileId) {
-    // 先尝试从手牌移除并添加到牌河
-    const idx = localTiles.value.indexOf(tileId)
-    if (idx !== -1) {
-      localTiles.value.splice(idx, 1)
-      store.tiles = [...localTiles.value]
-      store.addToRiver(tileId)
-    } else {
-      // 如果手牌中没有这张牌（从素材选择区直接拖入），直接添加到牌河
-      store.river.push(tileId)
+  // 对于万(w)、筒(b)、索(s)，检查能否形成顺子
+  const suit = getTileSuit(newTile)
+  const num = getTileNumber(newTile)
+
+  if (!suit || !num || suit === 'r') return null // 赤五星不能形成顺子
+
+  // 检查所有可能的顺子组合
+  // 1. newTile 作为最小牌: newTile, +1, +2
+  // 2. newTile 作为中间牌: -1, newTile, +1
+  // 3. newTile 作为最大牌: -2, -1, newTile
+
+  const candidates = [
+    [newTile, `${suit}${num + 1}`, `${suit}${num + 2}`],
+    [`${suit}${num - 1}`, newTile, `${suit}${num + 1}`],
+    [`${suit}${num - 2}`, `${suit}${num - 1}`, newTile]
+  ]
+
+  for (const combo of candidates) {
+    // 检查 combo 中的牌是否都在 tempTiles 中
+    const hasAll = combo.every((t) => {
+      const tileNum = getTileNumber(t)
+      return tileNum && tileNum >= 1 && tileNum <= 9 && tempTiles.includes(t)
+    })
+
+    if (hasAll) {
+      return combo
     }
   }
+
+  return null
 }
 
-// 牌河内拖动排序
-let riverDragStartIndex: number | null = null
-
-const handleRiverTileDragStart = (event: DragEvent, index: number) => {
-  riverDragStartIndex = index
-  if (event.dataTransfer) {
-    event.dataTransfer.setData('text/plain', store.river[index])
-    event.dataTransfer.setData('source', 'river')
-    event.dataTransfer.setData('index', String(index))
-    event.dataTransfer.effectAllowed = 'move'
-  }
-}
-
-const handleRiverTileDragOver = (event: DragEvent) => {
-  event.preventDefault()
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'move'
-  }
-}
-
-const handleRiverSortDrop = (event: DragEvent, targetIndex: number) => {
-  event.preventDefault()
-  event.stopPropagation()
-  if (riverDragStartIndex === null || riverDragStartIndex === targetIndex) {
-    riverDragStartIndex = null
-    return
-  }
-
-  // 交换位置
-  const temp = store.river[riverDragStartIndex]
-  store.river.splice(riverDragStartIndex, 1)
-  store.river.splice(targetIndex, 0, temp)
-
-  riverDragStartIndex = null
-}
-
-const handleRiverTileDragEnd = () => {
-  riverDragStartIndex = null
-}
-
-// 副露区拖入处理
+// 副露拖入处理
 const handleFuluDrop = (event: DragEvent) => {
   event.preventDefault()
+  event.stopPropagation()
+
   const tileId = event.dataTransfer?.getData('text/plain')
+  const source = event.dataTransfer?.getData('source')
+
   if (!tileId) return
 
-  // 如果有摸牌，需要先处理摸牌
-  if (localDrawTile.value) {
-    ElMessage.warning('请先处理摸牌')
-    return
-  }
+  // 如果是副露内部拖拽，不处理
+  if (source === 'fulu') return
 
-  // 从手牌移除这张牌（如果是来自手牌的话）
-  const handIdx = localTiles.value.indexOf(tileId)
-  if (handIdx !== -1) {
-    localTiles.value.splice(handIdx, 1)
-    store.tiles = [...localTiles.value]
-  }
+  // 先检查能否和暂存区形成吃（优先于杠）
+  const chiCombo = checkChiInTemp(tileId)
 
-  // 直接添加1张牌到副露区（作为新的副露组）
-  // 用户后续可以通过分析按钮校验副露是否符合规则
-  store.addFulu({
-    type: 'pon', // 默认作为碰的组（3张），用户可以后续调整
-    tiles: [tileId]
-  })
-
-  ElMessage.success('已添加到副露区')
-}
-
-// 手牌内拖动排序
-let dragStartIndex: number | null = null
-
-const handleTileDragStart = (event: DragEvent, index: number) => {
-  dragStartIndex = index
-  if (event.dataTransfer) {
-    event.dataTransfer.setData('text/plain', localTiles.value[index])
-    event.dataTransfer.setData('source', 'hand')
-    event.dataTransfer.effectAllowed = 'move'
-  }
-}
-
-const handleTileDragOver = (event: DragEvent) => {
-  event.preventDefault()
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'move'
-  }
-}
-
-const handleTileSortDrop = (event: DragEvent, targetIndex: number) => {
-  event.preventDefault()
-  event.stopPropagation()
-  if (dragStartIndex === null || dragStartIndex === targetIndex) {
-    dragStartIndex = null
-    return
-  }
-
-  // 交换位置
-  const temp = localTiles.value[dragStartIndex]
-  localTiles.value.splice(dragStartIndex, 1)
-  localTiles.value.splice(targetIndex, 0, temp)
-
-  // 同步到 store
-  store.tiles = [...localTiles.value]
-
-  dragStartIndex = null
-}
-
-const handleTileDragEnd = () => {
-  dragStartIndex = null
-}
-
-// 处理从副露区、牌河区开始的拖拽
-const handleAreaDragStart = (
-  event: DragEvent,
-  tile: string,
-  source: 'fulu' | 'river',
-  index?: number
-) => {
-  if (event.dataTransfer) {
-    event.dataTransfer.setData('text/plain', tile)
-    event.dataTransfer.setData('source', source)
-    if (index !== undefined) {
-      event.dataTransfer.setData('index', String(index))
+  if (chiCombo) {
+    // 从手牌或摸牌区移除
+    if (source === 'draw') {
+      // 从摸牌区来，清除摸牌
+      store.setDrawTile(null)
+      localDrawTile.value = null
+    } else {
+      const handIdx = localTiles.value.indexOf(tileId)
+      if (handIdx !== -1) {
+        localTiles.value.splice(handIdx, 1)
+        store.tiles = [...localTiles.value]
+      }
     }
-    event.dataTransfer.effectAllowed = 'move'
+
+    // 添加吃
+    store.addFulu({
+      type: 'chi',
+      tiles: chiCombo
+    })
+
+    // 从暂存区移除形成吃的牌
+    for (const t of chiCombo) {
+      const idx = fuluDropTiles.value.indexOf(t)
+      if (idx !== -1) {
+        fuluDropTiles.value.splice(idx, 1)
+      }
+    }
+
+    ElMessage.success('吃牌成功')
+    return
+  }
+
+  // 再检查是否已有相同牌的碰（形成明杠）
+  const existingPonIndex = store.fulu.findIndex((f) => f.type === 'pon' && f.tiles[0] === tileId)
+
+  if (existingPonIndex !== -1) {
+    // 已有碰，加第4张成明杠
+    // 从摸牌区来则清除摸牌
+    if (source === 'draw') {
+      store.setDrawTile(null)
+      localDrawTile.value = null
+    }
+
+    store.removeFulu(existingPonIndex)
+    store.addFulu({
+      type: 'kan',
+      tiles: [tileId, tileId, tileId, tileId],
+      isOpen: true // 明杠
+    })
+    ElMessage.success('明杠成功')
+    return
+  }
+
+  // 从手牌或摸牌区移除
+  if (source === 'draw') {
+    // 从摸牌区来，清除摸牌
+    store.setDrawTile(null)
+    localDrawTile.value = null
+  } else {
+    const handIdx = localTiles.value.indexOf(tileId)
+    if (handIdx !== -1) {
+      localTiles.value.splice(handIdx, 1)
+      store.tiles = [...localTiles.value]
+    }
+  }
+
+  // 添加到暂存区
+  fuluDropTiles.value.push(tileId)
+
+  // 检查是否达到4张成杠或3张成碰
+  const sameTiles = fuluDropTiles.value.filter((t) => t === tileId)
+
+  if (sameTiles.length === 4) {
+    // 4张相同牌，直接成暗杠
+    store.addFulu({
+      type: 'kan',
+      tiles: [tileId, tileId, tileId, tileId],
+      isOpen: false // 暗杠
+    })
+    // 清除暂存的这4张
+    fuluDropTiles.value = fuluDropTiles.value.filter((t) => t !== tileId)
+    ElMessage.success('暗杠成功')
+  } else if (sameTiles.length === 3) {
+    // 3张相同牌，成碰
+    store.addFulu({
+      type: 'pon',
+      tiles: [tileId, tileId, tileId]
+    })
+    // 清除暂存的这3张
+    fuluDropTiles.value = fuluDropTiles.value.filter((t) => t !== tileId)
+    ElMessage.success('碰牌成功')
   }
 }
 </script>
@@ -534,6 +689,7 @@ const handleAreaDragStart = (
           </template>
           <TileSelector
             :selected-tiles="selectedTiles"
+            :used-tiles="usedTiles"
             :max-count="4"
             :search-text="tileSearchText"
             @select="handleTileAdd"
@@ -607,7 +763,7 @@ const handleAreaDragStart = (
         </el-card>
 
         <!-- 副露区 -->
-        <el-card shadow="hover" class="fulu-card" @dragover="handleDragOver" @drop="handleFuluDrop">
+        <el-card shadow="hover" class="fulu-card">
           <template #header>
             <div class="fulu-header">
               <span class="panel-title">副露区</span>
@@ -707,31 +863,87 @@ const handleAreaDragStart = (
           </div>
 
           <!-- 副露列表展示 -->
-          <div class="fulu-list">
-            <div v-for="(item, idx) in store.fulu" :key="idx" class="fulu-item">
-              <div class="fulu-tiles">
-                <div
-                  v-for="(tile, tileIdx) in item.tiles"
-                  :key="tileIdx"
-                  class="fulu-tile-wrapper"
-                  draggable="true"
-                  @dragstart="(e) => handleAreaDragStart(e, tile, 'fulu', idx)"
+          <div class="fulu-container" @dragover.prevent @drop="handleFuluDrop">
+            <!-- 已有的副露列表 -->
+            <div class="fulu-groups">
+              <div v-for="(item, idx) in store.fulu" :key="idx" class="fulu-group">
+                <div class="fulu-tiles">
+                  <template v-if="item.type === 'kan' && !item.isOpen">
+                    <!-- 暗杠：牌背在中间 -->
+                    <div class="fulu-tile-wrapper">
+                      <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" />
+                    </div>
+                    <div class="fulu-tile-wrapper kan-back">
+                      <MahjongTile
+                        :tile-id="item.tiles[0]"
+                        :width="40"
+                        :show-name="false"
+                        :is-back="true"
+                      />
+                    </div>
+                    <div class="fulu-tile-wrapper kan-back">
+                      <MahjongTile
+                        :tile-id="item.tiles[0]"
+                        :width="40"
+                        :show-name="false"
+                        :is-back="true"
+                      />
+                    </div>
+                    <div class="fulu-tile-wrapper">
+                      <MahjongTile :tile-id="item.tiles[3]" :width="40" :show-name="false" />
+                    </div>
+                  </template>
+                  <template v-else>
+                    <!-- 碰/明杠：正常显示 -->
+                    <div
+                      v-for="(tile, tileIdx) in item.tiles"
+                      :key="tileIdx"
+                      class="fulu-tile-wrapper"
+                    >
+                      <MahjongTile :tile-id="tile" :width="40" :show-name="false" />
+                    </div>
+                  </template>
+                </div>
+                <el-button
+                  v-if="!store.isLiqi"
+                  size="small"
+                  type="danger"
+                  link
+                  @click="handleRemoveFulu(idx)"
                 >
-                  <MahjongTile :tile-id="tile" :width="40" :show-name="false" />
+                  删除
+                </el-button>
+              </div>
+            </div>
+
+            <!-- 暂存区 -->
+            <div v-if="fuluDropTiles.length > 0" class="fulu-drop-temp">
+              <span class="temp-label">暂存：</span>
+              <div class="temp-tiles">
+                <div
+                  v-for="(tile, idx) in fuluDropTiles"
+                  :key="idx"
+                  class="temp-tile"
+                  draggable="true"
+                  @dragstart="
+                    (e) => {
+                      if (e.dataTransfer) {
+                        e.dataTransfer.setData('text/plain', tile)
+                        e.dataTransfer.setData('source', 'fulu-temp')
+                        e.dataTransfer.setData('index', String(idx))
+                        e.dataTransfer.effectAllowed = 'move'
+                      }
+                    }
+                  "
+                >
+                  <MahjongTile :tile-id="tile" :width="36" :show-name="false" />
                 </div>
               </div>
-              <el-button
-                v-if="!store.isLiqi"
-                size="small"
-                type="danger"
-                link
-                @click="handleRemoveFulu(idx)"
-              >
-                删除
-              </el-button>
+              <span class="temp-hint">拖入相同牌达到3张成碰，4张成杠</span>
             </div>
-            <div v-if="store.fulu.length === 0 && fuluMode === 'none'" class="fulu-empty">
-              暂无副露
+
+            <div v-if="store.fulu.length === 0 && fuluDropTiles.length === 0" class="fulu-empty">
+              暂无副露，拖入3张相同牌成碰，4张成杠
             </div>
           </div>
         </el-card>
@@ -745,36 +957,37 @@ const handleAreaDragStart = (
             </span>
           </template>
 
-          <div class="hand-display-area" @dragover="handleDragOver" @drop="handleTileDrop">
-            <!-- 手牌 -->
-            <div class="hand-tiles">
-              <div class="tiles-container">
+          <div class="hand-area-container">
+            <!-- 手牌区 -->
+            <div class="hand-card-section">
+              <div class="section-label">手牌</div>
+              <div class="hand-tiles tiles-container" @dragover.prevent @drop="handleHandDrop">
                 <div
                   v-for="(element, index) in localTiles"
                   :key="index"
                   class="tile-wrapper"
                   :class="{ 'is-ting': store.analysis?.tingPai?.includes(element) }"
                   draggable="true"
-                  @dragstart="handleTileDragStart($event, index)"
-                  @dragover="handleTileDragOver"
-                  @drop="handleTileSortDrop($event, index)"
-                  @dragend="handleTileDragEnd"
+                  @dragstart="(e) => handleHandTileDragStart(e, element, index)"
                 >
-                  <!-- 听牌位置显示听牌张数 -->
                   <div v-if="store.analysis?.tingPai?.includes(element)" class="ting-indicator">
                     {{ tingCountMap[element] || '' }}
                   </div>
                   <MahjongTile :tile-id="element" :width="60" :show-name="false" />
                   <div class="tile-remove" @click.stop="handleTileRemove(element, index)">×</div>
                 </div>
+                <div v-if="localTiles.length === 0" class="hand-placeholder">拖入牌到这里</div>
               </div>
+            </div>
 
-              <!-- 摸牌区 -->
+            <!-- 摸牌区 -->
+            <div class="draw-card-section">
+              <div class="section-label">摸牌</div>
               <div
                 class="draw-tile-zone"
                 :class="{ 'has-draw': !!localDrawTile }"
                 @click="handleDrawTileClick"
-                @dragover="handleDragOver"
+                @dragover.prevent
                 @drop="handleDrawTileDrop"
               >
                 <div
@@ -785,7 +998,7 @@ const handleAreaDragStart = (
                     (e) => {
                       if (e.dataTransfer) {
                         e.dataTransfer.setData('text/plain', localDrawTile!)
-                        e.dataTransfer.setData('source', 'hand')
+                        e.dataTransfer.setData('source', 'draw')
                         e.dataTransfer.effectAllowed = 'move'
                       }
                     }
@@ -796,14 +1009,14 @@ const handleAreaDragStart = (
                 <div v-else class="draw-placeholder">拖入摸牌</div>
               </div>
             </div>
+          </div>
 
-            <!-- 听牌信息 -->
-            <div v-if="hasTing" class="ting-info">
-              <span class="ting-label">听牌：</span>
-              <span v-for="(count, tile) in tingCountMap" :key="tile" class="ting-item">
-                {{ tile }}{{ count }}张
-              </span>
-            </div>
+          <!-- 听牌信息 -->
+          <div v-if="hasTing" class="ting-info">
+            <span class="ting-label">听牌：</span>
+            <span v-for="(count, tile) in tingCountMap" :key="tile" class="ting-item">
+              {{ tile }}{{ count }}张
+            </span>
           </div>
         </el-card>
 
@@ -816,24 +1029,32 @@ const handleAreaDragStart = (
             </span>
           </template>
 
-          <div class="river-container" @dragover="handleDragOver" @drop="handleRiverDrop">
+          <div
+            class="river-container"
+            :class="{ 'drag-over': isRiverDragOver }"
+            @dragover.prevent="
+              (e) => {
+                isRiverDragOver = true
+                if (e.dataTransfer) {
+                  const source = e.dataTransfer.getData('source')
+                  e.dataTransfer.dropEffect = source === 'source' ? 'copy' : 'move'
+                }
+              }
+            "
+            @dragleave="isRiverDragOver = false"
+            @drop="handleRiverDrop"
+          >
             <div
               v-for="(element, index) in store.river"
               :key="index"
               class="river-tile"
               draggable="true"
               @click="handleRiverRecover(index)"
-              @dragstart="handleRiverTileDragStart($event, index)"
-              @dragover="handleRiverTileDragOver"
-              @drop="handleRiverSortDrop($event, index)"
-              @dragend="handleRiverTileDragEnd"
+              @dragstart="(e) => handleRiverTileDragStart(e, element, index)"
             >
               <MahjongTile :tile-id="element" :width="40" :show-name="false" />
             </div>
-          </div>
-
-          <div v-if="store.river.length === 0" class="river-empty">
-            从手牌拖拽到这里打牌，或点击"操作按钮"区域的"打牌"按钮
+            <div v-if="store.river.length === 0" class="river-placeholder">拖入牌到这里</div>
           </div>
         </el-card>
 
@@ -843,37 +1064,45 @@ const handleAreaDragStart = (
             <span class="panel-title">分析结果</span>
           </template>
           <div class="result-content">
-            <div class="result-item">
-              <span class="result-label">状态：</span>
-              <el-tag
-                :type="store.analysis.isHu ? 'success' : store.analysis.isTing ? 'warning' : 'info'"
-              >
-                {{ store.analysis.isHu ? '胡牌' : store.analysis.isTing ? '听牌' : '未听牌' }}
-              </el-tag>
+            <!-- 校验错误提示 -->
+            <div v-if="store.analysis.error" class="result-item">
+              <el-alert type="error" :title="store.analysis.error" :closable="false" />
             </div>
-            <div v-if="store.analysis.tingPai.length > 0" class="result-item">
-              <span class="result-label">听牌：</span>
-              <span class="result-value">
-                <span v-for="tile in store.analysis.tingPai" :key="tile" class="ting-tile">
-                  <MahjongTile :tile-id="tile" :width="40" :show-name="false" />
+            <div v-else>
+              <div class="result-item">
+                <span class="result-label">状态：</span>
+                <el-tag
+                  :type="
+                    store.analysis.isHu ? 'success' : store.analysis.isTing ? 'warning' : 'info'
+                  "
+                >
+                  {{ store.analysis.isHu ? '胡牌' : store.analysis.isTing ? '听牌' : '未听牌' }}
+                </el-tag>
+              </div>
+              <div v-if="store.analysis.tingPai.length > 0" class="result-item">
+                <span class="result-label">听牌：</span>
+                <span class="result-value">
+                  <span v-for="tile in store.analysis.tingPai" :key="tile" class="ting-tile">
+                    <MahjongTile :tile-id="tile" :width="40" :show-name="false" />
+                  </span>
                 </span>
-              </span>
-            </div>
-            <div class="result-item">
-              <span class="result-label">振听：</span>
-              <el-tag :type="store.analysis.zhenTing ? 'danger' : 'success'">
-                {{ store.analysis.zhenTing ? '是' : '否' }}
-              </el-tag>
-            </div>
-            <div class="result-item">
-              <span class="result-label">役种：</span>
-              <span class="result-value">
-                {{
-                  store.analysis.yaku.length > 0
-                    ? `${store.analysis.yaku.join('、')} (${store.analysis.han}番)`
-                    : '无'
-                }}
-              </span>
+              </div>
+              <div class="result-item">
+                <span class="result-label">振听：</span>
+                <el-tag :type="store.analysis.zhenTing ? 'danger' : 'success'">
+                  {{ store.analysis.zhenTing ? '是' : '否' }}
+                </el-tag>
+              </div>
+              <div class="result-item">
+                <span class="result-label">役种：</span>
+                <span class="result-value">
+                  {{
+                    store.analysis.yaku.length > 0
+                      ? `${store.analysis.yaku.join('、')} (${store.analysis.han}番)`
+                      : '无'
+                  }}
+                </span>
+              </div>
             </div>
           </div>
         </el-card>
@@ -1037,6 +1266,70 @@ const handleAreaDragStart = (
 
 .hand-display-area {
   min-height: 150px;
+}
+
+.hand-area-container {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.hand-card-section {
+  flex: 1;
+}
+
+.draw-card-section {
+  flex-shrink: 0;
+}
+
+.section-label {
+  font-size: 14px;
+  color: #909399;
+  margin-bottom: 8px;
+}
+
+.hand-tiles {
+  min-height: 90px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border: 2px dashed #dcdfe6;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: all 0.2s;
+}
+
+.hand-tiles:hover {
+  border-color: #409eff;
+  background: rgba(64, 158, 255, 0.05);
+}
+
+.hand-placeholder {
+  width: 100%;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c0c4cc;
+  font-size: 14px;
+}
+
+.draw-tile-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  min-height: 100px;
+  border: 2px dashed #dcdfe6;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: all 0.2s;
+}
+
+.draw-tile-zone:hover {
+  border-color: #409eff;
+  background: rgba(64, 158, 255, 0.05);
 }
 
 .hand-tiles {
@@ -1259,19 +1552,132 @@ const handleAreaDragStart = (
   gap: 2px;
 }
 
-.fulu-list {
+.fulu-tile-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.fulu-tile-wrapper.kan-back {
+  margin: 0 -5px;
+  z-index: 1;
+}
+
+.fulu-container {
+  min-height: 60px;
+  padding: 12px;
+  border: 2px dashed transparent;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.fulu-container:hover {
+  border-color: #409eff;
+  background: rgba(64, 158, 255, 0.05);
+}
+
+.fulu-groups {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
 }
 
-.fulu-item {
+.fulu-group {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px;
   background: #f5f7fa;
   border-radius: 4px;
+}
+
+.fulu-drop-temp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px;
+  background: #fff7e6;
+  border-radius: 4px;
+  border: 1px dashed #ffa500;
+}
+
+.temp-label {
+  font-size: 12px;
+  color: #ffa500;
+}
+
+.temp-tiles {
+  display: flex;
+  gap: 4px;
+}
+
+.temp-tile {
+  opacity: 0.7;
+}
+
+.temp-hint {
+  font-size: 12px;
+  color: #909399;
+}
+
+.fulu-list {
+  display: flex;
+  gap: 12px;
+  min-height: 60px;
+  padding: 12px;
+  border: 2px dashed transparent;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.fulu-container:hover {
+  border-color: #409eff;
+  background: rgba(64, 158, 255, 0.05);
+}
+
+.fulu-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fulu-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.fulu-drop-temp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px;
+  background: #fff7e6;
+  border-radius: 4px;
+  border: 1px dashed #ffa500;
+}
+
+.temp-label {
+  font-size: 12px;
+  color: #ffa500;
+}
+
+.temp-tiles {
+  display: flex;
+  gap: 4px;
+}
+
+.temp-tile {
+  opacity: 0.7;
+}
+
+.temp-hint {
+  font-size: 12px;
+  color: #909399;
 }
 
 .fulu-empty {
@@ -1294,12 +1700,28 @@ const handleAreaDragStart = (
 
 .river-container {
   display: flex;
-  flex-wrap: wrap;
+  align-items: flex-end;
   gap: 8px;
+  flex-wrap: wrap;
   min-height: 60px;
   padding: 12px;
   background: #fafafa;
   border-radius: 4px;
+  border: 2px dashed transparent;
+  transition: all 0.2s ease;
+}
+
+.river-container.drag-over {
+  background: #e6f7ff;
+  border-color: #1890ff;
+}
+
+.river-placeholder {
+  width: 100%;
+  text-align: center;
+  color: #999;
+  padding: 20px;
+  font-size: 14px;
 }
 
 .river-tile {

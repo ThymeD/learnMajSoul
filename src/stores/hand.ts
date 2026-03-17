@@ -31,6 +31,8 @@ export interface Fulu {
   tiles: string[]
   /** 来自哪一家（0=上家,1=对家,2=下家）- 吃牌需要 */
   from?: number
+  /** 是否明杠（暗杠=false，从手牌杠） */
+  isOpen?: boolean
 }
 
 /** 分析结果 */
@@ -41,6 +43,7 @@ export interface AnalysisResult {
   zhenTing: boolean
   han: number
   yaku: string[]
+  error?: string // 校验错误信息
 }
 
 // ==================== 常量定义 ====================
@@ -186,13 +189,8 @@ export const useHandStore = defineStore('hand', () => {
     // 标准化赤牌
     const normalized = normalizeTiles([tile])[0]
 
-    // 如果有摸牌，先将摸牌加入手牌
-    if (drawTile.value) {
-      tiles.value.push(drawTile.value)
-      drawTile.value = null
-    }
-
-    // 添加新牌
+    // 直接添加新牌到手牌，不自动移动摸牌区的牌
+    // 摸牌区的牌需要用户主动操作才会移动
     tiles.value.push(normalized)
     tiles.value = sortTiles(tiles.value)
 
@@ -611,9 +609,26 @@ export const useHandStore = defineStore('hand', () => {
    * 调用 mahjong.ts 中的算法分析手牌，并计算役种和番数
    */
   function analyze(): void {
-    // 需要14张牌才能分析（13张手牌+1张摸牌 或 14张手牌）
+    // 校验：检查每种牌的数量是否超过4张
     const all = allTiles.value
+    const tileCounts: Record<string, number> = {}
+    for (const tile of all) {
+      tileCounts[tile] = (tileCounts[tile] || 0) + 1
+      if (tileCounts[tile] > 4) {
+        analysis.value = {
+          isTing: false,
+          isHu: false,
+          tingPai: [],
+          zhenTing: false,
+          han: 0,
+          yaku: [],
+          error: `同一种牌不能超过4张：${tile}已有${tileCounts[tile]}张`
+        }
+        return
+      }
+    }
 
+    // 需要14张牌才能分析（13张手牌+1张摸牌 或 14张手牌）
     if (all.length !== 13 && all.length !== 14) {
       analysis.value = {
         isTing: false,

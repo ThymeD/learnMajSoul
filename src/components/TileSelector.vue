@@ -20,12 +20,13 @@ interface Props {
   selectedTiles?: string[]
   filterSuits?: string[]
   searchText?: string
+  usedTiles?: string[] // 已使用的牌，用于计算剩余数量
 }
 
 interface Emits {
   (e: 'select', tile: string): void
   (e: 'search', text: string): void
-  (e: 'remove', tile: string, source: 'hand' | 'river' | 'fulu'): void
+  (e: 'remove', tile: string, source: 'hand' | 'river' | 'fulu' | 'draw' | 'fulu-temp'): void
 }
 
 // Props with defaults
@@ -34,10 +35,14 @@ const props = withDefaults(defineProps<Props>(), {
   maxCount: 4,
   selectedTiles: () => [],
   filterSuits: () => [],
-  searchText: ''
+  searchText: '',
+  usedTiles: () => []
 })
 
 const emit = defineEmits<Emits>()
+
+// 配置：是否在数量为0时仍显示占位
+const showWhenEmpty = ref(true)
 
 // All tile categories data
 const categories: TileCategory[] = [
@@ -95,6 +100,22 @@ const categories: TileCategory[] = [
   }
 ]
 
+// 素材区数据：Record<tileId, count>
+const sourceTiles = ref<Record<string, number>>({})
+
+// 初始化素材区
+const initSourceTiles = () => {
+  const tiles: Record<string, number> = {}
+  for (const category of categories) {
+    for (const tile of category.tiles) {
+      tiles[tile.id] = props.maxCount
+    }
+  }
+  sourceTiles.value = tiles
+}
+
+initSourceTiles()
+
 // Active tab
 const activeTab = ref('all')
 
@@ -139,22 +160,21 @@ const filteredCategories = computed(() => {
   return result
 })
 
-// 响应式 tiles 列表，用于 vuedraggable
-const tilesList = ref<TileInfo[]>([])
+// 去重后的素材列表
+const uniqueSourceTiles = computed(() => {
+  const tiles: string[] = []
+  for (const category of filteredCategories.value) {
+    for (const tile of category.tiles) {
+      tiles.push(tile.id)
+    }
+  }
 
-// 初始化 tilesList
-const initTilesList = () => {
-  tilesList.value = filteredCategories.value.flatMap((c) => c.tiles)
-}
-
-// 监听 filteredCategories 变化更新 tilesList
-watch(
-  filteredCategories,
-  () => {
-    initTilesList()
-  },
-  { deep: true, immediate: true }
-)
+  // 根据配置过滤
+  if (!showWhenEmpty.value) {
+    return tiles.filter((id) => sourceTiles.value[id] > 0)
+  }
+  return tiles
+})
 
 // Get selected count for a specific tile
 const getSelectedCount = (tileId: string): number => {
@@ -167,70 +187,56 @@ const isTileDisabled = (tileId: string): boolean => {
   return getSelectedCount(tileId) >= props.maxCount
 }
 
-// Get remaining count for a tile
+// Get remaining count for a tile - 直接使用 sourceTiles
 const getRemainingCount = (tileId: string): number => {
-  return props.maxCount - getSelectedCount(tileId)
+  return sourceTiles.value[tileId] ?? 0
 }
 
-// For drag and drop
-let mouseDownPos: { x: number; y: number } | null = null
-let isDragging = false
-
-// Handle mouse down - 记录鼠标按下位置
-const handleMouseDown = (event: MouseEvent, _tileId: string) => {
-  mouseDownPos = { x: event.clientX, y: event.clientY }
-  isDragging = false
+// 检查是否还有剩余
+const hasRemaining = (tileId: string): boolean => {
+  return getRemainingCount(tileId) > 0
 }
 
-// Handle mouse up - 判断是拖拽还是点击
-const handleMouseUp = (event: MouseEvent, _tileId: string) => {
-  if (!mouseDownPos) return
-
-  const dx = event.clientX - mouseDownPos.x
-  const dy = event.clientY - mouseDownPos.y
-  const distance = Math.sqrt(dx * dx + dy * dy)
-
-  // 如果移动距离超过5px，认为是拖拽
-  if (distance > 5) {
-    isDragging = true
-  } else {
-    isDragging = false
+// Handle tile click - 添加牌到目标区域
+const handleTileClick = (tileId: string) => {
+  if (isTileDisabled(tileId)) return
+  // 减少素材区数量
+  if (sourceTiles.value[tileId] > 0) {
+    sourceTiles.value[tileId]--
   }
-
-  mouseDownPos = null
+  emit('select', tileId)
 }
 
-// Handle drag start - set data for HTML5 drag and drop
-const handleDragStart = (event: DragEvent, _tileId: string) => {
-  isDragging = true
-  if (event.dataTransfer) {
-    event.dataTransfer.setData('text/plain', _tileId)
-    event.dataTransfer.effectAllowed = 'copy'
-  }
-}
-
-// Handle drag end
-const handleDragEnd = () => {
-  isDragging = false
-}
-
-// Handle tile drop from other areas (hand, river, fulu)
-const handleTileDrop = (event: Event) => {
+// 素材区接收从其他区域拖回的牌
+const handleSourceDrop = (event: Event) => {
   const ev = event as DragEvent
   ev.preventDefault()
   const tileId = ev.dataTransfer?.getData('text/plain')
-  const source = (ev.dataTransfer?.getData('source') as 'hand' | 'river' | 'fulu') || 'hand'
-  if (tileId) {
-    emit('remove', tileId, source)
+  const source = ev.dataTransfer?.getData('source')
+
+  if (tileId && source && source !== 'source') {
+    // 增加素材区数量
+    if (sourceTiles.value[tileId] !== undefined && sourceTiles.value[tileId] < props.maxCount) {
+      sourceTiles.value[tileId]++
+    }
+    emit('remove', tileId, source as any)
   }
 }
 
-// Handle tile click - only trigger if not dragging
-const handleTileClick = (tileId: string) => {
-  if (isDragging) return
-
-  if (!isTileDisabled(tileId)) {
-    emit('select', tileId)
+// 素材区拖拽开始
+const handleSourceDragStart = (event: DragEvent, tileId: string) => {
+  if (!hasRemaining(tileId) || isTileDisabled(tileId)) {
+    event.preventDefault()
+    return
+  }
+  // 减少素材区数量
+  if (sourceTiles.value[tileId] > 0) {
+    sourceTiles.value[tileId]--
+  }
+  if (event.dataTransfer) {
+    event.dataTransfer.setData('text/plain', tileId)
+    event.dataTransfer.setData('source', 'source')
+    event.dataTransfer.effectAllowed = 'copy'
   }
 }
 </script>
@@ -239,8 +245,12 @@ const handleTileClick = (tileId: string) => {
   <div
     class="tile-selector"
     :class="{ 'is-disabled': disabled }"
-    @dragover="(e) => e.preventDefault()"
-    @drop="handleTileDrop"
+    @dragover.prevent="
+      (e: DragEvent) => {
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
+      }
+    "
+    @drop="handleSourceDrop"
   >
     <!-- Category Tabs -->
     <div class="category-tabs">
@@ -249,26 +259,23 @@ const handleTileClick = (tileId: string) => {
       </el-tabs>
     </div>
 
-    <!-- Tile Grid -->
+    <!-- Tile Grid - 使用原生 drag/drop -->
     <div class="tile-grid-container">
       <div class="tile-grid">
         <div
-          v-for="element in filteredCategories.flatMap((c) => c.tiles)"
-          :key="element.id"
+          v-for="tileId in uniqueSourceTiles"
+          :key="tileId"
           class="tile-item"
           :class="{
-            'is-disabled': isTileDisabled(element.id)
+            'is-disabled': isTileDisabled(tileId) || !hasRemaining(tileId)
           }"
-          draggable="true"
-          @click="handleTileClick(element.id)"
-          @mousedown="handleMouseDown($event, element.id)"
-          @mouseup="handleMouseUp($event, element.id)"
-          @dragstart="handleDragStart($event, element.id)"
-          @dragend="handleDragEnd"
+          :draggable="!disabled && hasRemaining(tileId)"
+          @click="handleTileClick(tileId)"
+          @dragstart="(e) => handleSourceDragStart(e, tileId)"
         >
-          <MahjongTile :tile-id="element.id" :width="50" :show-name="true" />
-          <div class="tile-count" :class="{ 'is-full': getRemainingCount(element.id) === 0 }">
-            {{ getRemainingCount(element.id) }}
+          <MahjongTile :tile-id="tileId" :width="50" :show-name="true" />
+          <div class="tile-count" :class="{ 'is-full': getRemainingCount(tileId) === 0 }">
+            {{ getRemainingCount(tileId) }}
           </div>
         </div>
       </div>
@@ -319,21 +326,21 @@ const handleTileClick = (tileId: string) => {
 }
 
 .tile-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  justify-items: center;
+  justify-content: flex-start;
 }
 
 @media (max-width: 768px) {
   .tile-grid {
-    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
   }
 }
 
 @media (max-width: 480px) {
   .tile-grid {
-    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
   }
 }
 
