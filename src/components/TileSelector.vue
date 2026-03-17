@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import draggable from 'vuedraggable'
 import MahjongTile from './MahjongTile.vue'
 
 // Types
@@ -139,6 +138,23 @@ const filteredCategories = computed(() => {
   return result
 })
 
+// 响应式 tiles 列表，用于 vuedraggable
+const tilesList = ref<TileInfo[]>([])
+
+// 初始化 tilesList
+const initTilesList = () => {
+  tilesList.value = filteredCategories.value.flatMap((c) => c.tiles)
+}
+
+// 监听 filteredCategories 变化更新 tilesList
+watch(
+  filteredCategories,
+  () => {
+    initTilesList()
+  },
+  { deep: true, immediate: true }
+)
+
 // Get selected count for a specific tile
 const getSelectedCount = (tileId: string): number => {
   return props.selectedTiles.filter((t) => t === tileId).length
@@ -162,10 +178,15 @@ const handleTileClick = (tileId: string) => {
   }
 }
 
-// For draggable - clone function
-const cloneTile = (tile: TileInfo): TileInfo => {
-  return { ...tile }
+// Handle drag start - set data for HTML5 drag and drop
+const handleDragStart = (event: DragEvent, tileId: string) => {
+  if (event.dataTransfer) {
+    event.dataTransfer.setData('text/plain', tileId)
+    event.dataTransfer.effectAllowed = 'copy'
+  }
 }
+
+// For drag and drop (保留但不使用)
 </script>
 
 <template>
@@ -179,30 +200,24 @@ const cloneTile = (tile: TileInfo): TileInfo => {
 
     <!-- Tile Grid -->
     <div class="tile-grid-container">
-      <draggable
-        :list="filteredCategories.flatMap((c) => c.tiles)"
-        :group="{ name: 'tiles', pull: 'clone', put: false }"
-        :clone="cloneTile"
-        :sort="false"
-        item-key="id"
-        class="tile-grid"
-        :disabled="disabled"
-      >
-        <template #item="{ element }">
-          <div
-            class="tile-item"
-            :class="{
-              'is-disabled': isTileDisabled(element.id)
-            }"
-            @click="handleTileClick(element.id)"
-          >
-            <MahjongTile :tile-id="element.id" :width="50" :show-name="true" />
-            <div class="tile-count" :class="{ 'is-full': getRemainingCount(element.id) === 0 }">
-              {{ getRemainingCount(element.id) }}
-            </div>
+      <div class="tile-grid">
+        <div
+          v-for="element in filteredCategories.flatMap((c) => c.tiles)"
+          :key="element.id"
+          class="tile-item"
+          :class="{
+            'is-disabled': isTileDisabled(element.id)
+          }"
+          draggable="true"
+          @click="handleTileClick(element.id)"
+          @dragstart="handleDragStart($event, element.id)"
+        >
+          <MahjongTile :tile-id="element.id" :width="50" :show-name="true" />
+          <div class="tile-count" :class="{ 'is-full': getRemainingCount(element.id) === 0 }">
+            {{ getRemainingCount(element.id) }}
           </div>
-        </template>
-      </draggable>
+        </div>
+      </div>
     </div>
 
     <!-- Empty State -->

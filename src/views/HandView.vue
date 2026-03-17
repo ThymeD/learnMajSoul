@@ -2,7 +2,6 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
-import draggable from 'vuedraggable'
 import TileSelector from '../components/TileSelector.vue'
 import MahjongTile from '../components/MahjongTile.vue'
 import { useHandStore, type Wind } from '../stores/hand'
@@ -39,16 +38,6 @@ watch(
   },
   { immediate: true }
 )
-
-// 摸牌区的 v-model 包装
-const drawTileList = computed({
-  get: () => (localDrawTile.value ? [localDrawTile.value] : []),
-  set: (val) => {
-    if (val.length > 0) {
-      handleSetDrawTile(val[0])
-    }
-  }
-})
 
 // 听牌位置映射
 const tingCountMap = computed(() => {
@@ -291,52 +280,48 @@ const handleRemoveFulu = (index: number) => {
 
 // ==================== 牌河相关 ====================
 
-// 打出牌到牌河
-const handleDiscardTile = (tile: string) => {
-  // 从手牌移除
-  const idx = localTiles.value.indexOf(tile)
-  if (idx === -1) return false
-
-  localTiles.value.splice(idx, 1)
-  store.tiles = [...localTiles.value]
-
-  // 添加到牌河
-  store.addToRiver(tile)
-  return true
-}
-
-// 牌河拖拽事件 - 打出
-const handleRiverAdd = (evt: any) => {
-  if (evt.added) {
-    const tile = evt.added.element
-    handleDiscardTile(tile)
-  }
-}
-
-// 牌河拖拽事件 - 回收
-const handleRiverRemove = (evt: any) => {
-  if (evt.removed) {
-    const tile = evt.removed.element
-    const idx = store.river.indexOf(tile)
-    if (idx !== -1) {
-      store.removeFromRiver(idx)
-    }
-  }
-}
-
 // 从牌河回收牌
 const handleRiverRecover = (index: number) => {
   store.removeFromRiver(index)
   localTiles.value = [...store.tiles]
 }
 
-// 检查拖拽是否允许（立直后不能打牌）
-const checkDragMove = (_evt: any) => {
-  // 如果已经立直，禁止拖拽到牌河
-  if (store.isLiqi) {
-    return false
+// 原生 HTML5 drag and drop 处理
+const handleDragOver = (event: DragEvent) => {
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'copy'
   }
-  return true
+}
+
+const handleTileDrop = (event: DragEvent) => {
+  event.preventDefault()
+  const tileId = event.dataTransfer?.getData('text/plain')
+  if (tileId) {
+    handleTileAdd(tileId)
+  }
+}
+
+const handleDrawTileDrop = (event: DragEvent) => {
+  event.preventDefault()
+  const tileId = event.dataTransfer?.getData('text/plain')
+  if (tileId) {
+    handleSetDrawTile(tileId)
+  }
+}
+
+const handleRiverDrop = (event: DragEvent) => {
+  event.preventDefault()
+  const tileId = event.dataTransfer?.getData('text/plain')
+  if (tileId) {
+    // 从手牌移除并添加到牌河
+    const idx = localTiles.value.indexOf(tileId)
+    if (idx !== -1) {
+      localTiles.value.splice(idx, 1)
+      store.tiles = [...localTiles.value]
+      store.addToRiver(tileId)
+    }
+  }
 }
 </script>
 
@@ -577,49 +562,35 @@ const checkDragMove = (_evt: any) => {
 
           <div class="hand-display-area">
             <!-- 手牌 -->
-            <div class="hand-tiles">
-              <draggable
-                v-model="localTiles"
-                group="tiles"
-                item-key="index"
-                class="tiles-container"
-                :move="checkDragMove"
-              >
-                <template #item="{ element, index }">
-                  <div
-                    class="tile-wrapper"
-                    :class="{ 'is-ting': store.analysis?.tingPai?.includes(element) }"
-                  >
-                    <!-- 听牌位置显示听牌张数 -->
-                    <div v-if="store.analysis?.tingPai?.includes(element)" class="ting-indicator">
-                      {{ tingCountMap[element] || '' }}
-                    </div>
-                    <MahjongTile :tile-id="element" :width="60" :show-name="false" />
-                    <div class="tile-remove" @click.stop="handleTileRemove(element, index)">×</div>
+            <div class="hand-tiles" @dragover="handleDragOver" @drop="handleTileDrop">
+              <div class="tiles-container">
+                <div
+                  v-for="(element, index) in localTiles"
+                  :key="index"
+                  class="tile-wrapper"
+                  :class="{ 'is-ting': store.analysis?.tingPai?.includes(element) }"
+                >
+                  <!-- 听牌位置显示听牌张数 -->
+                  <div v-if="store.analysis?.tingPai?.includes(element)" class="ting-indicator">
+                    {{ tingCountMap[element] || '' }}
                   </div>
-                </template>
-              </draggable>
+                  <MahjongTile :tile-id="element" :width="60" :show-name="false" />
+                  <div class="tile-remove" @click.stop="handleTileRemove(element, index)">×</div>
+                </div>
+              </div>
 
               <!-- 摸牌区 -->
               <div
                 class="draw-tile-zone"
                 :class="{ 'has-draw': !!localDrawTile }"
                 @click="handleDrawTileClick"
+                @dragover="handleDragOver"
+                @drop="handleDrawTileDrop"
               >
-                <draggable
-                  v-model="drawTileList"
-                  group="tiles"
-                  item-key="index"
-                  class="draw-container"
-                  :sort="false"
-                >
-                  <template #item="{ element }">
-                    <div class="draw-tile">
-                      <MahjongTile :tile-id="element" :width="60" :show-name="false" />
-                    </div>
-                  </template>
-                </draggable>
-                <div v-if="!localDrawTile" class="draw-placeholder">拖入摸牌</div>
+                <div v-if="localDrawTile" class="draw-tile">
+                  <MahjongTile :tile-id="localDrawTile" :width="60" :show-name="false" />
+                </div>
+                <div v-else class="draw-placeholder">拖入摸牌</div>
               </div>
             </div>
 
@@ -642,20 +613,16 @@ const checkDragMove = (_evt: any) => {
             </span>
           </template>
 
-          <draggable
-            :model-value="store.river"
-            group="tiles"
-            item-key="index"
-            class="river-container"
-            @add="handleRiverAdd"
-            @remove="handleRiverRemove"
-          >
-            <template #item="{ element, index }">
-              <div class="river-tile" @click="handleRiverRecover(index)">
-                <MahjongTile :tile-id="element" :width="40" :show-name="false" />
-              </div>
-            </template>
-          </draggable>
+          <div class="river-container" @dragover="handleDragOver" @drop="handleRiverDrop">
+            <div
+              v-for="(element, index) in store.river"
+              :key="index"
+              class="river-tile"
+              @click="handleRiverRecover(index)"
+            >
+              <MahjongTile :tile-id="element" :width="40" :show-name="false" />
+            </div>
+          </div>
 
           <div v-if="store.river.length === 0" class="river-empty">
             从手牌拖拽到这里打牌，或点击"操作按钮"区域的"打牌"按钮
