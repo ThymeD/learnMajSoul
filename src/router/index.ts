@@ -55,6 +55,11 @@ const routes: RouteRecordRaw[] = [
     path: '/draft/yaku-data-test',
     name: 'yakuDataTest',
     component: () => import('../views/draft/YakuDataTest.vue')
+  },
+  {
+    path: '/draft/drag-poc',
+    name: 'dragPoc',
+    component: () => import('../views/draft/DragPoc.vue')
   }
 ]
 
