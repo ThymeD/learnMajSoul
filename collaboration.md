@@ -41,16 +41,12 @@
 
 ### 已完成
 
-> 格式：完成时间: YYYY-MM-DD HH:MM:SS → agent: 任务 → 关联需求: #xxx → 产出: 目录/文件
+> 格式：完成时间: YYYY-MM-DD HH:MM:SS（真实时间） → agent: 任务 → 关联需求: #xxx → 产出: 目录/文件
 
-- 2026-03-18 14:30:00 → Requirements Manager: 需求审核与修正 → #001 → requirements/hand-view-requirements.md
-- 2026-03-18 15:00:00 → Architect: 技术方案设计 → #001 → docs/architecture.md
-- 2026-03-18 16:45:00 → Coder: 实现手牌分析功能 → #001 → 分支: feature/hand-view → 产出: src/
-- 2026-03-18 18:20:00 → UI Tester: UI测试（发现5个Bug） → #001 → tests/ui/hand-view-test-report.md
-- 2026-03-18 19:10:00 → Coder: Bug修复 → #001 → 分支: feature/hand-view → 产出: src/
-- 2026-03-18 19:45:00 → UI Tester: UI测试复测通过 → #001 → tests/ui/hand-view-test-report.md
-- 2026-03-18 23:19:40 → Committer: 代码审核（发现5个问题需修复） → #001 → 分支: feature/hand-view
-- 2026-03-18 23:45:00 → Coder: 修复代码审核问题 → #001 → 分支: feature/hand-view → 产出: src/
+- 2026-03-18 22:35:55 → 用户（优化需求文档） → #001 → requirements/hand-view-requirements.md
+- 2026-03-18 23:08:29 → Coder: 实现手牌分析功能 → #001 → 分支: feature/hand-view → 产出: src/
+- 2026-03-18 23:14:47 → Coder: Bug修复（BUG-001~005） → #001 → 分支: feature/hand-view → 产出: src/
+- 2026-03-18 23:25:18 → Coder: 修复代码审核问题 → #001 → 分支: feature/hand-view → 产出: src/
 
 ### 进行中
 
