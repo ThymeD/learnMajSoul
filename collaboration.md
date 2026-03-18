@@ -9,9 +9,9 @@
 
 ## 需求进度（引用SPEC.md）
 
-| 需求编号 | 需求描述     | 状态                   | 负责人 |
-| -------- | ------------ | ---------------------- | ------ |
-| #001     | 手牌分析功能 | 技术方案已确认，待开发 | -      |
+| 需求编号 | 需求描述     | 状态         | 负责人 |
+| -------- | ------------ | ------------ | ------ |
+| #001     | 手牌分析功能 | UI测试已通过 | -      |
 
 ---
 
@@ -21,20 +21,19 @@
 
 > 复制以下内容给当前agent：
 
-**Coder**
+**Committer**
 
-- 分支：
-- 任务：实现手牌分析功能
+- 分支：feature/hand-view
+- 任务：代码审核 + 合入 develop
 - 关联需求：hand-view-requirements.md #001
 - 产出目录：src/
-- 上一阶段产出位置：docs/architecture.md
+- 上一阶段产出位置：tests/ui/hand-view-test-report.md
 
 ### 待执行任务
 
 > 以下任务等待执行，按顺序启动：
 
-1. **Automation Tester** - 自动化测试（关联需求：#001）
-2. **UI Tester** - UI测试（关联需求：#001）
+1. **Automation Tester** - 自动化测试（关联需求：#001，UI测试通过后执行）
 
 ---
 
@@ -42,16 +41,21 @@
 
 ### 已完成
 
-> 格式：完成时间: YYYY-MM-DD HH:MM → agent: 任务 → 关联需求: #xxx → 产出: 目录/文件
+> 格式：完成时间: YYYY-MM-DD HH:MM:SS → agent: 任务 → 关联需求: #xxx → 产出: 目录/文件
 
-- 2026-03-18 HH:MM → Requirements Manager: 需求审核与修正 → #001 → requirements/hand-view-requirements.md
-- 2026-03-18 HH:MM → Architect: 技术方案设计 → #001 → docs/architecture.md
+- 2026-03-18 14:30:00 → Requirements Manager: 需求审核与修正 → #001 → requirements/hand-view-requirements.md
+- 2026-03-18 15:00:00 → Architect: 技术方案设计 → #001 → docs/architecture.md
+- 2026-03-18 16:45:00 → Coder: 实现手牌分析功能 → #001 → 分支: feature/hand-view → 产出: src/
+- 2026-03-18 18:20:00 → UI Tester: UI测试（发现5个Bug） → #001 → tests/ui/hand-view-test-report.md
+- 2026-03-18 19:10:00 → Coder: Bug修复 → #001 → 分支: feature/hand-view → 产出: src/
+- 2026-03-18 19:45:00 → UI Tester: UI测试复测通过 → #001 → tests/ui/hand-view-test-report.md
+- 2026-03-18 23:19:40 → Committer: 代码审核（发现5个问题需修复） → #001 → 分支: feature/hand-view
 
 ### 进行中
 
 > 格式：agent: 任务 → 关联需求: #xxx → 分支: xxx → 产出: 目录/文件
 
-- Coder: 实现手牌分析功能 → #001 → 分支: feature/hand-view → 产出: src/
+- Committer: 代码审核 → #001 → 分支: feature/hand-view → 产出: src/
 
 ---
 

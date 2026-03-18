@@ -29,10 +29,12 @@ export type Wind = 'd1' | 'd2' | 'd3' | 'd4'
 export type Dragon = 'z1' | 'z2' | 'z3'
 
 /** 副露类型 */
+export type FuluType = 'chi' | 'pon' | 'kan'
+
+/** 副露结构 */
 export interface Fulu {
-  type: 'chi' | 'pon' | 'kan'
-  /** 吃的牌/碰的牌/杠的牌 */
-  tiles: string[]
+  type: FuluType
+  tiles: string[] // 吃的牌/碰的牌/杠的牌
   /** 来自哪一家（0=上家,1=对家,2=下家）- 吃牌需要 */
   from?: number
   /** 是否明杠（暗杠=false，从手牌杠） */
@@ -444,7 +446,25 @@ export const useHandStore = defineStore('hand', () => {
     }
 
     // 检查3张连续 -> 吃
-    // ...
+    // 检查是否能形成顺子
+    const numberSuits = ['w', 'b', 's'] as const
+    for (const suit of numberSuits) {
+      for (let num = 1; num <= 7; num++) {
+        const t1 = `${suit}${num}`
+        const t2 = `${suit}${num + 1}`
+        const t3 = `${suit}${num + 2}`
+
+        // 检查这3张牌是否都在 allTiles 中
+        if (counts[t1] && counts[t2] && counts[t3]) {
+          clearFuluTemp()
+          return {
+            type: 'chi',
+            tiles: [t1, t2, t3],
+            from: 0 // 吃上家的牌
+          }
+        }
+      }
+    }
 
     return null
   }

@@ -14,7 +14,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/hand',
     name: 'hand',
-    component: () => import('../views/HandView.vue')
+    component: () => import('../views/HandView/index.vue')
   },
   {
     path: '/strategy',

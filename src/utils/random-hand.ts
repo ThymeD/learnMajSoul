@@ -4,6 +4,7 @@
  */
 
 import { sortTiles, normalizeTiles, checkHu, type Tile } from './mahjong'
+import { type Fulu } from '../stores/hand'
 
 // ==================== 类型定义 ====================
 
@@ -16,19 +17,12 @@ export interface RandomHandResult {
   fulu: Fulu[]
 }
 
-export interface Fulu {
-  type: 'chi' | 'pon' | 'kan'
-  tiles: Tile[]
-  from?: number
-  isOpen?: boolean
-}
-
 // ==================== 常量定义 ====================
 
 /** 所有数牌花色 */
 const NUMBER_SUITS = ['w', 'b', 's'] as const
 
-/** 所有可能的牌 */
+/** 所有可能的牌（含赤牌） */
 const ALL_POSSIBLE_TILES: Tile[] = [
   // 数牌：万、筒、索 1-9
   'w1',
@@ -66,8 +60,22 @@ const ALL_POSSIBLE_TILES: Tile[] = [
   // 三元牌：白中发
   'z1',
   'z2',
-  'z3'
+  'z3',
+  // 赤牌：赤五万、赤五筒、赤五索
+  'rw5',
+  'rb5',
+  'rs5'
 ]
+
+/** 赤牌列表 */
+const RED_FIVE_TILES: Tile[] = ['rw5', 'rb5', 'rs5']
+
+/** 普通5字牌映射到赤牌 */
+const NORMAL_TO_RED: Record<string, Tile> = {
+  w5: 'rw5',
+  b5: 'rb5',
+  s5: 'rs5'
+}
 
 // ==================== 辅助函数 ====================
 
@@ -95,13 +103,30 @@ function spliceRandom<T>(arr: T[]): T | undefined {
 }
 
 /**
- * 创建完整牌池（每种4张）
+ * 创建完整牌池（每种4张，但赤牌与普通5字共享4张配额）
  */
 function createFullPool(): Tile[] {
   const pool: Tile[] = []
-  for (let i = 0; i < 4; i++) {
-    pool.push(...ALL_POSSIBLE_TILES)
+
+  // 处理普通牌（每种4张）
+  for (const tile of ALL_POSSIBLE_TILES) {
+    // 跳过赤牌，单独处理
+    if (RED_FIVE_TILES.includes(tile)) {
+      continue
+    }
+
+    // 普通5字牌各3张（赤牌将补足到4张）
+    const count = NORMAL_TO_RED[tile] ? 3 : 4
+    for (let i = 0; i < count; i++) {
+      pool.push(tile)
+    }
   }
+
+  // 添加赤牌各1张（使每对普通5字+赤牌=4张）
+  for (const tile of RED_FIVE_TILES) {
+    pool.push(tile)
+  }
+
   return pool
 }
 
