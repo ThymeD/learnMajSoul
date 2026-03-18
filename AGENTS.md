@@ -25,6 +25,212 @@
 - **文档参考**：遇到 AI 训练语料可能过时时，以官网 https://element-plus.org/zh-CN/ 为准
 - **TypeScript**：全项目使用 TypeScript，严格类型检查
 
+---
+
+## 代码组织与模块化规范
+
+### 1. 单文件行数控制
+
+> **核心原则**：`script` 部分行数才是关键指标，template 行数多不一定代表复杂
+
+| 文件类型        | `<script>` 上限 | 整体参考 |
+| --------------- | --------------- | -------- |
+| 页面组件 .vue   | 200行           | 600行    |
+| 业务组件 .vue   | 150行           | 400行    |
+| 公共组件 .vue   | 100行           | 200行    |
+| Store .ts       | 300行           | 500行    |
+| Composables .ts | 150行           | 200行    |
+
+**触发拆分条件**（满足任一即触发）：
+
+- [ ] `<script>` 部分超过上述上限
+- [ ] 存在 2 处以上相同/相似逻辑
+- [ ] 组件承担超过 2 个独立职责
+- [ ] 某个函数/逻辑可被其他模块复用
+
+---
+
+### 2. 目录结构规范
+
+#### 视图层组织（views/）
+
+```
+views/
+├── HomeView.vue              # 简单页面保持单文件
+├── TilesView.vue
+├── StrategyView.vue
+├── HandView/                # 复杂页面按目录组织
+│   ├── index.vue            # 主入口，负责组装
+│   ├── components/
+│   │   ├── HandBoard.vue    # 手牌区域
+│   │   ├── RiverPanel.vue  # 牌河
+│   │   └── ActionPanel.vue # 操作按钮
+│   ├── composables/
+│   │   └── useHandView.ts  # 页面私有逻辑
+│   └── types.ts
+├── YakuView/
+│   ├── index.vue
+│   ├── components/
+│   │   ├── YakuCard.vue
+│   │   ├── YakuFilter.vue
+│   │   └── YakuCounter.vue
+│   └── composables/
+│       └── useYakuView.ts
+└── DraftView/               # 草稿区
+```
+
+#### 组合式逻辑层（composables/）
+
+```
+composables/                  # 全局可复用逻辑
+├── useLongPress.ts           # 长按交互
+├── useDragDrop.ts            # 拖拽逻辑
+├── useHandAnalysis.ts        # 手牌分析逻辑
+├── useYakuFilter.ts          # 役种筛选逻辑
+└── useClickOutside.ts        # 点击外部关闭
+```
+
+#### 组件层（components/）
+
+```
+components/                   # 公共UI组件
+├── MahjongTile.vue           # 原子组件（仅渲染）
+├── TileSelector.vue          # 业务组件
+├── HandDisplay.vue           # 业务组件
+└── MasteryStars.vue          # 业务组件
+```
+
+---
+
+### 3. Composables 设计规范
+
+#### 命名规范
+
+- 前缀：`use` + 语义化名称
+- 示例：`useHandAnalysis`, `useLongPress`, `useClickOutside`
+
+#### 职责单一原则
+
+```
+✅ useLongPress.ts      # 仅处理长按逻辑
+✅ useDragDrop.ts       # 仅处理拖拽逻辑
+❌ useHandLogic.ts      # 混杂多种逻辑
+```
+
+#### 抽离时机
+
+| 场景               | 决策         |
+| ------------------ | ------------ |
+| 逻辑被 2+ 组件复用 | **必须抽离** |
+| 逻辑超过 30 行     | 考虑抽离     |
+| 涉及复杂状态/计算  | 考虑抽离     |
+| 仅为当前组件服务   | 不抽离       |
+
+#### 输出规范
+
+```typescript
+// ✅ 正确：清晰的输入/输出
+export function useLongPress(callback: () => void, options?: { delay?: number }) {
+  const isPressing = ref(false)
+  // 逻辑...
+  return { start, stop, isPressing }
+}
+
+// ❌ 错误：隐式依赖/副作用不明确
+export function useHandLogic() {
+  const store = useHandStore() // 隐式依赖
+  // ... 大段逻辑
+}
+```
+
+---
+
+### 4. 组件拆分规范
+
+#### 拆分原则
+
+| 原则     | 说明                       |
+| -------- | -------------------------- |
+| 职责单一 | 一个组件只做一件事         |
+| 高内聚   | 相关逻辑放一起             |
+| 低耦合   | 组件间通过 props/emit 通信 |
+| 可复用   | 公共逻辑抽到 components/   |
+
+#### 页面组件拆分模板
+
+```vue
+<!-- HandView/index.vue -->
+<template>
+  <div class="hand-view">
+    <HandBoard :tiles="tiles" @select="handleSelect" />
+    <RiverPanel :river="river" />
+    <DrawTile :tile="drawTile" />
+    <ActionPanel :actions="actions" @action="handleAction" />
+  </div>
+</template>
+
+<script setup lang="ts">
+import HandBoard from './components/HandBoard.vue'
+import RiverPanel from './components/RiverPanel.vue'
+import DrawTile from './components/DrawTile.vue'
+import ActionPanel from './components/ActionPanel.vue'
+import { useHandView } from './composables/useHandView'
+
+const { tiles, river, drawTile, actions, handleSelect, handleAction } = useHandView()
+</script>
+```
+
+#### 组件引用层级
+
+```
+index.vue (入口)
+  └── components/ (子组件)
+        └── components/ (孙子组件，尽量避免)
+```
+
+---
+
+### 5. 类型定义管理
+
+| 位置                     | 用途         |
+| ------------------------ | ------------ |
+| `src/types/`             | 全局共享类型 |
+| `src/views/XXX/types.ts` | 页面私有类型 |
+| 同文件 `interface`       | 仅该组件使用 |
+
+#### 抽离时机
+
+- [ ] 2+ 文件使用同一类型
+- [ ] 类型定义超过 20 行
+- [ ] 类型会被 AI 频繁引用
+
+---
+
+### 6. 规范执行检查表
+
+| 检查项                      | 约束级别 | 监控方式 |
+| --------------------------- | -------- | -------- |
+| `<script>` 行数上限         | 强制     | 代码审查 |
+| views/ 按目录组织（>300行） | 建议     | 代码审查 |
+| Composables 命名规范        | 强制     | 代码审查 |
+| 公共逻辑抽离（复用2次+）    | 建议     | 代码审查 |
+| 职责单一                    | 强制     | 代码审查 |
+
+---
+
+### 7. 重构优先级
+
+基于当前项目现状，建议重构优先级：
+
+| 优先级 | 模块                   | 原因               | 预期收益      |
+| ------ | ---------------------- | ------------------ | ------------- |
+| P0     | HandView (1752行)      | 最大文件，收益最高 | 拆为5+组件    |
+| P1     | stores/hand.ts (788行) | 混杂状态与分析逻辑 | 抽离分析逻辑  |
+| P2     | YakuView (811行)       | 列表渲染逻辑复杂   | 抽离筛选逻辑  |
+| P3     | 新增 composables/      | 建立复用层         | 4+ 可复用逻辑 |
+
+---
+
 ## 验证标准
 
 每个模块完成后需满足：
