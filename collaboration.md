@@ -9,9 +9,9 @@
 
 ## 需求进度（引用SPEC.md）
 
-| 需求编号 | 需求描述     | 状态         | 负责人 |
-| -------- | ------------ | ------------ | ------ |
-| #001     | 手牌分析功能 | UI测试已通过 | -      |
+| 需求编号 | 需求描述     | 状态                                   | 负责人 |
+| -------- | ------------ | -------------------------------------- | ------ |
+| #001     | 手牌分析功能 | 合入develop，发现8个问题待下次迭代修复 | -      |
 
 ---
 
@@ -21,19 +21,24 @@
 
 > 复制以下内容给当前agent：
 
-**Committer**
+**（无进行中任务）**
 
-- 分支：feature/hand-view
-- 任务：代码审核 + 合入 develop
-- 关联需求：hand-view-requirements.md #001
-- 产出目录：src/
-- 上一阶段产出位置：tests/ui/hand-view-test-report.md
+### 待办事项（下次迭代）
 
-### 待执行任务
+> 以下问题记录在案，下次迭代修复：
 
-> 以下任务等待执行，按顺序启动：
+1. 素材区拖牌到牌河功能
+2. 牌河牌计入总牌数统计
+3. 副露吃碰杠按钮功能修正
+4. 牌河双击回到素材区
+5. 摸牌双击回到素材区
+6. 暗杠牌背排列修正
+7. 暗杠牌背素材使用麻将素材图的牌背
+8. 赤牌数量修正为1张
+9. 普通5数量修正为3张
 
-1. **Automation Tester** - 自动化测试（关联需求：#001，UI测试通过后执行）
+> 复盘报告：`evaluation/retrospective/hand-view-2026-03-18.md`  
+> 绩效评价：`evaluation/stage/hand-view-2026-03-18.md`
 
 ---
 
@@ -41,13 +46,16 @@
 
 ### 已完成
 
-> 格式：完成时间: YYYY-MM-DD HH:MM:SS（真实时间） → agent: 任务 → 关联需求: #xxx → 产出: 目录/文件
+> 格式：YYYY-MM-DD HH:MM:SS（真实时间）→ agent: 任务 → #xxx → 产出
 
-- 2026-03-18 22:35:55 → 用户（优化需求文档） → #001 → requirements/hand-view-requirements.md
-- 2026-03-18 23:08:29 → Coder: 实现手牌分析功能 → #001 → 分支: feature/hand-view → 产出: src/
-- 2026-03-18 23:14:47 → Coder: Bug修复（BUG-001~005） → #001 → 分支: feature/hand-view → 产出: src/
-- 2026-03-18 23:25:18 → Coder: 修复代码审核问题 → #001 → 分支: feature/hand-view → 产出: src/
-- 2026-03-18 23:32:00 → Committer: 代码审核通过，合入 develop → #001 → 分支: feature/hand-view → develop → 产出: src/
+- 2026-03-18 23:38:00 → Automation Tester: 手牌分析功能自动化测试 → #001 → tests/hand-analysis.test.ts（70个测试用例全部通过）
+- 2026-03-18 23:45:00 → UI Tester: UI测试发现8个问题待修复 → #001 → tests/ui/hand-view-ui-test-report.md
+- 2026-03-18 23:50:00 → PM: 复盘与绩效评价 → #001 → evaluation/retrospective/hand-view-2026-03-18.md
+- 2026-03-18 23:32:00 → Committer: 代码审核通过，合入 develop → #001 → feature/hand-view → develop
+- 2026-03-18 23:25:18 → Coder: 修复代码审核问题 → #001 → src/
+- 2026-03-18 23:14:47 → Coder: Bug修复（BUG-001~005） → #001 → src/
+- 2026-03-18 23:08:29 → Coder: 实现手牌分析功能 → #001 → src/
+- 2026-03-18 22:35:55 → 用户: 优化需求文档 → #001 → requirements/hand-view-requirements.md
 
 ### 进行中
 
