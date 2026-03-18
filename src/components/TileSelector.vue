@@ -101,9 +101,10 @@ const categories: TileCategory[] = [
 ]
 
 // 素材区数据：Record<tileId, count>
+// 基于 usedTiles 计算剩余数量，而非维护独立状态
 const sourceTiles = ref<Record<string, number>>({})
 
-// 初始化素材区
+// 初始化素材区数量
 const initSourceTiles = () => {
   const tiles: Record<string, number> = {}
   for (const category of categories) {
@@ -111,10 +112,35 @@ const initSourceTiles = () => {
       tiles[tile.id] = props.maxCount
     }
   }
-  sourceTiles.value = tiles
+  return tiles
 }
 
-initSourceTiles()
+// 根据 usedTiles 计算实际剩余数量
+const updateSourceTilesFromUsedTiles = () => {
+  // 初始化所有牌的数量
+  sourceTiles.value = initSourceTiles()
+
+  // 统计 usedTiles 中每种牌的出现次数
+  const usedCounts: Record<string, number> = {}
+  for (const tile of props.usedTiles) {
+    usedCounts[tile] = (usedCounts[tile] || 0) + 1
+  }
+
+  // 计算剩余数量 = 最大数量 - 已使用数量
+  for (const tileId of Object.keys(sourceTiles.value)) {
+    const usedCount = usedCounts[tileId] || 0
+    sourceTiles.value[tileId] = Math.max(0, props.maxCount - usedCount)
+  }
+}
+
+// 监听 usedTiles 变化，更新素材区数量
+watch(
+  () => props.usedTiles,
+  () => {
+    updateSourceTilesFromUsedTiles()
+  },
+  { deep: true, immediate: true }
+)
 
 // Active tab
 const activeTab = ref('all')
@@ -200,10 +226,7 @@ const hasRemaining = (tileId: string): boolean => {
 // Handle tile click - 添加牌到目标区域
 const handleTileClick = (tileId: string) => {
   if (isTileDisabled(tileId)) return
-  // 减少素材区数量
-  if (sourceTiles.value[tileId] > 0) {
-    sourceTiles.value[tileId]--
-  }
+  // 通过 emit 通知父组件，父组件会更新 usedTiles，从而更新 sourceTiles
   emit('select', tileId)
 }
 
@@ -215,10 +238,7 @@ const handleSourceDrop = (event: Event) => {
   const source = ev.dataTransfer?.getData('source')
 
   if (tileId && source && source !== 'source') {
-    // 增加素材区数量
-    if (sourceTiles.value[tileId] !== undefined && sourceTiles.value[tileId] < props.maxCount) {
-      sourceTiles.value[tileId]++
-    }
+    // 通过 emit 通知父组件增加素材区数量
     emit('remove', tileId, source as any)
   }
 }
@@ -229,10 +249,7 @@ const handleSourceDragStart = (event: DragEvent, tileId: string) => {
     event.preventDefault()
     return
   }
-  // 减少素材区数量
-  if (sourceTiles.value[tileId] > 0) {
-    sourceTiles.value[tileId]--
-  }
+  // 通知父组件减少素材区数量（通过 select 事件，父组件会将牌添加到其他区域）
   if (event.dataTransfer) {
     event.dataTransfer.setData('text/plain', tileId)
     event.dataTransfer.setData('source', 'source')

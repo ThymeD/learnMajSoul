@@ -110,9 +110,11 @@ const handleTileRemoveFromArea = (
   }
 }
 
-// 处理牌移除
-const handleTileRemove = (tile: string, index: number) => {
-  store.removeTile(tile, index)
+// 处理牌移除 - 双击移除时触发素材区数量更新
+const handleTileRemove = (tile: string, _index: number) => {
+  // 调用 handleTileRemoveFromArea 而不是直接调用 store.removeTile
+  // 这样可以触发 'remove' 事件，让素材区数量同步更新
+  handleTileRemoveFromArea(tile, 'hand')
 }
 
 // 摸牌区拖入处理
@@ -272,8 +274,11 @@ const handleDrawTileClick = () => {
 // 处理摸牌双击移除（双击摸牌将其移除回到素材区）
 const handleDrawTileDblClick = () => {
   if (localDrawTile.value) {
+    const tile = localDrawTile.value
     store.setDrawTile(null)
     localDrawTile.value = null
+    // 触发 remove 事件，让素材区数量同步更新
+    handleTileRemoveFromArea(tile, 'draw')
     ElMessage.success('已从摸牌区移除')
   }
 }
@@ -507,10 +512,27 @@ const handleToggleFuluType = (index: number) => {
 
 // ==================== 牌河相关 ====================
 
-// 从牌河回收牌
+// 从牌河回收牌到手牌（点击回收）
 const handleRiverRecover = (index: number) => {
-  store.removeFromRiver(index)
-  localTiles.value = [...store.tiles]
+  const tile = store.river[index]
+  if (tile) {
+    store.removeFromRiver(index)
+    // 牌回到手牌后，触发 'remove' 事件让素材区数量同步更新
+    // 因为牌从牌河移到手牌，不再占用素材区
+    handleTileRemoveFromArea(tile, 'river')
+    localTiles.value = [...store.tiles]
+  }
+}
+
+// 牌河双击移除（BUG-001: 牌河双击移除功能）
+const handleRiverTileDblClick = (tile: string) => {
+  const idx = store.river.indexOf(tile)
+  if (idx !== -1) {
+    // 从牌河移除牌（不回到手牌），直接触发 remove 事件
+    store.river.splice(idx, 1)
+    handleTileRemoveFromArea(tile, 'river')
+    ElMessage.success('已从牌河移除')
+  }
 }
 
 // 副露数据（用于原生 drag/drop 接收拖入）
@@ -1075,6 +1097,7 @@ const handleFuluDrop = (event: DragEvent) => {
               class="river-tile"
               draggable="true"
               @click="handleRiverRecover(index)"
+              @dblclick="handleRiverTileDblClick(element)"
               @dragstart="(e) => handleRiverTileDragStart(e, element, index)"
             >
               <MahjongTile :tile-id="element" :width="40" :show-name="false" />
