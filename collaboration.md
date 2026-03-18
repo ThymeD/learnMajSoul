@@ -47,12 +47,13 @@
 - 2026-03-18 23:08:29 → Coder: 实现手牌分析功能 → #001 → 分支: feature/hand-view → 产出: src/
 - 2026-03-18 23:14:47 → Coder: Bug修复（BUG-001~005） → #001 → 分支: feature/hand-view → 产出: src/
 - 2026-03-18 23:25:18 → Coder: 修复代码审核问题 → #001 → 分支: feature/hand-view → 产出: src/
+- 2026-03-18 23:32:00 → Committer: 代码审核通过，合入 develop → #001 → 分支: feature/hand-view → develop → 产出: src/
 
 ### 进行中
 
 > 格式：agent: 任务 → 关联需求: #xxx → 分支: xxx → 产出: 目录/文件
 
-- Committer: 代码审核（等待复审） → #001 → 分支: feature/hand-view → 产出: src/
+- （无进行中任务）
 
 ---
 
