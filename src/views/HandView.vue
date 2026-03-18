@@ -269,6 +269,15 @@ const handleDrawTileClick = () => {
   }
 }
 
+// 处理摸牌双击移除（双击摸牌将其移除回到素材区）
+const handleDrawTileDblClick = () => {
+  if (localDrawTile.value) {
+    store.setDrawTile(null)
+    localDrawTile.value = null
+    ElMessage.success('已从摸牌区移除')
+  }
+}
+
 // 清空
 const handleClear = () => {
   store.clear()
@@ -489,6 +498,11 @@ const handleRemoveFulu = (index: number) => {
 
   // 同步本地状态
   localTiles.value = [...store.tiles]
+}
+
+// 切换副露的明杠/暗杠状态
+const handleToggleFuluType = (index: number) => {
+  store.toggleFuluType(index)
 }
 
 // ==================== 牌河相关 ====================
@@ -905,6 +919,15 @@ const handleFuluDrop = (event: DragEvent) => {
                   </template>
                 </div>
                 <el-button
+                  v-if="item.type === 'kan'"
+                  size="small"
+                  type="warning"
+                  link
+                  @click="handleToggleFuluType(idx)"
+                >
+                  {{ item.isOpen === false ? '明杠' : '暗杠' }}
+                </el-button>
+                <el-button
                   v-if="!store.isLiqi"
                   size="small"
                   type="danger"
@@ -969,6 +992,7 @@ const handleFuluDrop = (event: DragEvent) => {
                   :class="{ 'is-ting': store.analysis?.tingPai?.includes(element) }"
                   draggable="true"
                   @dragstart="(e) => handleHandTileDragStart(e, element, index)"
+                  @dblclick="handleTileRemove(element, index)"
                 >
                   <div v-if="store.analysis?.tingPai?.includes(element)" class="ting-indicator">
                     {{ tingCountMap[element] || '' }}
@@ -987,6 +1011,7 @@ const handleFuluDrop = (event: DragEvent) => {
                 class="draw-tile-zone"
                 :class="{ 'has-draw': !!localDrawTile }"
                 @click="handleDrawTileClick"
+                @dblclick="handleDrawTileDblClick"
                 @dragover.prevent
                 @drop="handleDrawTileDrop"
               >

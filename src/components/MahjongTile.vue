@@ -9,9 +9,17 @@ const props = defineProps<{
   isBack?: boolean
 }>()
 
+const emit = defineEmits<{
+  (e: 'dblclick'): void
+}>()
+
 const tileWidth = computed(() => props.width || 100)
 const tileHeight = computed(() => Math.round((tileWidth.value * 13) / 8))
 const borderRadius = computed(() => Math.round(tileWidth.value / 10))
+
+const handleDoubleClick = () => {
+  emit('dblclick')
+}
 
 interface TileInfo {
   name: string
@@ -71,6 +79,7 @@ const imageUrl = computed(() => {
     class="mahjong-tile"
     :class="{ 'is-back': props.isBack }"
     :style="{ marginRight: props.split ? '24px' : undefined }"
+    @dblclick="handleDoubleClick"
   >
     <img
       v-if="!props.isBack"

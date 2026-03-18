@@ -15,6 +15,10 @@ import {
   type Tile
 } from '../utils/mahjong'
 import { matchYaku, calculateHan, type YakuMatchResult } from '../utils/yaku-match'
+import {
+  randomHand as generateRandomHuHand,
+  randomHandWithFulu as generateRandomHuHandWithFulu
+} from '../utils/random-hand'
 
 // ==================== 类型定义 ====================
 
@@ -33,6 +37,12 @@ export interface Fulu {
   from?: number
   /** 是否明杠（暗杠=false，从手牌杠） */
   isOpen?: boolean
+}
+
+/** 副露暂存区 */
+export interface FuluTemp {
+  tiles: string[] // 暂存的牌
+  createdAt: number // 创建时间戳
 }
 
 /** 分析结果 */
@@ -126,6 +136,9 @@ export const useHandStore = defineStore('hand', () => {
 
   /** 分析结果 */
   const analysis = ref<AnalysisResult | null>(null)
+
+  /** 副露暂存区 */
+  const fuluTemp = ref<FuluTemp[]>([])
 
   // ==================== Getters ====================
 
@@ -229,7 +242,9 @@ export const useHandStore = defineStore('hand', () => {
   }
 
   /**
-   * 清空手牌
+   * 清空所有状态到默认值
+   * 包括：手牌、摸牌、副露、牌河、宝牌、分析结果、副露暂存区
+   * 役种设置重置为：立直=false、庄家=false、自风=东、场风=东
    */
   function clear(): void {
     tiles.value = []
@@ -237,136 +252,77 @@ export const useHandStore = defineStore('hand', () => {
     fulu.value = []
     river.value = []
     isLiqi.value = false
+    dealer.value = false
+    selfWind.value = 'd1'
+    fieldWind.value = 'd1'
     dora.value = []
     analysis.value = null
+    fuluTemp.value = []
   }
 
   /**
-   * 随机生成一手牌
-   * 生成13张手牌（门清状态），可选择生成副露和牌河
-   * 保证所有区域的牌加起来不超过4张
+   * 随机生成可胡牌牌型
+   * 使用 random-hand.ts 中的算法生成符合胡牌条件的牌型
+   * @param includeFulu 是否包含副露
+   * @param includeRiver 是否包含牌河
    */
   function randomHand(includeFulu = false, includeRiver = false): void {
     // 清空现有状态
     clear()
 
-    // 牌池：每种牌最多4张
-    const pool: Tile[] = []
-    for (let i = 0; i < 4; i++) {
-      pool.push(...ALL_POSSIBLE_TILES)
-    }
+    // 使用新的随机生成算法
+    const result = includeFulu ? generateRandomHuHandWithFulu() : generateRandomHuHand()
 
-    // 跟踪每种牌的数量
-    const tileCounts: Record<string, number> = {}
+    // 设置生成的结果
+    tiles.value = result.tiles as string[]
+    drawTile.value = result.drawTile
+    fulu.value = result.fulu as Fulu[]
 
-    // 随机选择一张牌，确保不超过4张
-    const pickRandomTile = (): Tile | null => {
-      if (pool.length === 0) return null
-      const randomIndex = Math.floor(Math.random() * pool.length)
-      const tile = pool[randomIndex]
-      const currentCount = tileCounts[tile] || 0
-      if (currentCount >= 4) {
-        pool.splice(randomIndex, 1)
-        return pickRandomTile()
-      }
-      tileCounts[tile] = currentCount + 1
-      return tile
-    }
-
-    // 生成13张手牌
-    const selected: string[] = []
-    for (let i = 0; i < 13; i++) {
-      const tile = pickRandomTile()
-      if (tile) {
-        selected.push(tile)
+    // 可选：生成牌河
+    if (includeRiver) {
+      // 简单生成一些随机牌作为牌河
+      const riverCount = Math.floor(Math.random() * 6) // 0-5张
+      const pool = createAvailablePool()
+      for (let i = 0; i < riverCount && pool.length > 0; i++) {
+        const idx = Math.floor(Math.random() * pool.length)
+        river.value.push(pool.splice(idx, 1)[0])
       }
     }
-    tiles.value = sortTiles(selected)
+  }
 
-    // 可选：生成副露（0-4个）
-    if (includeFulu && pool.length >= 3) {
-      const numFulu = Math.floor(Math.random() * 5) // 0-4个副露
-      for (let i = 0; i < numFulu && pool.length >= 3; i++) {
-        // 尝试找到一个可以组成副露的牌
-        const fuluTypes: ('chi' | 'pon' | 'kan')[] = ['pon', 'kan', 'chi']
-        const chosenType = fuluTypes[Math.floor(Math.random() * fuluTypes.length)]
+  /**
+   * 创建当前可用牌池（从已使用的牌反推）
+   */
+  function createAvailablePool(): string[] {
+    const used: Record<string, number> = {}
 
-        if (chosenType === 'kan' && pool.length >= 4) {
-          // 杠牌：需要4张
-          const tile = pickRandomTile()
-          if (tile) {
-            // 从 pool 中移除4张相同的牌
-            for (let j = 0; j < 4; j++) {
-              const idx = pool.lastIndexOf(tile)
-              if (idx !== -1) pool.splice(idx, 1)
-            }
-            const kanTiles = [tile, tile, tile, tile]
-            fulu.value.push({
-              type: 'kan',
-              tiles: kanTiles
-            })
-          }
-        } else if (chosenType === 'pon' && pool.length >= 3) {
-          // 碰牌：需要3张
-          const tile = pickRandomTile()
-          if (tile) {
-            // 从 pool 中移除3张相同的牌
-            for (let j = 0; j < 3; j++) {
-              const idx = pool.lastIndexOf(tile)
-              if (idx !== -1) pool.splice(idx, 1)
-            }
-            const ponTiles = [tile, tile, tile]
-            fulu.value.push({
-              type: 'pon',
-              tiles: ponTiles
-            })
-          }
-        } else if (chosenType === 'chi' && pool.length >= 3) {
-          // 吃牌：需要3张连续
-          const numberSuits = ['w', 'b', 's'] as const
-          const suit = numberSuits[Math.floor(Math.random() * numberSuits.length)]
-          const startNum = Math.floor(Math.random() * 7) + 1 // 1-7
-          const t1 = `${suit}${startNum}` as Tile
-          const t2 = `${suit}${startNum + 1}` as Tile
-          const t3 = `${suit}${startNum + 2}` as Tile
+    // 统计已使用的牌
+    for (const tile of tiles.value) {
+      used[tile] = (used[tile] || 0) + 1
+    }
+    if (drawTile.value) {
+      used[drawTile.value] = (used[drawTile.value] || 0) + 1
+    }
+    for (const f of fulu.value) {
+      for (const tile of f.tiles) {
+        used[tile] = (used[tile] || 0) + 1
+      }
+    }
+    for (const tile of river.value) {
+      used[tile] = (used[tile] || 0) + 1
+    }
 
-          // 检查这些牌是否可用（在 pool 中存在且不超过4张）
-          const t1Count = tileCounts[t1] || 0
-          const t2Count = tileCounts[t2] || 0
-          const t3Count = tileCounts[t3] || 0
-
-          if (t1Count < 4 && t2Count < 4 && t3Count < 4) {
-            // 从 pool 中移除这3张牌
-            const removeFromPool = (t: Tile) => {
-              const idx = pool.indexOf(t)
-              if (idx !== -1) pool.splice(idx, 1)
-            }
-            removeFromPool(t1)
-            removeFromPool(t2)
-            removeFromPool(t3)
-
-            tileCounts[t1] = t1Count + 1
-            tileCounts[t2] = t2Count + 1
-            tileCounts[t3] = t3Count + 1
-            fulu.value.push({
-              type: 'chi',
-              tiles: [t1, t2, t3]
-            })
-          }
-        }
+    // 创建可用池（每种牌最多4张减去已使用的）
+    const pool: string[] = []
+    for (const tile of ALL_POSSIBLE_TILES) {
+      const usedCount = used[tile] || 0
+      const available = 4 - usedCount
+      for (let i = 0; i < available; i++) {
+        pool.push(tile)
       }
     }
 
-    // 可选：生成牌河（0-6张）
-    if (includeRiver && pool.length > 0) {
-      const numRiver = Math.floor(Math.random() * 7) // 0-6张
-      for (let i = 0; i < numRiver && pool.length > 0; i++) {
-        const tile = pickRandomTile()
-        if (tile) {
-          river.value.push(tile)
-        }
-      }
-    }
+    return pool
   }
 
   /**
@@ -402,6 +358,95 @@ export const useHandStore = defineStore('hand', () => {
     if (index >= 0 && index < fulu.value.length) {
       fulu.value.splice(index, 1)
     }
+  }
+
+  /**
+   * 切换副露的明杠/暗杠状态
+   * @param index 副露索引
+   */
+  function toggleFuluType(index: number): void {
+    if (index >= 0 && index < fulu.value.length) {
+      const fuluItem = fulu.value[index]
+      if (fuluItem.type === 'kan' && fuluItem.isOpen !== undefined) {
+        fuluItem.isOpen = !fuluItem.isOpen
+      }
+    }
+  }
+
+  /**
+   * 添加牌到副露暂存区
+   * @param tile 牌
+   */
+  function addToFuluTemp(tile: string): void {
+    const normalized = normalizeTiles([tile])[0]
+    fuluTemp.value.push({
+      tiles: [normalized],
+      createdAt: Date.now()
+    })
+  }
+
+  /**
+   * 从副露暂存区移除牌
+   * @param index 暂存区索引
+   */
+  function removeFromFuluTemp(index: number): void {
+    if (index >= 0 && index < fuluTemp.value.length) {
+      fuluTemp.value.splice(index, 1)
+    }
+  }
+
+  /**
+   * 清空副露暂存区
+   */
+  function clearFuluTemp(): void {
+    fuluTemp.value = []
+  }
+
+  /**
+   * 提交副露暂存区，尝试成组
+   * @returns 成组后创建的副露，如果无法成组则返回null
+   */
+  function commitFuluTemp(): Fulu | null {
+    if (fuluTemp.value.length === 0) {
+      return null
+    }
+
+    // 合并所有暂存的牌
+    const allTiles: string[] = []
+    for (const temp of fuluTemp.value) {
+      allTiles.push(...temp.tiles)
+    }
+
+    // 检查是否能成组
+    const counts = countTiles(allTiles)
+
+    // 检查4张相同 -> 杠
+    for (const [tile, count] of Object.entries(counts)) {
+      if (count >= 4) {
+        clearFuluTemp()
+        return {
+          type: 'kan',
+          tiles: [tile, tile, tile, tile],
+          isOpen: true // 明杠
+        }
+      }
+    }
+
+    // 检查3张相同 -> 碰
+    for (const [tile, count] of Object.entries(counts)) {
+      if (count >= 3) {
+        clearFuluTemp()
+        return {
+          type: 'pon',
+          tiles: [tile, tile, tile]
+        }
+      }
+    }
+
+    // 检查3张连续 -> 吃
+    // ...
+
+    return null
   }
 
   /**
@@ -756,6 +801,7 @@ export const useHandStore = defineStore('hand', () => {
     fieldWind,
     dora,
     analysis,
+    fuluTemp,
 
     // Getters
     allTiles,
@@ -771,6 +817,7 @@ export const useHandStore = defineStore('hand', () => {
     randomHand,
     addFulu,
     removeFulu,
+    toggleFuluType,
     addToRiver,
     removeFromRiver,
     setLiqi,
@@ -783,6 +830,10 @@ export const useHandStore = defineStore('hand', () => {
     loadState,
     getChiCombinations,
     getPonCombinations,
-    getKanCombinations
+    getKanCombinations,
+    addToFuluTemp,
+    removeFromFuluTemp,
+    clearFuluTemp,
+    commitFuluTemp
   }
 })

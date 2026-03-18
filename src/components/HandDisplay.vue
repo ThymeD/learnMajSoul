@@ -14,6 +14,7 @@ interface Emits {
   (e: 'remove-tile', tile: string, index: number): void
   (e: 'set-draw', tile: string): void
   (e: 'update:tiles', tiles: string[]): void
+  (e: 'tile-dblclick', tile: string, index: number): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -52,8 +53,12 @@ const handleTilesUpdate = (val: string[]) => {
         :disabled="disabled"
         @update:model-value="handleTilesUpdate"
       >
-        <template #item="{ element }">
-          <div class="tile-wrapper" :class="{ 'is-ting': tingPai.includes(element) }">
+        <template #item="{ element, index }">
+          <div
+            class="tile-wrapper"
+            :class="{ 'is-ting': tingPai.includes(element) }"
+            @dblclick="emit('tile-dblclick', element, index)"
+          >
             <!-- 听牌位置显示听牌张数 -->
             <div v-if="tingPai.includes(element)" class="ting-indicator">
               {{ tingCountMap[element] || '' }}
@@ -64,7 +69,11 @@ const handleTilesUpdate = (val: string[]) => {
       </draggable>
 
       <!-- 摸牌区域 -->
-      <div class="draw-tile-zone" :class="{ 'has-draw': !!drawTile, 'is-disabled': disabled }">
+      <div
+        class="draw-tile-zone"
+        :class="{ 'has-draw': !!drawTile, 'is-disabled': disabled }"
+        @dblclick="emit('tile-dblclick', drawTile!, -1)"
+      >
         <div v-if="drawTile" class="draw-tile">
           <MahjongTile :tile-id="drawTile" :width="60" :show-name="false" />
         </div>
