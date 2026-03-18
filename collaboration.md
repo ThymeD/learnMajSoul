@@ -50,12 +50,13 @@
 - 2026-03-18 19:10:00 → Coder: Bug修复 → #001 → 分支: feature/hand-view → 产出: src/
 - 2026-03-18 19:45:00 → UI Tester: UI测试复测通过 → #001 → tests/ui/hand-view-test-report.md
 - 2026-03-18 23:19:40 → Committer: 代码审核（发现5个问题需修复） → #001 → 分支: feature/hand-view
+- 2026-03-18 23:45:00 → Coder: 修复代码审核问题 → #001 → 分支: feature/hand-view → 产出: src/
 
 ### 进行中
 
 > 格式：agent: 任务 → 关联需求: #xxx → 分支: xxx → 产出: 目录/文件
 
-- Committer: 代码审核 → #001 → 分支: feature/hand-view → 产出: src/
+- Committer: 代码审核（等待复审） → #001 → 分支: feature/hand-view → 产出: src/
 
 ---
 
