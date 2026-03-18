@@ -20,6 +20,7 @@ Coder（代码实现）
 - 构建验证（确保代码能编译通过）
 - 运行项目，展示效果给用户确认
 - 按规范提交代码
+- **识别POC适用场景**：当改动风险高、可能影响已有功能时，主动建议POC验证
 
 ## 产出要求
 
@@ -27,6 +28,174 @@ Coder（代码实现）
 | -------- | --------- | ---------------------------- |
 | 代码     | src/\*\*  | 业务代码                     |
 | 简单测试 | 测试文件  | 基本断言覆盖（简单单元测试） |
+
+## 编码规范
+
+### 单文件行数控制
+
+> **核心原则**：`script` 部分行数才是关键指标，template 行数多不一定代表复杂
+
+| 文件类型        | `<script>` 上限 | 整体参考 |
+| --------------- | --------------- | -------- |
+| 页面组件 .vue   | 200行           | 600行    |
+| 业务组件 .vue   | 150行           | 400行    |
+| 公共组件 .vue   | 100行           | 200行    |
+| Store .ts       | 300行           | 500行    |
+| Composables .ts | 150行           | 200行    |
+
+**触发拆分条件**（满足任一即触发）：
+
+- `<script>` 部分超过上述上限
+- 存在 2 处以上相同/相似逻辑
+- 组件承担超过 2 个独立职责
+- 某个函数/逻辑可被其他模块复用
+
+### 目录结构规范
+
+```
+src/
+├── components/                   # 公共UI组件
+│   ├── MahjongTile.vue          # 原子组件（仅渲染）
+│   ├── TileSelector.vue         # 业务组件
+│   ├── HandDisplay.vue          # 业务组件
+│   └── MasteryStars.vue         # 业务组件
+│
+├── composables/                 # 全局可复用逻辑
+│   ├── useLongPress.ts          # 长按交互
+│   ├── useDragDrop.ts           # 拖拽逻辑
+│   ├── useHandAnalysis.ts       # 手牌分析逻辑
+│   ├── useYakuFilter.ts         # 役种筛选逻辑
+│   └── useClickOutside.ts       # 点击外部关闭
+│
+├── stores/                      # 状态管理
+├── utils/                       # 纯函数工具
+├── views/                       # 页面视图
+│   ├── HomeView.vue             # 简单页面保持单文件
+│   ├── HandView/                # 复杂页面按目录组织
+│   │   ├── index.vue            # 主入口，负责组装
+│   │   ├── components/          # 页面私有组件
+│   │   ├── composables/         # 页面私有逻辑
+│   │   └── types.ts
+│   └── YakuView/
+│       ├── index.vue
+│       ├── components/
+│       └── composables/
+└── DraftView/                   # 草稿区
+```
+
+### Composables 设计规范
+
+#### 命名规范
+
+- 前缀：`use` + 语义化名称
+- 示例：`useHandAnalysis`, `useLongPress`
+
+#### 职责单一原则
+
+```
+✅ useLongPress.ts      # 仅处理长按逻辑
+✅ useDragDrop.ts       # 仅处理拖拽逻辑
+❌ useHandLogic.ts      # 混杂多种逻辑
+```
+
+#### 抽离时机
+
+| 场景               | 决策         |
+| ------------------ | ------------ |
+| 逻辑被 2+ 组件复用 | **必须抽离** |
+| 逻辑超过 30 行     | 考虑抽离     |
+| 涉及复杂状态/计算  | 考虑抽离     |
+| 仅为当前组件服务   | 不抽离       |
+
+#### 输出规范
+
+```typescript
+// ✅ 正确：清晰的输入/输出
+export function useLongPress(callback: () => void, options?: { delay?: number }) {
+  const isPressing = ref(false)
+  return { start, stop, isPressing }
+}
+
+// ❌ 错误：隐式依赖不明确
+export function useHandLogic() {
+  const store = useHandStore() // 隐式依赖
+}
+```
+
+### 组件拆分规范
+
+#### 拆分原则
+
+| 原则     | 说明                       |
+| -------- | -------------------------- |
+| 职责单一 | 一个组件只做一件事         |
+| 高内聚   | 相关逻辑放一起             |
+| 低耦合   | 组件间通过 props/emit 通信 |
+| 可复用   | 公共逻辑抽到 components/   |
+
+#### 页面组件拆分模板
+
+```vue
+<!-- views/HandView/index.vue -->
+<template>
+  <div class="hand-view">
+    <HandBoard :tiles="tiles" @select="handleSelect" />
+    <RiverPanel :river="river" />
+    <DrawTile :tile="drawTile" />
+    <ActionPanel :actions="actions" @action="handleAction" />
+  </div>
+</template>
+
+<script setup lang="ts">
+import HandBoard from './components/HandBoard.vue'
+import RiverPanel from './components/RiverPanel.vue'
+import DrawTile from './components/DrawTile.vue'
+import ActionPanel from './components/ActionPanel.vue'
+import { useHandView } from './composables/useHandView'
+
+const { tiles, river, drawTile, actions, handleSelect, handleAction } = useHandView()
+</script>
+```
+
+#### 组件引用层级
+
+```
+index.vue (入口)
+  └── components/ (子组件)
+        └── components/ (孙子组件，尽量避免)
+```
+
+### 类型定义管理
+
+| 位置                     | 用途         |
+| ------------------------ | ------------ |
+| `src/types/`             | 全局共享类型 |
+| `src/views/XXX/types.ts` | 页面私有类型 |
+| 同文件 `interface`       | 仅该组件使用 |
+
+#### 抽离时机
+
+- 2+ 文件使用同一类型
+- 类型定义超过 20 行
+
+### 规范执行检查表
+
+| 检查项                      | 约束级别 |
+| --------------------------- | -------- |
+| `<script>` 行数上限         | 强制     |
+| Composables 命名规范        | 强制     |
+| 职责单一                    | 强制     |
+| views/ 按目录组织（>300行） | 建议     |
+| 公共逻辑抽离（复用2次+）    | 建议     |
+
+### 验证标准
+
+每个模块完成后需满足：
+
+1. 功能可独立运行验证
+2. 测试用例通过
+3. 代码符合项目规范
+4. 构建通过（npm run build）
 
 ## 协作规范
 

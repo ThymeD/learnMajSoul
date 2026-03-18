@@ -890,17 +890,17 @@ project/
 
 各agent的详细职责定义在各自的配置文件中，窗口切换时直接读取：
 
-| agent                | 配置文件                       |
-| -------------------- | ------------------------------ |
-| PM                   | agents/pm.md                   |
-| requirements-manager | agents/requirements-manager.md |
-| architect            | agents/architect.md            |
-| ui-designer          | agents/ui-designer.md          |
-| coder                | agents/coder.md                |
-| committer            | agents/committer.md            |
-| automation-tester    | agents/automation-tester.md    |
-| ui-tester            | agents/ui-tester.md            |
-| docs-writer          | agents/docs-writer.md          |
+| agent                | 配置文件                                 |
+| -------------------- | ---------------------------------------- |
+| PM                   | .opencode/agents/pm.md                   |
+| requirements-manager | .opencode/agents/requirements-manager.md |
+| architect            | .opencode/agents/architect.md            |
+| ui-designer          | .opencode/agents/ui-designer.md          |
+| coder                | .opencode/agents/coder.md                |
+| committer            | .opencode/agents/committer.md            |
+| automation-tester    | .opencode/agents/automation-tester.md    |
+| ui-tester            | .opencode/agents/ui-tester.md            |
+| docs-writer          | .opencode/agents/docs-writer.md          |
 
 > **注**：各agent配置文件在窗口切换时读取，职责定义不在本文件中重复维护。
 
@@ -926,7 +926,7 @@ project/
 | 文件                       | 定位                         | 是否参与交付      |
 | -------------------------- | ---------------------------- | ----------------- |
 | **agent-team-workflow.md** | 流程规范原始稿，定义协作规则 | ❌ 仅用于定义规则 |
-| **agents/\*.md**           | agent执行配置，由原始稿生成  | ✅ 参与实际交付   |
+| **.opencode/agents/\*.md** | agent执行配置，由原始稿生成  | ✅ 参与实际交付   |
 | **工作流层AGENTS.md**      | 工作流本身的agent配置        | 工作流自身使用    |
 | **项目层AGENTS.md**        | 从工作流生成的，用于实际项目 | ✅ 项目配置       |
 
@@ -935,23 +935,23 @@ project/
 ```
 agent-team-workflow.md（原始稿）
     ↓ 提取agent角色和职责
-agents/*.md（各agent定义文件）
+.opencode/agents/*.md（各agent定义文件）
     ↓ 配置路径
 项目层 AGENTS.md（项目级配置）
 ```
 
 ### 三、信息分配
 
-| 内容         | agent-team-workflow.md | agents/\*.md | 项目AGENTS.md |
-| ------------ | ---------------------- | ------------ | ------------- |
-| 协作流程规范 | ✅ 完整定义            | 简要提及     | 引用          |
-| 角色职责     | 简要说明               | ✅ 详细定义  | 引用          |
-| 评价机制     | ✅ 完整定义            | -            | -             |
-| 触发条件     | ✅ 完整定义            | -            | 引用          |
-| 产出目录约定 | ✅ 完整定义            | 详细         | -             |
-| Git规范      | ✅ 完整定义            | 简要重复     | -             |
+| 内容         | agent-team-workflow.md | .opencode/agents/\*.md | 项目AGENTS.md |
+| ------------ | ---------------------- | ---------------------- | ------------- |
+| 协作流程规范 | ✅ 完整定义            | 简要提及               | 引用          |
+| 角色职责     | 简要说明               | ✅ 详细定义            | 引用          |
+| 评价机制     | ✅ 完整定义            | -                      | -             |
+| 触发条件     | ✅ 完整定义            | -                      | 引用          |
+| 产出目录约定 | ✅ 完整定义            | 详细                   | -             |
+| Git规范      | ✅ 完整定义            | 简要重复               | -             |
 
-### 四、agents/\*.md 内容结构
+### 四、.opencode/agents/\*.md 内容结构
 
 每个agent文件应包含：
 
@@ -971,7 +971,7 @@ agents/*.md（各agent定义文件）
     ↓
 更新 agent-team-workflow.md（规范层）
     ↓
-同步更新 agents/*.md（执行层）
+同步更新 .opencode/agents/*.md（执行层）
     ↓
 重新生成 项目AGENTS.md
     ↓
@@ -984,13 +984,13 @@ agents/*.md（各agent定义文件）
 
 基于本原始稿，需要生成以下文件：
 
-1. **agents/pm.md** - PM agent定义
-2. **agents/requirements-manager.md** - 需求分析agent定义
-3. **agents/architect.md** - 架构设计agent定义
-4. **agents/ui-designer.md** - 界面设计agent定义
-5. **agents/coder.md** - 代码实现agent定义
-6. **agents/committer.md** - 代码审核agent定义
-7. **agents/automation-tester.md** - 自动化测试agent定义
-8. **agents/ui-tester.md** - UI测试agent定义
-9. **agents/docs-writer.md** - 文档编写agent定义
-10. **项目AGENTS.md** - 项目级配置（引用agents/\*.md）
+1. **.opencode/agents/pm.md** - PM agent定义
+2. **.opencode/agents/requirements-manager.md** - 需求分析agent定义
+3. **.opencode/agents/architect.md** - 架构设计agent定义
+4. **.opencode/agents/ui-designer.md** - 界面设计agent定义
+5. **.opencode/agents/coder.md** - 代码实现agent定义
+6. **.opencode/agents/committer.md** - 代码审核agent定义
+7. **.opencode/agents/automation-tester.md** - 自动化测试agent定义
+8. **.opencode/agents/ui-tester.md** - UI测试agent定义
+9. **.opencode/agents/docs-writer.md** - 文档编写agent定义
+10. **项目AGENTS.md** - 项目级配置（引用.opencode/agents/\*.md）
