@@ -178,4 +178,29 @@ Docs Writer相对边缘，但文档是项目的门面：
 
 ---
 
+## 历史绩效摘要
+
+> PM在绩效评价后更新，agent开始新任务前应查看
+
+### 最近评价
+
+| 日期 | 周期 | 评级 | 存在问题 |
+|------|------|------|----------|
+| - | - | - | - |
+
+### 待改进项
+
+- [ ] 
+
+### 已改进项
+
+- [ ] 
+
+### 查看完整评价
+
+详见：`evaluation/self-summary/docs-writer-summary-{date}.md`
+             `evaluation/stage/{feature}-{date}.md`
+
+---
+
 详见工作目录下的 `agent-team-workflow.md` 考评机制章节
