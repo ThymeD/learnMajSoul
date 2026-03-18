@@ -25,7 +25,7 @@
 
 ### 待办事项（下次迭代）
 
-> 以下问题记录在案，下次迭代修复：
+> 以下生产问题（用户登记）记录在案，修复后必须复盘确认才能关闭：
 
 1. 素材区拖牌到牌河功能
 2. 牌河牌计入总牌数统计
@@ -49,7 +49,7 @@
 > 格式：YYYY-MM-DD HH:MM:SS（真实时间）→ agent: 任务 → #xxx → 产出
 
 - 2026-03-18 23:38:00 → Automation Tester: 手牌分析功能自动化测试 → #001 → tests/hand-analysis.test.ts（70个测试用例全部通过）
-- 2026-03-18 23:45:00 → UI Tester: UI测试发现8个问题待修复 → #001 → tests/ui/hand-view-ui-test-report.md
+- 2026-03-18 23:45:00 → UI Tester: UI测试发现9个生产问题 → #001 → tests/ui/hand-view-ui-test-report.md
 - 2026-03-18 23:50:00 → PM: 复盘与绩效评价 → #001 → evaluation/retrospective/hand-view-2026-03-18.md
 - 2026-03-18 23:32:00 → Committer: 代码审核通过，合入 develop → #001 → feature/hand-view → develop
 - 2026-03-18 23:25:18 → Coder: 修复代码审核问题 → #001 → src/
