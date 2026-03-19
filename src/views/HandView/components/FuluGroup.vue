@@ -25,10 +25,10 @@ const emit = defineEmits<Emits>()
           <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" />
         </div>
         <div class="fulu-tile-wrapper kan-back">
-          <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" :is-back="true" />
+          <MahjongTile :tile-id="item.tiles[1]" :width="40" :show-name="false" :is-back="true" />
         </div>
         <div class="fulu-tile-wrapper kan-back">
-          <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" :is-back="true" />
+          <MahjongTile :tile-id="item.tiles[2]" :width="40" :show-name="false" :is-back="true" />
         </div>
         <div class="fulu-tile-wrapper">
           <MahjongTile :tile-id="item.tiles[3]" :width="40" :show-name="false" />

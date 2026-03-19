@@ -69,7 +69,7 @@ const handleTempRemove = (index: number) => {
             </div>
             <div class="fulu-tile-wrapper kan-back">
               <MahjongTile
-                :tile-id="item.tiles[0]"
+                :tile-id="item.tiles[1]"
                 :width="40"
                 :show-name="false"
                 :is-back="true"
@@ -77,7 +77,7 @@ const handleTempRemove = (index: number) => {
             </div>
             <div class="fulu-tile-wrapper kan-back">
               <MahjongTile
-                :tile-id="item.tiles[0]"
+                :tile-id="item.tiles[2]"
                 :width="40"
                 :show-name="false"
                 :is-back="true"
