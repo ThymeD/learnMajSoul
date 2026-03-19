@@ -20,18 +20,18 @@ const emit = defineEmits<Emits>()
   <div class="fulu-group">
     <div class="fulu-tiles">
       <template v-if="item.type === 'kan' && !item.isOpen">
-        <!-- 暗杠：牌背在中间 -->
-        <div class="fulu-tile-wrapper">
-          <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" />
-        </div>
+        <!-- 暗杠：牌背、牌面、牌面、牌背 -->
         <div class="fulu-tile-wrapper kan-back">
-          <MahjongTile :tile-id="item.tiles[1]" :width="40" :show-name="false" :is-back="true" />
-        </div>
-        <div class="fulu-tile-wrapper kan-back">
-          <MahjongTile :tile-id="item.tiles[2]" :width="40" :show-name="false" :is-back="true" />
+          <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" :is-back="true" />
         </div>
         <div class="fulu-tile-wrapper">
-          <MahjongTile :tile-id="item.tiles[3]" :width="40" :show-name="false" />
+          <MahjongTile :tile-id="item.tiles[1]" :width="40" :show-name="false" />
+        </div>
+        <div class="fulu-tile-wrapper">
+          <MahjongTile :tile-id="item.tiles[2]" :width="40" :show-name="false" />
+        </div>
+        <div class="fulu-tile-wrapper kan-back">
+          <MahjongTile :tile-id="item.tiles[3]" :width="40" :show-name="false" :is-back="true" />
         </div>
       </template>
       <template v-else>
