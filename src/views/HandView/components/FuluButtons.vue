@@ -23,17 +23,29 @@ const emit = defineEmits<Emits>()
 <template>
   <div class="fulu-buttons">
     <template v-if="mode === 'none'">
-      <el-button size="small" :disabled="!canFulu || chiCount === 0" @click="emit('enter-chi')">
+      <el-button
+        size="small"
+        :disabled="!canFulu || chiCount === 0"
+        @click="() => emit('enter-chi')"
+      >
         吃
       </el-button>
-      <el-button size="small" :disabled="!canFulu || ponCount === 0" @click="emit('enter-pon')">
+      <el-button
+        size="small"
+        :disabled="!canFulu || ponCount === 0"
+        @click="() => emit('enter-pon')"
+      >
         碰
       </el-button>
-      <el-button size="small" :disabled="!canFulu || kanCount === 0" @click="emit('enter-kan')">
+      <el-button
+        size="small"
+        :disabled="!canFulu || kanCount === 0"
+        @click="() => emit('enter-kan')"
+      >
         杠
       </el-button>
     </template>
-    <el-button v-else size="small" @click="emit('cancel')">取消</el-button>
+    <el-button v-else size="small" @click="() => emit('cancel')">取消</el-button>
   </div>
 </template>
 

@@ -577,7 +577,13 @@ const handleRiverDrop = (event: DragEvent) => {
       store.river.push(tileId)
     }
   } else if (source === 'source') {
-    store.river.push(tileId)
+    // 从素材区拖拽到牌河，直接加入牌河，同时更新usedTiles以减少素材区数量
+    // 通过强制触发usedTiles的计算来确保TileSelector正确响应
+    const tempRiver = [...store.river]
+    tempRiver.push(tileId)
+    store.river = tempRiver
+    // 触发一个响应式更新，确保素材区数量能正确减少
+    // 由于usedTiles依赖store.river，这会触发TileSelector的watch
   }
 }
 
