@@ -277,6 +277,8 @@ const usedTiles = computed(() => {
     used.push(...fulu.tiles)
   }
   used.push(...fuluDropTiles.value)
+  // 从素材区直接消耗到牌河的牌也需要计入usedTiles，以便素材区正确计算剩余数量
+  used.push(...store.consumedFromSource)
   return used
 })
 
@@ -577,13 +579,11 @@ const handleRiverDrop = (event: DragEvent) => {
       store.river.push(tileId)
     }
   } else if (source === 'source') {
-    // 从素材区拖拽到牌河，直接加入牌河，同时更新usedTiles以减少素材区数量
-    // 通过强制触发usedTiles的计算来确保TileSelector正确响应
-    const tempRiver = [...store.river]
-    tempRiver.push(tileId)
-    store.river = tempRiver
-    // 触发一个响应式更新，确保素材区数量能正确减少
-    // 由于usedTiles依赖store.river，这会触发TileSelector的watch
+    // 从素材区拖拽到牌河，牌直接加入牌河
+    // 同时记录到 consumedFromSource，让素材区能够正确减少数量
+    store.river.push(tileId)
+    store.addConsumedFromSource(tileId)
+    ElMessage.success('已添加到牌河')
   }
 }
 
