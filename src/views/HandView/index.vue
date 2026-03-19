@@ -71,6 +71,7 @@ const handleTileAdd = (tile: string) => {
 }
 
 // 从各区域移除牌（拖回素材选择区）
+// 注意：'draw' 和 'river' 的处理已在各自的处理函数中完成，这里只处理其他情况
 const handleTileRemoveFromArea = (
   tile: string,
   source: 'hand' | 'river' | 'fulu' | 'draw' | 'fulu-temp'
@@ -82,23 +83,14 @@ const handleTileRemoveFromArea = (
       store.tiles = [...localTiles.value]
       ElMessage.success('已从手牌移除')
     }
-  } else if (source === 'draw') {
-    if (localDrawTile.value === tile) {
-      store.setDrawTile(null)
-      localDrawTile.value = null
-      ElMessage.success('已从摸牌区移除')
-    }
+  } else if (source === 'draw' || source === 'river') {
+    // draw 和 river 的处理已在各自的dblclick/click处理函数中完成
+    // 这里不需要额外处理，usedTiles 会自动响应变化
   } else if (source === 'fulu-temp') {
     const idx = fuluDropTiles.value.indexOf(tile)
     if (idx !== -1) {
       fuluDropTiles.value.splice(idx, 1)
       ElMessage.success('已从副露暂存区移除')
-    }
-  } else if (source === 'river') {
-    const idx = store.river.indexOf(tile)
-    if (idx !== -1) {
-      store.river.splice(idx, 1)
-      ElMessage.success('已从牌河移除')
     }
   } else if (source === 'fulu') {
     for (let i = store.fulu.length - 1; i >= 0; i--) {
@@ -214,13 +206,12 @@ const handleDrawTileClick = () => {
   }
 }
 
-// 处理摸牌双击移除
+// 处理摸牌双击移除（回到素材区）
 const handleDrawTileDblClick = () => {
   if (localDrawTile.value) {
-    const tile = localDrawTile.value
+    // 清空摸牌区，usedTiles 会自动响应变化，素材区数量会自动增加
     store.setDrawTile(null)
     localDrawTile.value = null
-    handleTileRemoveFromArea(tile, 'draw')
     ElMessage.success('已从摸牌区移除')
   }
 }
@@ -531,16 +522,18 @@ const handleRiverRecover = (index: number) => {
   const tile = store.river[index]
   if (tile) {
     store.removeFromRiver(index)
-    handleTileRemoveFromArea(tile, 'river')
+    // store.removeFromRiver 会把牌添加到手牌，同时从牌河移除
+    // usedTiles 会自动响应变化
     localTiles.value = [...store.tiles]
   }
 }
 
+// 牌河双击移除（回到素材区）
 const handleRiverTileDblClick = (tile: string) => {
   const idx = store.river.indexOf(tile)
   if (idx !== -1) {
     store.river.splice(idx, 1)
-    handleTileRemoveFromArea(tile, 'river')
+    // usedTiles 会自动响应 store.river 的变化，素材区数量会自动增加
     ElMessage.success('已从牌河移除')
   }
 }
