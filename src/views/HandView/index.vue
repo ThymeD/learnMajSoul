@@ -518,16 +518,6 @@ const handleFuluDrop = (event: DragEvent) => {
 
 // ==================== 牌河相关 ====================
 
-const handleRiverRecover = (index: number) => {
-  const tile = store.river[index]
-  if (tile) {
-    store.removeFromRiver(index)
-    // store.removeFromRiver 会把牌添加到手牌，同时从牌河移除
-    // usedTiles 会自动响应变化
-    localTiles.value = [...store.tiles]
-  }
-}
-
 // 牌河双击移除（回到素材区）
 const handleRiverTileDblClick = (tile: string) => {
   const idx = store.river.indexOf(tile)
