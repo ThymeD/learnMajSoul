@@ -20,18 +20,18 @@ const emit = defineEmits<Emits>()
   <div class="fulu-group">
     <div class="fulu-tiles">
       <template v-if="item.type === 'kan' && !item.isOpen">
-        <!-- 暗杠：牌背、牌面、牌面、牌背 -->
+        <!-- 暗杠：牌背在两边两张 -->
         <div class="fulu-tile-wrapper kan-back">
           <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" :is-back="true" />
         </div>
         <div class="fulu-tile-wrapper">
-          <MahjongTile :tile-id="item.tiles[1]" :width="40" :show-name="false" />
+          <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" />
         </div>
         <div class="fulu-tile-wrapper">
-          <MahjongTile :tile-id="item.tiles[2]" :width="40" :show-name="false" />
+          <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" />
         </div>
         <div class="fulu-tile-wrapper kan-back">
-          <MahjongTile :tile-id="item.tiles[3]" :width="40" :show-name="false" :is-back="true" />
+          <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" :is-back="true" />
         </div>
       </template>
       <template v-else>
@@ -68,6 +68,7 @@ const emit = defineEmits<Emits>()
 
 .fulu-tiles {
   display: flex;
+  gap: 4px;
 }
 
 .fulu-tile-wrapper {
@@ -76,7 +77,6 @@ const emit = defineEmits<Emits>()
 }
 
 .fulu-tile-wrapper.kan-back {
-  margin: 0 -5px;
-  z-index: 1;
+  /* 去掉负边距，让间距与碰的牌一致 */
 }
 </style>
