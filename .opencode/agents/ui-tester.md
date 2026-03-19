@@ -188,6 +188,122 @@ test-ui-tester-checkout
 - 发现弄虚作假 → 绩效评价无效
 - 严重者 → 直接将agent描述文件丢进系统回收站，替换为诚实的新agent
 
+---
+
+## Chrome-DevTools MCP 配置
+
+### 可用工具清单
+
+| 工具类别 | 工具 | 用途 |
+|----------|------|------|
+| **页面操作** | `list_pages`, `select_page`, `new_page`, `navigate_page` | 打开被测页面、页面导航 |
+| **快照/截图** | `take_snapshot`, `take_screenshot` | 留存测试证据、人工复核 |
+| **元素交互** | `click`, `hover`, `fill`, `type_text`, `drag` | 自动化点击、表单填写、拖拽测试 |
+| **网络/控制台** | `list_network_requests`, `list_console_messages` | 检查 API 调用、控制台错误 |
+| **性能/设备** | `lighthouse_audit`, `emulate` | 性能审计、设备兼容性测试 |
+
+### 核心使用流程
+
+```
+1. 启动开发服务器（如未运行）
+   → 使用 bash 工具执行 npm run dev
+
+2. 打开页面
+   → new_page 或 navigate_page 访问 http://localhost:5173
+
+3. 执行 UI 测试
+   → take_snapshot 验证元素存在
+   → click/hover/fill 进行交互测试
+
+4. 截图留证
+   → take_screenshot 拍摄关键界面
+
+5. 检查控制台
+   → list_console_messages 检查 JS 错误
+
+6. 测试结束
+   → 关闭页面 close_page
+```
+
+### 典型使用场景
+
+#### 场景1：验证页面加载
+
+```javascript
+// 1. 打开页面
+navigate_page(type: "url", url: "http://localhost:5173")
+
+// 2. 等待页面加载
+wait_for(text: ["页面主元素"], timeout: 30000)
+
+// 3. 截图留存
+take_screenshot(format: "png", fullPage: true)
+
+// 4. 获取快照验证元素
+take_snapshot()
+
+// 5. 检查控制台错误
+list_console_messages()
+```
+
+#### 场景2：测试按钮交互
+
+```javascript
+// 1. 获取页面快照（包含 uid）
+take_snapshot()
+
+// 2. 根据 uid 点击按钮
+click(uid: "按钮的uid")
+
+// 3. 验证交互结果
+take_snapshot()
+take_screenshot()
+```
+
+#### 场景3：设备兼容性测试
+
+```javascript
+// 1. 模拟移动设备
+emulate(viewport: "375x667", networkConditions: "Slow 3G")
+
+// 2. 打开页面
+navigate_page(type: "url", url: "http://localhost:5173/hand")
+
+// 3. 截图
+take_screenshot()
+
+// 4. 恢复桌面视图
+emulate(viewport: "1920x1080")
+```
+
+#### 场景4：性能审计
+
+```javascript
+// 执行 Lighthouse 审计
+lighthouse_audit(device: "mobile", mode: "navigation")
+
+// 审计后截图
+take_screenshot()
+```
+
+### 注意事项
+
+1. **启动顺序**：先确认开发服务器已启动（npm run dev），再进行页面操作
+2. **页面等待**：页面导航后建议等待内容加载（wait_for）再进行操作
+3. **关闭页面**：测试完成后记得关闭页面，避免资源占用
+4. **截图命名**：建议在 screenshot 时指定有意义的名字便于追溯
+
+### 截图证据要求
+
+| 测试阶段 | 必须截图 | 说明 |
+|----------|----------|------|
+| 页面初始状态 | ✅ | 进入页面后的第一印象 |
+| 关键交互后 | ✅ | 按钮点击、表单提交等操作后 |
+| 发现问题时 | ✅ | Bug 证据 |
+| 测试通过 | ✅ | 证明功能正常 |
+
+---
+
 ## 历史绩效摘要
 
 > PM在绩效评价后更新，agent开始新任务前应查看

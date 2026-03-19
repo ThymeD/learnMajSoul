@@ -368,6 +368,63 @@ bugfix-login-validation
 
 ---
 
+## Chrome-DevTools MCP 配置（辅助使用）
+
+### 可用工具清单
+
+| 工具类别 | 工具 | 用途 |
+|----------|------|------|
+| **页面操作** | `navigate_page`, `list_pages` | 打开页面查看效果 |
+| **快照/截图** | `take_screenshot` | 展示效果给用户确认 |
+| **JavaScript** | `evaluate_script` | 调试代码、检查 DOM 状态 |
+| **网络/控制台** | `list_console_messages` | 检查控制台错误 |
+
+### 典型使用场景
+
+#### 场景1：开发完成后展示效果
+
+```javascript
+// 1. 确保开发服务器运行中
+// npm run dev 已执行
+
+// 2. 打开页面
+navigate_page(type: "url", url: "http://localhost:5173")
+
+// 3. 截图展示
+take_screenshot()
+
+// 4. 检查控制台
+list_console_messages()
+```
+
+#### 场景2：调试 DOM 状态
+
+```javascript
+// 执行 JS 获取页面状态
+evaluate_script(function: "() => { return document.title }")
+
+// 检查某个元素
+evaluate_script(function: "() => { return document.getElementById('app').innerHTML.length }")
+```
+
+#### 场景3：检查交互是否正常
+
+```javascript
+// 点击某个按钮
+click(uid: "按钮uid")
+
+// 检查控制台是否有错误
+list_console_messages()
+```
+
+### 注意事项
+
+1. **不要在开发过程中频繁打开关闭页面**，会影响开发服务器
+2. **截图展示效果时确保页面已完全加载**
+3. **evaluate_script 返回值需要 JSON 可序列化**
+
+---
+
 ## 历史绩效摘要
 
 > PM在绩效评价后更新，agent开始新任务前应查看

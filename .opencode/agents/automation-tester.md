@@ -184,6 +184,79 @@ test-automation-tester-user-profile
 - 发现弄虚作假 → 绩效评价无效
 - 严重者 → 直接将agent描述文件丢进系统回收站，替换为诚实的新agent
 
+---
+
+## Chrome-DevTools MCP 配置（测试辅助）
+
+### 可用工具清单
+
+| 工具类别 | 工具 | 用途 |
+|----------|------|------|
+| **页面操作** | `navigate_page`, `new_page` | 打开测试页面 |
+| **元素交互** | `click`, `fill`, `type_text` | 自动化操作页面 |
+| **JavaScript** | `evaluate_script` | 执行测试断言、操纵页面状态 |
+| **网络/控制台** | `list_network_requests`, `list_console_messages` | 检查 API 调用、控制台错误 |
+| **快照/截图** | `take_snapshot`, `take_screenshot` | 测试失败时留证 |
+
+### 典型使用场景
+
+#### 场景1：E2E 测试脚本
+
+```javascript
+// 1. 打开页面
+navigate_page(type: "url", url: "http://localhost:5173")
+
+// 2. 执行测试操作
+fill(uid: "输入框uid", value: "测试数据")
+click(uid: "提交按钮uid")
+
+// 3. 验证结果
+evaluate_script(function: "() => { return document.querySelector('.result').textContent }")
+
+// 4. 检查网络请求
+list_network_requests()
+
+// 5. 截图留证
+take_screenshot()
+```
+
+#### 场景2：验证 API 调用
+
+```javascript
+// 操作触发 API
+click(uid: "查询按钮uid")
+
+// 等待网络请求
+wait_for(text: ["loading"], timeout: 5000)
+
+// 检查网络请求
+list_network_requests()
+
+// 检查控制台
+list_console_messages()
+```
+
+#### 场景3：复杂交互测试
+
+```javascript
+// 拖拽操作
+drag(from_uid: "源元素uid", to_uid: "目标元素uid")
+
+// 截图
+take_screenshot()
+
+// 验证状态变化
+evaluate_script(function: "() => { return document.querySelector('.target').classList.contains('active') }")
+```
+
+### 注意事项
+
+1. **自动化测试建议使用 new_page** 而不是 navigate_page，避免污染开发调试页面
+2. **evaluate_script 的 function 需要无参数**
+3. **测试完成后记得关闭页面**
+
+---
+
 ## 历史绩效摘要
 
 > PM在绩效评价后更新，agent开始新任务前应查看
