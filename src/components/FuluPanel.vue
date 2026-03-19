@@ -191,7 +191,6 @@ const handleTempRemove = (index: number) => {
 }
 
 .fulu-tile-wrapper.kan-back {
-  margin: 0 -5px;
   z-index: 1;
 }
 

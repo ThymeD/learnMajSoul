@@ -142,7 +142,9 @@ const updateSourceTilesFromUsedTiles = () => {
   // 计算剩余数量 = 最大数量 - 已使用数量
   for (const tileId of Object.keys(sourceTiles.value)) {
     const usedCount = usedCounts[tileId] || 0
-    sourceTiles.value[tileId] = Math.max(0, props.maxCount - usedCount)
+    // 使用 SPECIAL_TILE_COUNTS 中的最大数量，而非 props.maxCount
+    const maxCount = SPECIAL_TILE_COUNTS[tileId] ?? props.maxCount
+    sourceTiles.value[tileId] = Math.max(0, maxCount - usedCount)
   }
 }
 
