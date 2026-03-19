@@ -399,12 +399,13 @@ const handleFuluDrop = (event: DragEvent) => {
     }
   }
 
-  // 碰牌检查：根据 ponEnabled 开关状态决定
+  // 碰牌检查：如果已有碰，检查是否能加杠
   const existingPonIndex = store.fulu.findIndex((f) => f.type === 'pon' && f.tiles[0] === tileId)
 
   if (existingPonIndex !== -1) {
-    // 可以加杠
+    // 已经有碰存在
     if (kanEnabled.value) {
+      // 杠开关开启，尝试加杠（明杠）
       if (source === 'draw') {
         store.setDrawTile(null)
         localDrawTile.value = null
@@ -419,8 +420,7 @@ const handleFuluDrop = (event: DragEvent) => {
       ElMessage.success('明杠成功')
       return
     }
-    // 如果 kan 禁用，不处理
-    return
+    // 杠开关关闭时，不在这里处理，让牌继续添加到暂存区
   }
 
   if (source === 'draw') {
@@ -449,9 +449,8 @@ const handleFuluDrop = (event: DragEvent) => {
       fuluDropTiles.value = fuluDropTiles.value.filter((t) => t !== tileId)
       ElMessage.success('暗杠成功')
     } else {
-      // 杠禁用时，只移除第4张，不形成杠
-      fuluDropTiles.value.pop()
-      ElMessage.info('杠已禁用，无法形成杠牌')
+      // 杠禁用时，第4张牌留在暂存区，但不形成杠
+      ElMessage.info('杠已禁用，第4张牌已添加到暂存区')
     }
   } else if (sameTiles.length === 3) {
     // 碰牌：根据 ponEnabled 开关状态决定
