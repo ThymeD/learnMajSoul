@@ -76,7 +76,6 @@ const emit = defineEmits<Emits>()
 }
 
 .fulu-tile-wrapper.kan-back {
-  margin: 0 -5px;
-  z-index: 1;
+  /* 去掉负边距，让间距与碰的牌一致 */
 }
 </style>
