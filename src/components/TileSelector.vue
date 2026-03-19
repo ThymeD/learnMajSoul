@@ -104,12 +104,25 @@ const categories: TileCategory[] = [
 // 基于 usedTiles 计算剩余数量，而非维护独立状态
 const sourceTiles = ref<Record<string, number>>({})
 
+// 特殊牌的初始数量配置
+const SPECIAL_TILE_COUNTS: Record<string, number> = {
+  // 赤牌：只有1张
+  rw5: 1,
+  rb5: 1,
+  rs5: 1,
+  // 普通5：只有3张
+  w5: 3,
+  b5: 3,
+  s5: 3
+}
+
 // 初始化素材区数量
 const initSourceTiles = () => {
   const tiles: Record<string, number> = {}
   for (const category of categories) {
     for (const tile of category.tiles) {
-      tiles[tile.id] = props.maxCount
+      // 特殊牌使用配置的数量，其他牌使用默认值 maxCount
+      tiles[tile.id] = SPECIAL_TILE_COUNTS[tile.id] ?? props.maxCount
     }
   }
   return tiles
