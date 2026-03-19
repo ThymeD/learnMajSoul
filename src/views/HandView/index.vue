@@ -860,7 +860,6 @@ const handleRiverTileDragStart = (event: DragEvent, tile: string, _index: number
               :key="index"
               class="river-tile"
               draggable="true"
-              @click="handleRiverRecover(index)"
               @dblclick="handleRiverTileDblClick(element)"
               @dragstart="(e) => handleRiverTileDragStart(e, element, index)"
             >
