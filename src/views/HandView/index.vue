@@ -268,108 +268,30 @@ const usedTiles = computed(() => {
     used.push(...fulu.tiles)
   }
   used.push(...fuluDropTiles.value)
+  // 从素材区直接消耗到牌河的牌也需要计入usedTiles，以便素材区正确计算剩余数量
+  used.push(...store.consumedFromSource)
   return used
 })
 
 // ==================== 副露操作相关 ====================
 
-type FuluMode = 'none' | 'chi' | 'pon' | 'kan'
-
-const fuluMode = ref<FuluMode>('none')
-
-const chiCombinations = computed(() => {
-  if (!localDrawTile.value) return store.getChiCombinations()
-  return store.getChiCombinations(localDrawTile.value)
-})
-
-const ponCombinations = computed(() => store.getPonCombinations())
-
-const kanCombinations = computed(() => store.getKanCombinations())
-
-const canFulu = computed(() => !store.isLiqi)
+// 副露开关状态
+const chiEnabled = ref(true) // 吃开关
+const ponEnabled = ref(true) // 碰开关
+const kanEnabled = ref(true) // 杠开关
 
 const liqiDisabled = computed(() => store.fulu.length > 0)
 
-const handleEnterChiMode = () => {
-  if (!canFulu.value) return
-  fuluMode.value = 'chi'
+const handleToggleChi = () => {
+  chiEnabled.value = !chiEnabled.value
 }
 
-const handleEnterPonMode = () => {
-  if (!canFulu.value) return
-  fuluMode.value = 'pon'
+const handleTogglePon = () => {
+  ponEnabled.value = !ponEnabled.value
 }
 
-const handleEnterKanMode = () => {
-  if (!canFulu.value) return
-  fuluMode.value = 'kan'
-}
-
-const handleCancelFuluMode = () => {
-  fuluMode.value = 'none'
-}
-
-const handleChi = (tiles: string[]) => {
-  const counts: Record<string, number> = {}
-  for (const t of tiles) {
-    counts[t] = (counts[t] || 0) + 1
-  }
-
-  for (const [tile, count] of Object.entries(counts)) {
-    for (let i = 0; i < count; i++) {
-      const idx = localTiles.value.indexOf(tile)
-      if (idx !== -1) {
-        localTiles.value.splice(idx, 1)
-      }
-    }
-  }
-
-  store.addFulu({
-    type: 'chi',
-    tiles: tiles
-  })
-
-  store.tiles = [...localTiles.value]
-  fuluMode.value = 'none'
-  ElMessage.success('吃牌成功')
-}
-
-const handlePon = (tile: string) => {
-  let removed = 0
-  for (let i = localTiles.value.length - 1; i >= 0; i--) {
-    if (localTiles.value[i] === tile && removed < 3) {
-      localTiles.value.splice(i, 1)
-      removed++
-    }
-  }
-
-  store.addFulu({
-    type: 'pon',
-    tiles: [tile, tile, tile]
-  })
-
-  store.tiles = [...localTiles.value]
-  fuluMode.value = 'none'
-  ElMessage.success('碰牌成功')
-}
-
-const handleKan = (tile: string) => {
-  let removed = 0
-  for (let i = localTiles.value.length - 1; i >= 0; i--) {
-    if (localTiles.value[i] === tile && removed < 4) {
-      localTiles.value.splice(i, 1)
-      removed++
-    }
-  }
-
-  store.addFulu({
-    type: 'kan',
-    tiles: [tile, tile, tile, tile]
-  })
-
-  store.tiles = [...localTiles.value]
-  fuluMode.value = 'none'
-  ElMessage.success('杠牌成功')
+const handleToggleKan = () => {
+  kanEnabled.value = !kanEnabled.value
 }
 
 const handleRemoveFulu = (index: number) => {
@@ -435,52 +357,61 @@ const handleFuluDrop = (event: DragEvent) => {
 
   if (source === 'fulu') return
 
-  const chiCombo = checkChiInTemp(tileId)
+  // 吃牌检查：根据 chiEnabled 开关状态决定
+  if (chiEnabled.value) {
+    const chiCombo = checkChiInTemp(tileId)
 
-  if (chiCombo) {
-    if (source === 'draw') {
-      store.setDrawTile(null)
-      localDrawTile.value = null
-    } else {
-      const handIdx = localTiles.value.indexOf(tileId)
-      if (handIdx !== -1) {
-        localTiles.value.splice(handIdx, 1)
-        store.tiles = [...localTiles.value]
+    if (chiCombo) {
+      if (source === 'draw') {
+        store.setDrawTile(null)
+        localDrawTile.value = null
+      } else {
+        const handIdx = localTiles.value.indexOf(tileId)
+        if (handIdx !== -1) {
+          localTiles.value.splice(handIdx, 1)
+          store.tiles = [...localTiles.value]
+        }
       }
-    }
 
-    store.addFulu({
-      type: 'chi',
-      tiles: chiCombo
-    })
+      store.addFulu({
+        type: 'chi',
+        tiles: chiCombo
+      })
 
-    for (const t of chiCombo) {
-      const idx = fuluDropTiles.value.indexOf(t)
-      if (idx !== -1) {
-        fuluDropTiles.value.splice(idx, 1)
+      for (const t of chiCombo) {
+        const idx = fuluDropTiles.value.indexOf(t)
+        if (idx !== -1) {
+          fuluDropTiles.value.splice(idx, 1)
+        }
       }
-    }
 
-    ElMessage.success('吃牌成功')
-    return
+      ElMessage.success('吃牌成功')
+      return
+    }
   }
 
+  // 碰牌检查：如果已有碰，检查是否能加杠
   const existingPonIndex = store.fulu.findIndex((f) => f.type === 'pon' && f.tiles[0] === tileId)
 
   if (existingPonIndex !== -1) {
-    if (source === 'draw') {
-      store.setDrawTile(null)
-      localDrawTile.value = null
-    }
+    // 已经有碰存在
+    if (kanEnabled.value) {
+      // 杠开关开启，尝试加杠（明杠）
+      if (source === 'draw') {
+        store.setDrawTile(null)
+        localDrawTile.value = null
+      }
 
-    store.removeFulu(existingPonIndex)
-    store.addFulu({
-      type: 'kan',
-      tiles: [tileId, tileId, tileId, tileId],
-      isOpen: true
-    })
-    ElMessage.success('明杠成功')
-    return
+      store.removeFulu(existingPonIndex)
+      store.addFulu({
+        type: 'kan',
+        tiles: [tileId, tileId, tileId, tileId],
+        isOpen: true
+      })
+      ElMessage.success('明杠成功')
+      return
+    }
+    // 杠开关关闭时，不在这里处理，让牌继续添加到暂存区
   }
 
   if (source === 'draw') {
@@ -498,21 +429,31 @@ const handleFuluDrop = (event: DragEvent) => {
 
   const sameTiles = fuluDropTiles.value.filter((t) => t === tileId)
 
+  // 杠牌检查：根据 kanEnabled 开关状态决定
   if (sameTiles.length === 4) {
-    store.addFulu({
-      type: 'kan',
-      tiles: [tileId, tileId, tileId, tileId],
-      isOpen: false
-    })
-    fuluDropTiles.value = fuluDropTiles.value.filter((t) => t !== tileId)
-    ElMessage.success('暗杠成功')
+    if (kanEnabled.value) {
+      store.addFulu({
+        type: 'kan',
+        tiles: [tileId, tileId, tileId, tileId],
+        isOpen: false
+      })
+      fuluDropTiles.value = fuluDropTiles.value.filter((t) => t !== tileId)
+      ElMessage.success('暗杠成功')
+    } else {
+      // 杠禁用时，第4张牌留在暂存区，但不形成杠
+      ElMessage.info('杠已禁用，第4张牌已添加到暂存区')
+    }
   } else if (sameTiles.length === 3) {
-    store.addFulu({
-      type: 'pon',
-      tiles: [tileId, tileId, tileId]
-    })
-    fuluDropTiles.value = fuluDropTiles.value.filter((t) => t !== tileId)
-    ElMessage.success('碰牌成功')
+    // 碰牌：根据 ponEnabled 开关状态决定
+    if (ponEnabled.value) {
+      store.addFulu({
+        type: 'pon',
+        tiles: [tileId, tileId, tileId]
+      })
+      fuluDropTiles.value = fuluDropTiles.value.filter((t) => t !== tileId)
+      ElMessage.success('碰牌成功')
+    }
+    // 如果 pon 禁用，牌留在暂存区但不成组
   }
 }
 
@@ -570,13 +511,11 @@ const handleRiverDrop = (event: DragEvent) => {
       store.river.push(tileId)
     }
   } else if (source === 'source') {
-    // 从素材区拖拽到牌河，直接加入牌河，同时更新usedTiles以减少素材区数量
-    // 通过强制触发usedTiles的计算来确保TileSelector正确响应
-    const tempRiver = [...store.river]
-    tempRiver.push(tileId)
-    store.river = tempRiver
-    // 触发一个响应式更新，确保素材区数量能正确减少
-    // 由于usedTiles依赖store.river，这会触发TileSelector的watch
+    // 从素材区拖拽到牌河，牌直接加入牌河
+    // 同时记录到 consumedFromSource，让素材区能够正确减少数量
+    store.river.push(tileId)
+    store.addConsumedFromSource(tileId)
+    ElMessage.success('已添加到牌河')
   }
 }
 
@@ -691,86 +630,15 @@ const handleRiverTileDragStart = (event: DragEvent, tile: string, _index: number
             <div class="fulu-header">
               <span class="panel-title">副露区</span>
               <FuluButtons
-                :mode="fuluMode"
-                :can-fulu="canFulu"
-                :chi-count="chiCombinations.length"
-                :pon-count="ponCombinations.length"
-                :kan-count="kanCombinations.length"
-                @enter-chi="handleEnterChiMode"
-                @enter-pon="handleEnterPonMode"
-                @enter-kan="handleEnterKanMode"
-                @cancel="handleCancelFuluMode"
+                :chi-enabled="chiEnabled"
+                :pon-enabled="ponEnabled"
+                :kan-enabled="kanEnabled"
+                @toggle-chi="handleToggleChi"
+                @toggle-pon="handleTogglePon"
+                @toggle-kan="handleToggleKan"
               />
             </div>
           </template>
-
-          <!-- 副露模式提示 -->
-          <div v-if="fuluMode !== 'none'" class="fulu-mode-tip">
-            <span v-if="fuluMode === 'chi'">请选择要吃的顺子组合：</span>
-            <span v-if="fuluMode === 'pon'">请选择要碰的牌：</span>
-            <span v-if="fuluMode === 'kan'">请选择要杠的牌：</span>
-          </div>
-
-          <!-- 副露操作选项 -->
-          <div v-if="fuluMode === 'chi'" class="fulu-options">
-            <div
-              v-for="(combo, idx) in chiCombinations"
-              :key="idx"
-              class="fulu-option"
-              @click="handleChi(combo.tiles)"
-            >
-              <span class="fulu-type">{{ combo.type }}</span>
-              <div class="fulu-tiles">
-                <MahjongTile
-                  v-for="tile in combo.tiles"
-                  :key="tile"
-                  :tile-id="tile"
-                  :width="40"
-                  :show-name="false"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div v-if="fuluMode === 'pon'" class="fulu-options">
-            <div
-              v-for="combo in ponCombinations"
-              :key="combo.tile"
-              class="fulu-option"
-              @click="handlePon(combo.tile)"
-            >
-              <span class="fulu-type">碰 {{ combo.tile }}</span>
-              <div class="fulu-tiles">
-                <MahjongTile
-                  v-for="i in 3"
-                  :key="i"
-                  :tile-id="combo.tile"
-                  :width="40"
-                  :show-name="false"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div v-if="fuluMode === 'kan'" class="fulu-options">
-            <div
-              v-for="combo in kanCombinations"
-              :key="combo.tile"
-              class="fulu-option"
-              @click="handleKan(combo.tile)"
-            >
-              <span class="fulu-type">杠 {{ combo.tile }}</span>
-              <div class="fulu-tiles">
-                <MahjongTile
-                  v-for="i in 4"
-                  :key="i"
-                  :tile-id="combo.tile"
-                  :width="40"
-                  :show-name="false"
-                />
-              </div>
-            </div>
-          </div>
 
           <!-- 副露列表 -->
           <div class="fulu-container" @dragover.prevent @drop="handleFuluDrop">

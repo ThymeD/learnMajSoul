@@ -142,6 +142,9 @@ export const useHandStore = defineStore('hand', () => {
   /** 副露暂存区 */
   const fuluTemp = ref<FuluTemp[]>([])
 
+  /** 从素材区直接消耗到牌河的牌（用于素材区数量计算） */
+  const consumedFromSource = ref<string[]>([])
+
   // ==================== Getters ====================
 
   /**
@@ -260,6 +263,7 @@ export const useHandStore = defineStore('hand', () => {
     dora.value = []
     analysis.value = null
     fuluTemp.value = []
+    consumedFromSource.value = []
   }
 
   /**
@@ -402,6 +406,14 @@ export const useHandStore = defineStore('hand', () => {
    */
   function clearFuluTemp(): void {
     fuluTemp.value = []
+  }
+
+  /**
+   * 添加从素材区直接消耗到牌河的牌
+   * @param tile 牌
+   */
+  function addConsumedFromSource(tile: string): void {
+    consumedFromSource.value.push(tile)
   }
 
   /**
@@ -822,6 +834,7 @@ export const useHandStore = defineStore('hand', () => {
     dora,
     analysis,
     fuluTemp,
+    consumedFromSource,
 
     // Getters
     allTiles,
@@ -854,6 +867,7 @@ export const useHandStore = defineStore('hand', () => {
     addToFuluTemp,
     removeFromFuluTemp,
     clearFuluTemp,
-    commitFuluTemp
+    commitFuluTemp,
+    addConsumedFromSource
   }
 })
