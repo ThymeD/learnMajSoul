@@ -532,9 +532,9 @@ const handleRiverRecover = (index: number) => {
 const handleRiverTileDblClick = (tile: string) => {
   const idx = store.river.indexOf(tile)
   if (idx !== -1) {
-    store.river.splice(idx, 1)
-    // usedTiles 会自动响应 store.river 的变化，素材区数量会自动增加
-    ElMessage.success('已从牌河移除')
+    // 使用 filter 创建新数组而非 splice，确保 Vue 响应式正确触发
+    store.river = store.river.filter((_, i) => i !== idx)
+    ElMessage.success('已从牌河移除，牌回到素材区')
   }
 }
 
