@@ -70,6 +70,10 @@ const tileData: Record<string, TileInfo> = {
 const tileInfo = computed(() => tileData[props.tileId] || { name: '', category: '' })
 
 const imageUrl = computed(() => {
+  // 如果是牌背，使用牌背素材图
+  if (props.isBack) {
+    return new URL(`../assets/mahjong/bg.jpg`, import.meta.url).href
+  }
   return new URL(`../assets/mahjong/${props.tileId}.jpg`, import.meta.url).href
 })
 </script>
@@ -82,7 +86,6 @@ const imageUrl = computed(() => {
     @dblclick="handleDoubleClick"
   >
     <img
-      v-if="!props.isBack"
       :src="imageUrl"
       :alt="tileInfo.name"
       class="tile-image"
@@ -92,17 +95,6 @@ const imageUrl = computed(() => {
         borderRadius: borderRadius + 'px'
       }"
     />
-    <div
-      v-else
-      class="tile-back"
-      :style="{
-        width: tileWidth + 'px',
-        height: tileHeight + 'px',
-        borderRadius: borderRadius + 'px'
-      }"
-    >
-      <span>牌背</span>
-    </div>
     <div v-if="props.showName !== false && tileInfo.name && !props.isBack" class="tile-name">
       {{ tileInfo.name }}
     </div>
@@ -119,20 +111,6 @@ const imageUrl = computed(() => {
 .tile-image {
   border: 1px solid #ebeef5;
   filter: brightness(1.1);
-}
-
-.tile-back {
-  background: linear-gradient(135deg, #1a5c1a 0%, #0d3a0d 100%);
-  border: 2px solid #ffd700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tile-back span {
-  color: #ffd700;
-  font-size: 12px;
-  transform: rotate(-45deg);
 }
 
 .tile-name {
