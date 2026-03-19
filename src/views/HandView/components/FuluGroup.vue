@@ -68,6 +68,7 @@ const emit = defineEmits<Emits>()
 
 .fulu-tiles {
   display: flex;
+  gap: 4px;
 }
 
 .fulu-tile-wrapper {
