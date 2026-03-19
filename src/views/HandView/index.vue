@@ -198,7 +198,19 @@ const handleSetDrawTile = (tile: string) => {
 }
 
 // 处理摸牌点击（点击摸牌将其加入手牌）
+// 防抖：只有当快速点击（不是双击的一部分）时才触发
+let lastDrawTileClickTime = 0
+const DRAW_TILE_CLICK_THRESHOLD = 300 // 双击间隔阈值(ms)
 const handleDrawTileClick = () => {
+  const now = Date.now()
+  const timeSinceLastClick = now - lastDrawTileClickTime
+  lastDrawTileClickTime = now
+
+  // 如果距离上次点击时间过短（300ms），说明是双击的一部分，不处理
+  if (timeSinceLastClick < DRAW_TILE_CLICK_THRESHOLD) {
+    return
+  }
+
   if (localDrawTile.value) {
     store.addTile(localDrawTile.value)
     store.setDrawTile(null)
@@ -209,10 +221,11 @@ const handleDrawTileClick = () => {
 // 处理摸牌双击移除（回到素材区）
 const handleDrawTileDblClick = () => {
   if (localDrawTile.value) {
-    // 清空摸牌区，usedTiles 会自动响应变化，素材区数量会自动增加
+    // 强制触发 usedTiles 响应式更新：通过复制数组确保 Vue 响应式系统正确追踪变化
     store.setDrawTile(null)
+    localTiles.value = [...localTiles.value]
     localDrawTile.value = null
-    ElMessage.success('已从摸牌区移除')
+    ElMessage.success('已从摸牌区移除，牌回到素材区')
   }
 }
 
