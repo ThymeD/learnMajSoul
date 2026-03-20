@@ -13,9 +13,11 @@ import {
   isHonorTile,
   isYaojiu,
   splitMentsu,
+  checkChitoitsu,
   type Tile
 } from './mahjong'
 import { matchSpecialYaku } from './yaku/special'
+import { normalizeYakuId } from './yaku/id'
 import {
   DRAGON_TILES,
   WIND_TILES,
@@ -38,7 +40,8 @@ export type { MatchInput, Fulu, YakuMatchResult } from './yaku/types'
  */
 export function matchYaku(input: MatchInput): YakuMatchResult[] {
   const results: YakuMatchResult[] = []
-  const { allTiles, isMenqian, isLiqi, isZimo, selfWind, fieldWind, fulu, tingPai } = input
+  const { allTiles, isMenqian, isLiqi, isZimo, selfWind, fieldWind, fulu, tingPai, isHu, agariTile } =
+    input
 
   // 标准化牌
   const normalized = normalizeTiles(allTiles)
@@ -54,10 +57,18 @@ export function matchYaku(input: MatchInput): YakuMatchResult[] {
   }
 
   // 2. 检测普通役种
+  // 七对子非役满，允许与部分役复合，单独检测
+  const chitoitsuResult = matchChitoitsu(normalized, isMenqian)
+  if (chitoitsuResult.matched) {
+    results.push(chitoitsuResult)
+  }
+
   // 2.1 门前清役种（需要门清）
   if (isMenqian) {
+    const winState = isHu ?? tingPai.length > 0
+
     // 立直
-    if (isLiqi && tingPai.length > 0) {
+    if (isLiqi && winState) {
       results.push({
         id: 'reach',
         name: '立直',
@@ -68,7 +79,7 @@ export function matchYaku(input: MatchInput): YakuMatchResult[] {
     }
 
     // 门前清自摸和
-    if (isZimo && tingPai.length > 0) {
+    if (isZimo && winState) {
       results.push({
         id: 'tsumo',
         name: '门前清自摸和',
@@ -79,7 +90,7 @@ export function matchYaku(input: MatchInput): YakuMatchResult[] {
     }
 
     // 平和
-    const pinfuResult = matchPinfu(sorted, normalized)
+    const pinfuResult = matchPinfu(sorted, normalized, selfWind, fieldWind, agariTile)
     if (pinfuResult.matched) {
       results.push(pinfuResult)
     }
@@ -105,14 +116,24 @@ export function matchYaku(input: MatchInput): YakuMatchResult[] {
 
   // 2.3 役牌
   // 自风牌
-  const jikazeResult = matchYakuhai(counts, WIND_TO_TILE[selfWind], '自风')
+  const jikazeResult = matchYakuhai(
+    counts,
+    WIND_TO_TILE[selfWind],
+    'yakuhai-jikaze',
+    '役牌：自风牌'
+  )
   if (jikazeResult.matched) {
     results.push(jikazeResult)
   }
 
   // 场风牌
   if (selfWind !== fieldWind) {
-    const bakazeResult = matchYakuhai(counts, WIND_TO_TILE[fieldWind], '场风')
+    const bakazeResult = matchYakuhai(
+      counts,
+      WIND_TO_TILE[fieldWind],
+      'yakuhai-bakaze',
+      '役牌：场风牌'
+    )
     if (bakazeResult.matched) {
       results.push(bakazeResult)
     }
@@ -125,7 +146,7 @@ export function matchYaku(input: MatchInput): YakuMatchResult[] {
   }
 
   // 2.4 对对和
-  const toitoiResult = matchToitoi(normalized, fulu)
+  const toitoiResult = matchToitoi(normalized)
   if (toitoiResult.matched) {
     results.push(toitoiResult)
   }
@@ -142,48 +163,44 @@ export function matchYaku(input: MatchInput): YakuMatchResult[] {
     results.push(sandangatsuResult)
   }
 
-  // 2.7 三色同顺（副露后）
-  if (fulu.length > 0) {
-    const sanshokuResult = matchSanshokuDoushun(normalized, fulu)
-    if (sanshokuResult.matched) {
-      results.push(sanshokuResult)
-    }
+  // 2.7 三色同顺（门清2番，副露1番）
+  const sanshokuResult = matchSanshokuDoushun(normalized, isMenqian)
+  if (sanshokuResult.matched) {
+    results.push(sanshokuResult)
   }
 
   // 2.8 三色同刻
-  const sanshokuDoukoResult = matchSanshokuDouko(normalized, fulu)
+  const sanshokuDoukoResult = matchSanshokuDouko(normalized)
   if (sanshokuDoukoResult.matched) {
     results.push(sanshokuDoukoResult)
   }
 
-  // 2.9 一气通贯（副露后）
-  if (fulu.length > 0) {
-    const ikkititsuanResult = matchIkkititsuan(normalized, fulu)
-    if (ikkititsuanResult.matched) {
-      results.push(ikkititsuanResult)
-    }
+  // 2.9 一气通贯（门清2番，副露1番）
+  const ikkititsuanResult = matchIkkititsuan(normalized, isMenqian)
+  if (ikkititsuanResult.matched) {
+    results.push(ikkititsuanResult)
   }
 
   // 2.10 混全带幺九
-  const honchantaiyaochuuResult = matchHonchantaiyaochuu(normalized, fulu)
+  const honchantaiyaochuuResult = matchHonchantaiyaochuu(normalized, isMenqian)
   if (honchantaiyaochuuResult.matched) {
     results.push(honchantaiyaochuuResult)
   }
 
   // 2.11 纯全带幺九
-  const junhonchantaiyaochuuResult = matchJunhonchantaiyaochuu(normalized, fulu)
+  const junhonchantaiyaochuuResult = matchJunhonchantaiyaochuu(normalized, isMenqian)
   if (junhonchantaiyaochuuResult.matched) {
     results.push(junhonchantaiyaochuuResult)
   }
 
   // 2.12 混一色
-  const hunyisokuResult = matchHunyisoku(normalized, fulu)
+  const hunyisokuResult = matchHunyisoku(normalized, isMenqian)
   if (hunyisokuResult.matched) {
     results.push(hunyisokuResult)
   }
 
   // 2.13 清一色
-  const chinitsuResult = matchChinitsu(normalized, fulu)
+  const chinitsuResult = matchChinitsu(normalized, isMenqian)
   if (chinitsuResult.matched) {
     results.push(chinitsuResult)
   }
@@ -236,7 +253,10 @@ export function matchYaku(input: MatchInput): YakuMatchResult[] {
     results.push(honroutouResult)
   }
 
-  return results
+  return results.map((y) => ({
+    ...y,
+    id: normalizeYakuId(y.id)
+  }))
 }
 
 /**
@@ -256,10 +276,49 @@ function matchTanyao(tiles: Tile[]): YakuMatchResult {
 }
 
 /**
+ * 匹配七对子
+ */
+function matchChitoitsu(tiles: Tile[], isMenqian: boolean): YakuMatchResult {
+  if (!isMenqian) {
+    return {
+      id: 'chitoitsu',
+      name: '七对子',
+      han: 2,
+      matched: false,
+      reason: '有副露'
+    }
+  }
+
+  if (!checkChitoitsu(tiles)) {
+    return {
+      id: 'chitoitsu',
+      name: '七对子',
+      han: 2,
+      matched: false,
+      reason: '不满足七对子结构'
+    }
+  }
+
+  return {
+    id: 'chitoitsu',
+    name: '七对子',
+    han: 2,
+    matched: true,
+    reason: '7组对子成立'
+  }
+}
+
+/**
  * 匹配平和
  * 门清 + 4顺子 + 非役牌雀头 + 两面听
  */
-function matchPinfu(tiles: Tile[], normalized: Tile[]): YakuMatchResult {
+function matchPinfu(
+  tiles: Tile[],
+  normalized: Tile[],
+  selfWind: keyof typeof WIND_TO_TILE,
+  fieldWind: keyof typeof WIND_TO_TILE,
+  agariTile?: Tile
+): YakuMatchResult {
   // 检查是否14张
   if (normalized.length !== 14) {
     return {
@@ -283,13 +342,13 @@ function matchPinfu(tiles: Tile[], normalized: Tile[]): YakuMatchResult {
     if (!split.jietou) continue
 
     const jietou = split.jietou
-    // 役牌包括：三元牌和风牌
-    const isHonor = isHonorTile(jietou)
-    if (isHonor) continue
+    if (DRAGON_TILES.includes(jietou)) continue
+    if (jietou === WIND_TO_TILE[selfWind] || jietou === WIND_TO_TILE[fieldWind]) continue
 
-    // 检查是否是两面听（听牌是顺子的两端）
-    // 这里简化处理：只要是顺子分割就算平和
-    // 实际需要检查听牌是否在听的位置
+    // 有和了牌时，尽量按两面听校验
+    if (agariTile && !isRyanmenAgari(agariTile, normalized)) {
+      continue
+    }
 
     return {
       id: 'pinfu',
@@ -307,6 +366,36 @@ function matchPinfu(tiles: Tile[], normalized: Tile[]): YakuMatchResult {
     matched: false,
     reason: '不满足平和条件'
   }
+}
+
+/**
+ * 是否为两面听和了（近似校验）
+ * 规则：
+ * - 只支持数牌
+ * - 去掉1张和了牌后，若可与两侧形成 x-2,x-1,x 或 x,x+1,x+2 且非边张，则视为两面
+ */
+function isRyanmenAgari(agariTile: Tile, fullTiles: Tile[]): boolean {
+  const normalizedAgari = normalizeTiles([agariTile])[0]
+  if (!isNumberTile(normalizedAgari)) return false
+
+  const suit = getTileSuit(normalizedAgari)
+  const num = getTileNumber(normalizedAgari)
+  const counts = countTiles(fullTiles)
+
+  if (!counts[normalizedAgari] || counts[normalizedAgari] <= 0) return false
+  counts[normalizedAgari] -= 1
+
+  // 形如 [x-2, x-1] + x，且起点不能是1（12等待3是边张）
+  const low1 = `${suit}${num - 1}` as Tile
+  const low2 = `${suit}${num - 2}` as Tile
+  const canAsUpper = num >= 4 && (counts[low1] || 0) > 0 && (counts[low2] || 0) > 0
+
+  // 形如 x + [x+1, x+2]，且终点不能是9（89等待7是边张）
+  const high1 = `${suit}${num + 1}` as Tile
+  const high2 = `${suit}${num + 2}` as Tile
+  const canAsLower = num <= 6 && (counts[high1] || 0) > 0 && (counts[high2] || 0) > 0
+
+  return canAsUpper || canAsLower
 }
 
 /**
@@ -423,12 +512,17 @@ function matchRyanpeikou(tiles: Tile[], isMenqian: boolean): YakuMatchResult {
 /**
  * 匹配役牌
  */
-function matchYakuhai(counts: Record<Tile, number>, tile: Tile, label: string): YakuMatchResult {
+function matchYakuhai(
+  counts: Record<Tile, number>,
+  tile: Tile,
+  id: string,
+  name: string
+): YakuMatchResult {
   const count = counts[tile] || 0
 
   return {
-    id: `yakuhai-${label}`,
-    name: `役牌：${label}牌`,
+    id,
+    name,
     han: 1,
     matched: count >= 3,
     reason: count >= 3 ? `有${count}张${tile}` : `只有${count}张${tile}`
@@ -463,7 +557,7 @@ function matchSangenYakuhai(counts: Record<Tile, number>): YakuMatchResult {
  * 匹配对对和
  * 4组刻子+雀头
  */
-function matchToitoi(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
+function matchToitoi(tiles: Tile[]): YakuMatchResult {
   // 统计手牌中的刻子数量（明刻+暗刻）
   let keziCount = 0
 
@@ -473,13 +567,6 @@ function matchToitoi(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
     const mKezi = split.mentsu.filter((m) => m.type === 'kezi' || m.type === 'gangzi').length
     if (mKezi > keziCount) {
       keziCount = mKezi
-    }
-  }
-
-  // 加上副露中的刻子/杠子
-  for (const f of fulu) {
-    if (f.type === 'pon' || f.type === 'kan') {
-      keziCount++
     }
   }
 
@@ -507,24 +594,22 @@ function matchToitoi(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
  * 匹配三暗刻
  */
 function matchSanankei(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
-  // 三暗刻：3组暗刻（手牌中的刻子，不含副露）
-  // 简化判断：检查手牌分割中是否有3组刻子
+  // 三暗刻：3组暗刻（明碰不计入，明杠不计入）
+  const openTripletFromFulu = fulu.filter((f) => f.type === 'pon' || (f.type === 'kan' && f.isOpen)).length
 
   const splits = splitMentsu(tiles)
 
   for (const split of splits) {
-    const keziCount = split.mentsu.filter((m) => m.type === 'kezi').length
+    const keziCount = split.mentsu.filter((m) => m.type === 'kezi' || m.type === 'gangzi').length
+    const concealedKeziCount = keziCount - openTripletFromFulu
 
-    // 加上副露中的碰（算暗刻）
-    const fuluKezi = fulu.filter((f) => f.type === 'pon').length
-
-    if (keziCount + fuluKezi >= 3) {
+    if (concealedKeziCount >= 3) {
       return {
         id: 'sanankei',
         name: '三暗刻',
         han: 2,
         matched: true,
-        reason: `${keziCount + fuluKezi}组暗刻`
+        reason: `${concealedKeziCount}组暗刻`
       }
     }
   }
@@ -558,17 +643,7 @@ function matchSandangatsu(fulu: Fulu[]): YakuMatchResult {
  * 匹配三色同顺
  * 副露 + 万筒索同数值顺子
  */
-function matchSanshokuDoushun(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
-  if (fulu.length === 0) {
-    return {
-      id: 'sanshoku-doushun',
-      name: '三色同顺',
-      han: 2,
-      matched: false,
-      reason: '没有副露'
-    }
-  }
-
+function matchSanshokuDoushun(tiles: Tile[], isMenqian: boolean): YakuMatchResult {
   // 从分割结果中获取顺子
   const splits = splitMentsu(tiles)
 
@@ -598,7 +673,7 @@ function matchSanshokuDoushun(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
         return {
           id: 'sanshoku-doushun',
           name: '三色同顺',
-          han: 2,
+          han: isMenqian ? 2 : 1,
           matched: true,
           reason: `数字${num}有3种花色顺子`
         }
@@ -618,7 +693,7 @@ function matchSanshokuDoushun(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
 /**
  * 匹配三色同刻
  */
-function matchSanshokuDouko(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
+function matchSanshokuDouko(tiles: Tile[]): YakuMatchResult {
   const normalized = normalizeTiles(tiles)
   const counts = countTiles(normalized)
 
@@ -630,14 +705,7 @@ function matchSanshokuDouko(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
 
     // 检查是否有3种花色同数字的刻子
     const keziCount = [wCount, bCount, sCount].filter((c) => c >= 3).length
-    // 加上副露
-    const fuluKezi = fulu.filter((f) => {
-      if (f.type !== 'pon' && f.type !== 'kan') return false
-      const t = normalizeTiles([f.tiles[0]])[0]
-      return getTileNumber(t) === num && isNumberTile(t)
-    }).length
-
-    if (keziCount + fuluKezi >= 3) {
+    if (keziCount >= 3) {
       return {
         id: 'sanshoku-douko',
         name: '三色同刻',
@@ -660,17 +728,7 @@ function matchSanshokuDouko(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
 /**
  * 匹配一气通贯
  */
-function matchIkkititsuan(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
-  if (fulu.length === 0) {
-    return {
-      id: 'ikkititsuan',
-      name: '一气通贯',
-      han: 2,
-      matched: false,
-      reason: '没有副露'
-    }
-  }
-
+function matchIkkititsuan(tiles: Tile[], isMenqian: boolean): YakuMatchResult {
   const splits = splitMentsu(tiles)
 
   for (const split of splits) {
@@ -701,7 +759,7 @@ function matchIkkititsuan(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
         return {
           id: 'ikkititsuan',
           name: '一气通贯',
-          han: 2,
+          han: isMenqian ? 2 : 1,
           matched: true,
           reason: `${suit}花色有一气通贯`
         }
@@ -721,15 +779,8 @@ function matchIkkititsuan(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
 /**
  * 匹配混全带幺九
  */
-function matchHonchantaiyaochuu(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
-  const allTiles = [...tiles]
-
-  // 加上副露的牌
-  for (const f of fulu) {
-    allTiles.push(...f.tiles)
-  }
-
-  const normalized = normalizeTiles(allTiles)
+function matchHonchantaiyaochuu(tiles: Tile[], isMenqian: boolean): YakuMatchResult {
+  const normalized = normalizeTiles(tiles)
 
   // 检查所有牌是否都带幺九
   for (const tile of normalized) {
@@ -737,7 +788,7 @@ function matchHonchantaiyaochuu(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
       return {
         id: 'honchantaiyaochuu',
         name: '混全带幺九',
-        han: 2,
+        han: isMenqian ? 2 : 1,
         matched: false,
         reason: `含有非幺九牌: ${tile}`
       }
@@ -747,7 +798,7 @@ function matchHonchantaiyaochuu(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
   return {
     id: 'honchantaiyaochuu',
     name: '混全带幺九',
-    han: 2,
+    han: isMenqian ? 2 : 1,
     matched: true,
     reason: '全部牌都带幺九'
   }
@@ -756,15 +807,8 @@ function matchHonchantaiyaochuu(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
 /**
  * 匹配纯全带幺九
  */
-function matchJunhonchantaiyaochuu(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
-  const allTiles = [...tiles]
-
-  // 加上副露的牌
-  for (const f of fulu) {
-    allTiles.push(...f.tiles)
-  }
-
-  const normalized = normalizeTiles(allTiles)
+function matchJunhonchantaiyaochuu(tiles: Tile[], isMenqian: boolean): YakuMatchResult {
+  const normalized = normalizeTiles(tiles)
 
   // 检查所有牌是否都带数牌幺九（不含字牌）
   for (const tile of normalized) {
@@ -772,7 +816,7 @@ function matchJunhonchantaiyaochuu(tiles: Tile[], fulu: Fulu[]): YakuMatchResult
       return {
         id: 'junhonchantaiyaochuu',
         name: '纯全带幺九',
-        han: 3,
+        han: isMenqian ? 3 : 2,
         matched: false,
         reason: `含有字牌: ${tile}`
       }
@@ -781,7 +825,7 @@ function matchJunhonchantaiyaochuu(tiles: Tile[], fulu: Fulu[]): YakuMatchResult
       return {
         id: 'junhonchantaiyaochuu',
         name: '纯全带幺九',
-        han: 3,
+        han: isMenqian ? 3 : 2,
         matched: false,
         reason: `含有非幺九牌: ${tile}`
       }
@@ -791,7 +835,7 @@ function matchJunhonchantaiyaochuu(tiles: Tile[], fulu: Fulu[]): YakuMatchResult
   return {
     id: 'junhonchantaiyaochuu',
     name: '纯全带幺九',
-    han: 3,
+    han: isMenqian ? 3 : 2,
     matched: true,
     reason: '全部牌都是数牌幺九'
   }
@@ -800,14 +844,8 @@ function matchJunhonchantaiyaochuu(tiles: Tile[], fulu: Fulu[]): YakuMatchResult
 /**
  * 匹配混一色
  */
-function matchHunyisoku(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
-  const allTiles = [...tiles]
-
-  for (const f of fulu) {
-    allTiles.push(...f.tiles)
-  }
-
-  const normalized = normalizeTiles(allTiles)
+function matchHunyisoku(tiles: Tile[], isMenqian: boolean): YakuMatchResult {
+  const normalized = normalizeTiles(tiles)
 
   // 检查是否只有一种数牌花色+字牌
   const suits = new Set<string>()
@@ -825,7 +863,7 @@ function matchHunyisoku(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
     return {
       id: 'hunyisoku',
       name: '混一色',
-      han: 3,
+      han: isMenqian ? 3 : 2,
       matched: true,
       reason: `${numberSuits[0]}数牌+字牌`
     }
@@ -834,7 +872,7 @@ function matchHunyisoku(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
   return {
     id: 'hunyisoku',
     name: '混一色',
-    han: 3,
+    han: isMenqian ? 3 : 2,
     matched: false,
     reason: '不满足混一色条件'
   }
@@ -843,14 +881,8 @@ function matchHunyisoku(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
 /**
  * 匹配清一色
  */
-function matchChinitsu(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
-  const allTiles = [...tiles]
-
-  for (const f of fulu) {
-    allTiles.push(...f.tiles)
-  }
-
-  const normalized = normalizeTiles(allTiles)
+function matchChinitsu(tiles: Tile[], isMenqian: boolean): YakuMatchResult {
+  const normalized = normalizeTiles(tiles)
 
   // 检查是否只有一种数牌花色（不含字牌）
   const suits = new Set<string>()
@@ -868,7 +900,7 @@ function matchChinitsu(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
     return {
       id: 'chinitsu',
       name: '清一色',
-      han: 6,
+      han: isMenqian ? 6 : 5,
       matched: true,
       reason: `全是${numberSuits[0]}数牌`
     }
@@ -877,7 +909,7 @@ function matchChinitsu(tiles: Tile[], fulu: Fulu[]): YakuMatchResult {
   return {
     id: 'chinitsu',
     name: '清一色',
-    han: 6,
+    han: isMenqian ? 6 : 5,
     matched: false,
     reason: '不满足清一色条件'
   }
@@ -1158,3 +1190,4 @@ function matchHonroutou(tiles: Tile[]): YakuMatchResult {
 }
 
 export { calculateHan } from './yaku/han'
+export { normalizeYakuId } from './yaku/id'

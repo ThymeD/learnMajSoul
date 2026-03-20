@@ -16,6 +16,7 @@ import {
   type Tile
 } from '../utils/mahjong'
 import { matchYaku, calculateHan, type YakuMatchResult } from '../utils/yaku-match'
+import { buildRoundTiles, validateAnalysisTileCount, type FuluLike } from '../utils/hand-rules'
 import {
   randomHand as generateRandomHuHand,
   randomHandWithFulu as generateRandomHuHandWithFulu
@@ -682,10 +683,11 @@ export const useHandStore = defineStore('hand', () => {
    * 调用 mahjong.ts 中的算法分析手牌，并计算役种和番数
    */
   function analyze(): void {
-    const all = allTiles.value
+    const handAndDrawTiles = allTiles.value
+    const roundTiles = buildRoundTiles(handAndDrawTiles as Tile[], fulu.value as FuluLike[])
 
-    if (!isValidTileCount(all)) {
-      const c = countTiles(all)
+    if (!isValidTileCount(roundTiles)) {
+      const c = countTiles(roundTiles)
       const bad = Object.entries(c).find(([, n]) => n > 4)
       analysis.value = {
         isTing: false,
@@ -701,21 +703,22 @@ export const useHandStore = defineStore('hand', () => {
       return
     }
 
-    // 需要14张牌才能分析（13张手牌+1张摸牌 或 14张手牌）
-    if (all.length !== 13 && all.length !== 14) {
+    const countValidation = validateAnalysisTileCount(roundTiles as Tile[], fulu.value as FuluLike[])
+    if (!countValidation.valid) {
       analysis.value = {
         isTing: false,
         isHu: false,
         tingPai: [],
         zhenTing: false,
         han: 0,
-        yaku: []
+        yaku: [],
+        error: countValidation.message
       }
       return
     }
 
     // 使用 mahjong.ts 的分析函数
-    const result = analyzeHand(all, river.value)
+    const result = analyzeHand(roundTiles as Tile[], river.value)
 
     // 役种匹配
     let matchedYaku: YakuMatchResult[] = []
@@ -724,7 +727,7 @@ export const useHandStore = defineStore('hand', () => {
     if (result.isHu || result.isTing) {
       // 构建匹配输入
       const matchInput = {
-        allTiles: all,
+        allTiles: roundTiles,
         isMenqian: isMenqian.value,
         isLiqi: isLiqi.value,
         isZimo: drawTile.value !== null, // 简化判断：有摸牌算自摸
@@ -733,6 +736,8 @@ export const useHandStore = defineStore('hand', () => {
         fieldWind: fieldWind.value,
         fulu: fulu.value as { type: 'chi' | 'pon' | 'kan'; tiles: string[]; from?: number }[],
         tingPai: result.tingPai,
+        agariTile: drawTile.value ?? undefined,
+        isHu: result.isHu,
         river: river.value
       }
 

@@ -1,4 +1,6 @@
 import yakuConfig from './yaku-config.json'
+import { normalizeYakuId } from '../utils/yaku/id'
+import { loadNormalizedNumberMap, saveNormalizedNumberMap } from '../utils/storage-map'
 
 export interface Yaku {
   id: string
@@ -24,7 +26,8 @@ export const yakuData: Yaku[] = (yakuConfig.yaku as Yaku[]).map((y) => ({
 const STORAGE_KEY = 'yaku-mastery'
 
 export const setYakuMastery = (id: string, count: number) => {
-  const yaku = yakuData.find((y) => y.id === id)
+  const normalizedId = normalizeYakuId(id)
+  const yaku = yakuData.find((y) => y.id === normalizedId)
   if (yaku) {
     yaku.mastery = count
     saveMastery()
@@ -44,23 +47,21 @@ const saveMastery = () => {
   const masteryMap: Record<string, number> = {}
   yakuData.forEach((y) => {
     if (y.mastery) {
-      masteryMap[y.id] = y.mastery
+      masteryMap[normalizeYakuId(y.id)] = y.mastery
     }
   })
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(masteryMap))
+  saveNormalizedNumberMap(STORAGE_KEY, masteryMap, normalizeYakuId)
 }
 
 export const loadMastery = () => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      const masteryMap = JSON.parse(stored)
-      yakuData.forEach((y) => {
-        if (masteryMap[y.id] !== undefined) {
-          y.mastery = masteryMap[y.id]
-        }
-      })
-    }
+    const normalizedMap = loadNormalizedNumberMap(STORAGE_KEY, normalizeYakuId)
+    yakuData.forEach((y) => {
+      const key = normalizeYakuId(y.id)
+      if (normalizedMap[key] !== undefined) {
+        y.mastery = normalizedMap[key]
+      }
+    })
   } catch (e) {
     console.warn('Failed to load mastery from localStorage:', e)
   }

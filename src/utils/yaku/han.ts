@@ -1,4 +1,5 @@
 import type { YakuMatchResult } from './types'
+import { normalizeYakuId } from './id'
 
 const MENQIAN_ONLY_YAKU = new Set([
   'reach',
@@ -24,18 +25,23 @@ export function calculateHan(matchedYaku: YakuMatchResult[], isMenqian: boolean)
     return 0
   }
 
-  const yakumanCount = matchedYaku.filter((y) => y.han >= 8).length
+  const normalizedYaku = matchedYaku.map((y) => ({
+    ...y,
+    id: normalizeYakuId(y.id)
+  }))
+
+  const yakumanCount = normalizedYaku.filter((y) => y.han >= 8).length
   if (yakumanCount >= 1) {
     if (yakumanCount >= 2) {
       return yakumanCount * 8
     }
-    return matchedYaku.find((y) => y.han >= 8)?.han || 8
+    return normalizedYaku.find((y) => y.han >= 8)?.han || 8
   }
 
-  let totalHan = matchedYaku.reduce((sum, yaku) => sum + yaku.han, 0)
+  let totalHan = normalizedYaku.reduce((sum, yaku) => sum + yaku.han, 0)
 
   if (!isMenqian) {
-    const hasReduction = matchedYaku.some(
+    const hasReduction = normalizedYaku.some(
       (y) => !MENQIAN_ONLY_YAKU.has(y.id) && y.han >= 1 && y.han <= 2
     )
     if (hasReduction) {

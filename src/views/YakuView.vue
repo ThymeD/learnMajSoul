@@ -126,6 +126,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, reactive, onUnmounted } from 'vue'
 import { yakuData as originYakuData, type Yaku } from '../data/yaku'
+import { normalizeYakuId } from '../utils/yaku/id'
+import { loadNormalizedNumberMap, saveNormalizedNumberMap } from '../utils/storage-map'
 import MahjongTile from '../components/MahjongTile.vue'
 
 const searchText = ref('')
@@ -136,15 +138,13 @@ const STORAGE_KEY = 'yaku-mastery'
 
 const loadMastery = () => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      const masteryMap = JSON.parse(stored)
-      yakuData.forEach((y) => {
-        if (masteryMap[y.id] !== undefined) {
-          y.mastery = masteryMap[y.id]
-        }
-      })
-    }
+    const normalizedMap = loadNormalizedNumberMap(STORAGE_KEY, normalizeYakuId)
+    yakuData.forEach((y) => {
+      const key = normalizeYakuId(y.id)
+      if (normalizedMap[key] !== undefined) {
+        y.mastery = normalizedMap[key]
+      }
+    })
   } catch (e) {
     console.warn('Failed to load mastery from localStorage:', e)
   }
@@ -154,10 +154,10 @@ const saveMastery = () => {
   const masteryMap: Record<string, number> = {}
   yakuData.forEach((y) => {
     if (y.mastery !== undefined && y.mastery !== null) {
-      masteryMap[y.id] = y.mastery
+      masteryMap[normalizeYakuId(y.id)] = y.mastery
     }
   })
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(masteryMap))
+  saveNormalizedNumberMap(STORAGE_KEY, masteryMap, normalizeYakuId)
 }
 
 onMounted(() => {

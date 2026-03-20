@@ -856,7 +856,7 @@ describe('役种匹配测试', () => {
         tingPai: []
       }
       const result = matchYaku(input)
-      const jikaze = result.find((y) => y.id === 'yakuhai-自风')
+      const jikaze = result.find((y) => y.id === 'yakuhai-jikaze' || y.id === 'yakuhai-自风')
       expect(jikaze?.matched).toBe(true)
     })
 
@@ -1252,6 +1252,66 @@ describe('副露操作测试', () => {
       expect(combinations[0].tile).toBe('w1')
       expect(combinations[0].count).toBe(4)
     })
+  })
+})
+
+describe('牌局分析-副露与杠规则', () => {
+  let store: ReturnType<typeof useHandStore>
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    store = useHandStore()
+    store.clear()
+  })
+
+  function addTiles(tiles: string[]) {
+    tiles.forEach((t) => {
+      store.addTile(t)
+    })
+  }
+
+  it('有副露时应按手牌+摸牌+副露合并后分析', () => {
+    // 副露：111万；其余：123筒 123索 111东 11白 => 总计14张
+    addTiles(['b1', 'b2', 'b3', 's1', 's2', 's3', 'd1', 'd1', 'd1', 'z1', 'z1'])
+    store.addFulu({
+      type: 'pon',
+      tiles: ['w1', 'w1', 'w1']
+    })
+
+    store.analyze()
+
+    expect(store.analysis).not.toBeNull()
+    expect(store.analysis?.error).toBeUndefined()
+    expect(store.analysis?.isHu).toBe(true)
+  })
+
+  it('杠牌应让可分析牌数上限+1', () => {
+    // 副露：1111万；其余：123筒 123索 111东 11白 => 总计15张
+    addTiles(['b1', 'b2', 'b3', 's1', 's2', 's3', 'd1', 'd1', 'd1', 'z1', 'z1'])
+    store.addFulu({
+      type: 'kan',
+      tiles: ['w1', 'w1', 'w1', 'w1'],
+      isOpen: false
+    })
+
+    store.analyze()
+
+    expect(store.analysis).not.toBeNull()
+    expect(store.analysis?.error).toBeUndefined()
+    expect(typeof store.analysis?.isHu).toBe('boolean')
+  })
+
+  it('副露后牌数不满足规则时应给出错误信息', () => {
+    // 无杠时总牌应为13或14，这里构造15张
+    addTiles(['b1', 'b2', 'b3', 's1', 's2', 's3', 'd1', 'd1', 'd1', 'z1', 'z1', 'w2'])
+    store.addFulu({
+      type: 'pon',
+      tiles: ['w1', 'w1', 'w1']
+    })
+
+    store.analyze()
+
+    expect(store.analysis?.error).toContain('牌数过多')
   })
 })
 

@@ -372,7 +372,7 @@ export function findJietou(tiles: Tile[]): Tile[] {
 
 /**
  * 标准胡牌判定（4面子+1雀头=14张）
- * 支持：正常14张，杠后15张（4+4+4+3）
+ * 支持：正常14张，杠后 15~18 张（每个杠额外 +1）
  * @param tiles 牌列表
  * @returns 胡牌结果
  */
@@ -388,10 +388,8 @@ export function checkHu(tiles: Tile[]): HuResult {
 
   const tileCount = sorted.length
 
-  // 牌数必须是14或15（考虑杠的情况）
-  // 标准胡牌：4*3+2=14张
-  // 杠后胡牌：3*3+4+2=15张 或 2*3+8+2=14张（两个杠）
-  if (tileCount !== 14 && tileCount !== 15) {
+  // 牌数必须在 14~18（4面子中 0~4 个杠）
+  if (tileCount < 14 || tileCount > 18) {
     return { isHu: false, mentsu: [], jietou: null }
   }
 

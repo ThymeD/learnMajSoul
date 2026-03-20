@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { matchYaku, calculateHan, type MatchInput } from '../utils/yaku-match'
+import { matchYaku, calculateHan, normalizeYakuId, type MatchInput } from '../utils/yaku-match'
 
 describe('役种匹配', () => {
   describe('断幺九', () => {
@@ -209,7 +209,7 @@ describe('役种匹配', () => {
       }
 
       const result = matchYaku(input)
-      const jikaze = result.find((y) => y.id === 'yakuhai-自风')
+      const jikaze = result.find((y) => y.id === 'yakuhai-jikaze' || y.id === 'yakuhai-自风')
 
       expect(jikaze).toBeDefined()
       expect(jikaze?.matched).toBe(true)
@@ -286,7 +286,7 @@ describe('役种匹配', () => {
 
       expect(chinitsu).toBeDefined()
       expect(chinitsu?.matched).toBe(true)
-      expect(chinitsu?.han).toBe(6)
+      expect(chinitsu?.han).toBe(5)
     })
   })
 
@@ -324,12 +324,49 @@ describe('役种匹配', () => {
 
       expect(hunyi).toBeDefined()
       expect(hunyi?.matched).toBe(true)
-      expect(hunyi?.han).toBe(3)
+      expect(hunyi?.han).toBe(2)
+    })
+  })
+
+  describe('平和两面听', () => {
+    it('有和了牌且为边张时，不应匹配平和', () => {
+      const input: MatchInput = {
+        allTiles: [
+          'w1',
+          'w2',
+          'w3',
+          'b2',
+          'b3',
+          'b4',
+          's3',
+          's4',
+          's5',
+          's6',
+          's7',
+          's8',
+          'w7',
+          'w7'
+        ],
+        isMenqian: true,
+        isLiqi: false,
+        isZimo: true,
+        dealer: false,
+        selfWind: 'd1',
+        fieldWind: 'd1',
+        fulu: [],
+        tingPai: [],
+        isHu: true,
+        agariTile: 'w3'
+      }
+
+      const result = matchYaku(input)
+      const pinfu = result.find((y) => y.id === 'pinfu')
+      expect(pinfu).toBeUndefined()
     })
   })
 
   describe('回归稳定性', () => {
-    it('特殊役成立时不再继续叠加普通役', () => {
+    it('七对子可与立直/门清自摸等兼容役并存', () => {
       const input: MatchInput = {
         allTiles: [
           'w1',
@@ -358,8 +395,10 @@ describe('役种匹配', () => {
       }
 
       const result = matchYaku(input)
-      expect(result.length).toBe(1)
-      expect(result[0].id).toBe('chitoitsu')
+      const ids = result.map((y) => y.id)
+      expect(ids).toContain('chitoitsu')
+      expect(ids).toContain('reach')
+      expect(ids).toContain('tsumo')
     })
 
     it('副露后仍可稳定识别三色同刻', () => {
@@ -450,6 +489,21 @@ describe('役种匹配', () => {
 
       // 5番以上按满贯计
       expect(han).toBe(5)
+    })
+
+    it('应兼容旧版役牌ID并归一化', () => {
+      expect(normalizeYakuId('yakuhai-自风')).toBe('yakuhai-jikaze')
+      expect(normalizeYakuId('yakuhai-场风')).toBe('yakuhai-bakaze')
+      expect(normalizeYakuId('tanyao')).toBe('tanyao')
+    })
+
+    it('旧版役牌ID参与计番时应兼容', () => {
+      const matchedYaku = [
+        { id: 'yakuhai-自风', name: '役牌：自风牌', han: 1, matched: true },
+        { id: 'yakuhai-sangen', name: '役牌：三元牌', han: 1, matched: true }
+      ]
+      const han = calculateHan(matchedYaku, false)
+      expect(han).toBe(1)
     })
   })
 })

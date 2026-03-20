@@ -6,6 +6,7 @@ export interface Fulu {
   type: 'chi' | 'pon' | 'kan'
   tiles: Tile[]
   from?: number
+  isOpen?: boolean
 }
 
 /** 役种匹配输入 */
@@ -28,6 +29,10 @@ export interface MatchInput {
   fulu: Fulu[]
   /** 听牌列表 */
   tingPai: Tile[]
+  /** 和了牌（可选，用于平和两面听等判定） */
+  agariTile?: Tile
+  /** 是否已胡牌（用于区分胡牌态和听牌态） */
+  isHu?: boolean
   /** 牌河（用于振听判断） */
   river?: Tile[]
 }
