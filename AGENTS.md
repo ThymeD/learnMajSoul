@@ -5,7 +5,7 @@
 - **项目名称**：雀魂麻将游戏攻略
 - **项目简介**：本项目旨在实现雀魂麻将游戏攻略系统，采用模块化开发，每个功能可独立验证，最终整合为完整系统。
 - **初始化时间**：2026-03-18
-- **工作流**：agent-team-workflow.md
+- **工作流**：.cursor/rules/workflow.md（Cursor 工作流固化）
 - **开发服务器地址**：http://localhost:5173
 - **启动命令**：npm run dev
 
@@ -135,7 +135,7 @@ PM 通知原 Agent 继续任务
 
 ## 工作流说明
 
-详见 `agent-team-workflow.md`
+详见 `.cursor/rules/workflow.md`（Cursor 工作流固化）
 
 ---
 
@@ -149,4 +149,4 @@ PM作为主agent，调用各子agent协作完成任务。
 
 用户在各窗口切换，传递任务信息。
 
-详见 `agent-team-workflow.md` 中的"两种作业模式"章节。
+详见 `.cursor/rules/workflow.md` 中的工作流程说明。
