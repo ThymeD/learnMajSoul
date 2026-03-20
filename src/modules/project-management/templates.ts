@@ -253,6 +253,125 @@ export function createDefaultProjectTemplates(): ProjectTemplate[] {
           rollback: ''
         }
       ]
+    },
+    {
+      id: 'delivery-data-page-hardening',
+      name: '交付与数据页优化跟踪',
+      description: '用于跟踪交付管理页、数据管理页的体验与稳定性优化',
+      items: [
+        {
+          title: '修复桥接事件误消费（失败事件不可直接标记已处理）',
+          domain: 'management',
+          kind: 'defect',
+          mode: 'both',
+          status: 'pending_ai',
+          priority: 'P0',
+          handler: 'ai',
+          decisionOwner: '',
+          dueDate: '',
+          note: '仅成功应用的桥接事件才能写入 appliedIds；失败事件进入可重试队列并可见',
+          evidence: '',
+          risk: '桥接数据可能遗漏，导致任务状态与真实执行不一致',
+          impact: '交付状态可信度下降，影响后续排期与决策',
+          rollback: '保留旧逻辑开关，异常时切回旧路径'
+        },
+        {
+          title: '删除交付项增加二次确认与短时撤销',
+          domain: 'management',
+          kind: 'requirement',
+          mode: 'both',
+          status: 'pending_ai',
+          priority: 'P0',
+          handler: 'ai',
+          decisionOwner: '',
+          dueDate: '',
+          note: '删除前确认“是否删除”，删除后提示“已删除，可在N秒内撤销”',
+          evidence: '',
+          risk: '误删后恢复成本高',
+          impact: '用户信任和操作安全性下降',
+          rollback: '仅保留二次确认，暂不启用撤销'
+        },
+        {
+          title: '日志清理前强制预览并校验预览时效',
+          domain: 'management',
+          kind: 'defect',
+          mode: 'both',
+          status: 'pending_ai',
+          priority: 'P0',
+          handler: 'ai',
+          decisionOwner: '',
+          dueDate: '',
+          note: '确认清理前自动触发预览；若预览过旧或条件变化则要求重新预览',
+          evidence: '',
+          risk: '清理数量与用户预期不一致，存在误清理',
+          impact: '可追溯日志受损，排障成本上升',
+          rollback: '仅做强制预览，不做时效校验'
+        },
+        {
+          title: '降低轮询开销（可见性暂停 + 退避策略）',
+          domain: 'management',
+          kind: 'todo',
+          mode: 'both',
+          status: 'pending_ai',
+          priority: 'P1',
+          handler: 'ai',
+          decisionOwner: '',
+          dueDate: '',
+          note: '页面隐藏时暂停轮询；连续无更新按 5s/15s/30s 退避；用户操作后立即刷新',
+          evidence: '',
+          risk: '频繁轮询导致性能消耗和日志噪音',
+          impact: '页面卡顿、资源浪费、告警噪声增多',
+          rollback: '保留固定轮询间隔作为兜底'
+        },
+        {
+          title: '拆分“连接自检”与“自检并同步”操作语义',
+          domain: 'management',
+          kind: 'requirement',
+          mode: 'both',
+          status: 'pending_ai',
+          priority: 'P1',
+          handler: 'ai',
+          decisionOwner: '',
+          dueDate: '',
+          note: '按钮命名与行为一致，避免“只想检查却触发写操作”',
+          evidence: '',
+          risk: '用户误触导致状态变化不可预期',
+          impact: '学习成本和误操作成本上升',
+          rollback: '保留单按钮，但补充明确提示'
+        },
+        {
+          title: '状态流转可解释化（不可达状态说明）',
+          domain: 'management',
+          kind: 'todo',
+          mode: 'both',
+          status: 'pending_ai',
+          priority: 'P1',
+          handler: 'ai',
+          decisionOwner: '',
+          dueDate: '',
+          note: '状态下拉中对不可流转路径展示原因提示，降低试错',
+          evidence: '',
+          risk: '用户不清楚为什么不能改状态',
+          impact: '效率下降，沟通成本上升',
+          rollback: '先在文案中补充流转规则说明'
+        },
+        {
+          title: '交付列表支持批量操作（批量改状态/指派）',
+          domain: 'management',
+          kind: 'requirement',
+          mode: 'both',
+          status: 'pending_ai',
+          priority: 'P1',
+          handler: 'ai',
+          decisionOwner: '',
+          dueDate: '',
+          note: '支持多选后批量执行常见动作，减少重复点击',
+          evidence: '',
+          risk: '单条操作在任务量大时效率低',
+          impact: '迭代执行速度慢，易出错',
+          rollback: '先补批量状态修改，后续再加批量指派'
+        }
+      ]
     }
   ]
 }

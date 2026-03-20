@@ -21,6 +21,7 @@ import {
   previewProcessLogCleanup,
   saveDeliveryItems,
   saveDeliveryItemsToProjectFile,
+  setProjectWorkingMode,
   syncProjectDataRepo,
   type DeliveryItem,
   type DeliveryKind,
@@ -42,6 +43,7 @@ const MANAGEMENT_DOMAIN_KEYWORDS = ['流程', '看板', '模板', '状态', '日
 const BRIDGE_ENDPOINT = '/__pm_api/bridge'
 const ITEMS_ENDPOINT = '/__pm_api/items'
 const RECEIPTS_ENDPOINT = '/__pm_api/receipts'
+const DELIVERY_DATA_HARDENING_TEMPLATE_ID = 'delivery-data-page-hardening'
 
 interface BridgeEvent {
   id: string
@@ -75,6 +77,27 @@ interface ApiHealthCheckOutcome {
   applied?: number
 }
 
+interface ApiEndpointHealth {
+  endpoint: 'items' | 'bridge' | 'receipts'
+  ok: boolean
+  message: string
+}
+
+interface BridgeApplyResult {
+  ok: boolean
+  reason?: string
+}
+
+interface BridgeFailureEntry {
+  id: string
+  action: BridgeEvent['action']
+  itemId: string
+  title: string
+  reason: string
+  retryCount: number
+  lastTriedAt: number
+}
+
 export function useProjectManagement() {
   const domainFilter = ref<'all' | DeliveryDomain>('all')
   const modeFilter = ref<'all' | DeliveryMode>('all')
@@ -93,6 +116,12 @@ export function useProjectManagement() {
   const bridgeLastSyncAt = ref<number | null>(null)
   const bridgeSyncing = ref(false)
   const bridgeAppliedIdsStorageKey = `${projectManagementConfig.projectKey}-bridge-applied-ids-v1`
+  const deliveryDataHardeningSeededStorageKey =
+    `${projectManagementConfig.projectKey}-${DELIVERY_DATA_HARDENING_TEMPLATE_ID}-seeded-v1`
+  const deliveryDataHardeningPromotedStorageKey =
+    `${projectManagementConfig.projectKey}-${DELIVERY_DATA_HARDENING_TEMPLATE_ID}-promoted-v1`
+  const deliveryDataReminderOptimizationRegisteredStorageKey =
+    `${projectManagementConfig.projectKey}-delivery-data-reminder-optimization-registered-v1`
   const bridgeAppliedIds = new Set<string>()
   const projectFileSyncMessage = ref('未连接')
   const projectFileReady = ref(false)
@@ -116,7 +145,12 @@ export function useProjectManagement() {
     workingTreeDirty: false,
     ahead: 0,
     behind: 0,
-    syncMessage: '未检测同步状态'
+    syncMessage: '未检测同步状态',
+    workingMode: 'single_local',
+    modeConfirmed: false,
+    modeConfirmedAt: 0,
+    needsModeConfirmation: false,
+    modePromptReason: ''
   })
   const projectLinkStatusMessage = ref('未检测关联')
   const writeRiskAcknowledged = ref(false)
@@ -146,18 +180,16 @@ export function useProjectManagement() {
   })
   const apiHealthChecking = ref(false)
   const projectControlLoading = ref(false)
+  const projectBootstrapReady = ref(false)
   const dataRepoSyncing = ref(false)
   const dataRepoBackingUp = ref(false)
   const projectControlMessage = ref('未执行')
   const apiHealthSummary = ref('未检测')
-  const apiHealthDetails = ref<
-    {
-      endpoint: 'items' | 'bridge' | 'receipts'
-      ok: boolean
-      message: string
-    }[]
-  >([])
+  const apiHealthDetails = ref<ApiEndpointHealth[]>([])
+  const bridgeFailedEvents = ref<BridgeFailureEntry[]>([])
+  const bridgeFailureMap = new Map<string, BridgeFailureEntry>()
   let bridgePollTimer: number | undefined
+  let bridgePollBackoffMs = 5000
   let projectFileSaveChain: Promise<void> = Promise.resolve()
 
   const logCleanupDate = ref('')
@@ -291,6 +323,21 @@ export function useProjectManagement() {
       }
     } finally {
       dataRepoBackingUp.value = false
+    }
+  }
+
+  async function updateProjectWorkingModeByUi(
+    mode: 'single_local' | 'multi_sync'
+  ): Promise<{ ok: boolean; message: string }> {
+    try {
+      const result = await setProjectWorkingMode(mode)
+      await refreshProjectLinkStatus()
+      return { ok: result.ok, message: result.message }
+    } catch (error: unknown) {
+      return {
+        ok: false,
+        message: error instanceof Error && error.message ? error.message : '模式更新失败，请稍后重试'
+      }
     }
   }
 
@@ -470,22 +517,22 @@ export function useProjectManagement() {
     localStorage.setItem(bridgeAppliedIdsStorageKey, JSON.stringify(Array.from(bridgeAppliedIds)))
   }
 
-  function applyBridgeEvent(event: BridgeEvent): boolean {
+  function applyBridgeEvent(event: BridgeEvent): BridgeApplyResult {
     if (event.action === 'update_status') {
-      if (!event.itemId || !event.toStatus) return false
+      if (!event.itemId || !event.toStatus) return { ok: false, reason: '缺少目标条目或状态' }
       const target = items.value.find((item) => item.id === event.itemId)
-      if (!target) return false
+      if (!target) return { ok: false, reason: '目标条目不存在' }
       const result = updateStatus(target, event.toStatus, {
         actor: event.actor || 'AI',
         note: event.note || 'AI桥接同步'
       })
-      return result.ok
+      return result.ok ? { ok: true } : { ok: false, reason: result.message || '状态流转失败' }
     }
 
     if (event.action === 'create_item') {
       const payload = event.payload ?? {}
       const title = payload?.title?.trim()
-      if (!title) return false
+      if (!title) return { ok: false, reason: '缺少标题' }
       items.value.unshift(
         createDeliveryItem({
           title,
@@ -504,14 +551,35 @@ export function useProjectManagement() {
           rollback: payload.rollback || ''
         })
       )
-      return true
+      return { ok: true }
     }
 
-    return false
+    return { ok: false, reason: '未知桥接动作' }
   }
 
-  async function syncBridgeEventsNow(): Promise<{ applied: number; total: number }> {
-    if (bridgeSyncing.value) return { applied: 0, total: 0 }
+  function upsertBridgeFailure(event: BridgeEvent, reason: string) {
+    if (!event.id) return
+    const prev = bridgeFailureMap.get(event.id)
+    bridgeFailureMap.set(event.id, {
+      id: event.id,
+      action: event.action,
+      itemId: event.itemId || '-',
+      title: event.payload?.title?.trim() || event.note?.trim() || '-',
+      reason,
+      retryCount: (prev?.retryCount || 0) + 1,
+      lastTriedAt: Date.now()
+    })
+    bridgeFailedEvents.value = Array.from(bridgeFailureMap.values()).sort((a, b) => b.lastTriedAt - a.lastTriedAt)
+  }
+
+  function clearBridgeFailure(eventId: string) {
+    if (!bridgeFailureMap.has(eventId)) return
+    bridgeFailureMap.delete(eventId)
+    bridgeFailedEvents.value = Array.from(bridgeFailureMap.values()).sort((a, b) => b.lastTriedAt - a.lastTriedAt)
+  }
+
+  async function syncBridgeEventsNow(): Promise<{ applied: number; total: number; failed: number }> {
+    if (bridgeSyncing.value) return { applied: 0, total: 0, failed: 0 }
     bridgeSyncing.value = true
     try {
       const response = await fetch(
@@ -520,28 +588,107 @@ export function useProjectManagement() {
       )
       if (!response.ok) {
         bridgeSyncMessage.value = `同步失败：${response.status}`
-        return { applied: 0, total: 0 }
+        return { applied: 0, total: 0, failed: 0 }
       }
       const payload = (await response.json()) as { events?: BridgeEvent[] }
       const events = Array.isArray(payload.events) ? payload.events : []
       const sortedEvents = [...events].sort((a, b) => a.createdAt - b.createdAt)
 
       let applied = 0
+      let failed = 0
       sortedEvents.forEach((event) => {
         if (!event?.id || bridgeAppliedIds.has(event.id)) return
-        const ok = applyBridgeEvent(event)
-        bridgeAppliedIds.add(event.id)
-        if (ok) applied++
+        const result = applyBridgeEvent(event)
+        if (result.ok) {
+          bridgeAppliedIds.add(event.id)
+          clearBridgeFailure(event.id)
+          applied++
+          return
+        }
+        failed++
+        upsertBridgeFailure(event, result.reason || '应用失败')
       })
       saveAppliedBridgeIds()
       bridgeLastSyncAt.value = Date.now()
-      bridgeSyncMessage.value = applied > 0 ? `已同步 ${applied} 条桥接事件` : '已同步（无新事件）'
-      return { applied, total: sortedEvents.length }
+      if (failed > 0) {
+        bridgeSyncMessage.value = `同步完成：成功 ${applied} 条，失败 ${failed} 条`
+      } else {
+        bridgeSyncMessage.value = applied > 0 ? `已同步 ${applied} 条桥接事件` : '已同步（无新事件）'
+      }
+      return { applied, total: sortedEvents.length, failed }
     } catch {
       bridgeSyncMessage.value = '同步失败：桥接文件不可用'
-      return { applied: 0, total: 0 }
+      return { applied: 0, total: 0, failed: 0 }
     } finally {
       bridgeSyncing.value = false
+    }
+  }
+
+  async function runProjectApiHealthChecks(): Promise<{ results: ApiEndpointHealth[]; okCount: number }> {
+    const checks: {
+      endpoint: 'items' | 'bridge' | 'receipts'
+      url: string
+    }[] = [
+      {
+        endpoint: 'items',
+        url: `${ITEMS_ENDPOINT}?projectKey=${projectManagementConfig.projectKey}&t=${Date.now()}`
+      },
+      {
+        endpoint: 'bridge',
+        url: `${BRIDGE_ENDPOINT}?projectKey=${projectManagementConfig.projectKey}&t=${Date.now()}`
+      },
+      {
+        endpoint: 'receipts',
+        url: `${RECEIPTS_ENDPOINT}?projectKey=${projectManagementConfig.projectKey}&t=${Date.now()}`
+      }
+    ]
+
+    const results = await Promise.all(
+      checks.map(async (check) => {
+        try {
+          const response = await fetch(check.url, { cache: 'no-store' })
+          if (!response.ok) {
+            return {
+              endpoint: check.endpoint,
+              ok: false,
+              message: `HTTP ${response.status}`
+            }
+          }
+          await response.json()
+          return {
+            endpoint: check.endpoint,
+            ok: true,
+            message: 'OK'
+          }
+        } catch {
+          return {
+            endpoint: check.endpoint,
+            ok: false,
+            message: '请求失败'
+          }
+        }
+      })
+    )
+
+    apiHealthDetails.value = results
+    const okCount = results.filter((r) => r.ok).length
+    apiHealthSummary.value = okCount === results.length ? '全部可用' : `异常 ${results.length - okCount} 项`
+    return { results, okCount }
+  }
+
+  async function checkProjectFileApiOnly(): Promise<{ ok: boolean; message: string }> {
+    if (apiHealthChecking.value) {
+      return { ok: false, message: '正在执行连接自检，请稍候' }
+    }
+    apiHealthChecking.value = true
+    try {
+      const { results, okCount } = await runProjectApiHealthChecks()
+      if (okCount === results.length) {
+        return { ok: true, message: '连接自检通过（仅检查，不触发同步）' }
+      }
+      return { ok: false, message: `连接自检异常：${results.length - okCount} 项失败` }
+    } finally {
+      apiHealthChecking.value = false
     }
   }
 
@@ -554,54 +701,7 @@ export function useProjectManagement() {
     }
     apiHealthChecking.value = true
     try {
-      const checks: {
-        endpoint: 'items' | 'bridge' | 'receipts'
-        url: string
-      }[] = [
-        {
-          endpoint: 'items',
-          url: `${ITEMS_ENDPOINT}?projectKey=${projectManagementConfig.projectKey}&t=${Date.now()}`
-        },
-        {
-          endpoint: 'bridge',
-          url: `${BRIDGE_ENDPOINT}?projectKey=${projectManagementConfig.projectKey}&t=${Date.now()}`
-        },
-        {
-          endpoint: 'receipts',
-          url: `${RECEIPTS_ENDPOINT}?projectKey=${projectManagementConfig.projectKey}&t=${Date.now()}`
-        }
-      ]
-
-      const results = await Promise.all(
-        checks.map(async (check) => {
-          try {
-            const response = await fetch(check.url, { cache: 'no-store' })
-            if (!response.ok) {
-              return {
-                endpoint: check.endpoint,
-                ok: false,
-                message: `HTTP ${response.status}`
-              }
-            }
-            await response.json()
-            return {
-              endpoint: check.endpoint,
-              ok: true,
-              message: 'OK'
-            }
-          } catch {
-            return {
-              endpoint: check.endpoint,
-              ok: false,
-              message: '请求失败'
-            }
-          }
-        })
-      )
-
-      apiHealthDetails.value = results
-      const okCount = results.filter((r) => r.ok).length
-      apiHealthSummary.value = okCount === results.length ? '全部可用' : `异常 ${results.length - okCount} 项`
+      const { results, okCount } = await runProjectApiHealthChecks()
       if (okCount === results.length) {
         const reconnected = await reconnectProjectFileStorage()
         if (reconnected) {
@@ -761,6 +861,11 @@ export function useProjectManagement() {
     items.value = items.value.filter((item) => item.id !== id)
   }
 
+  function restoreItem(item: DeliveryItem, atIndex = 0) {
+    const safeIndex = Math.max(0, Math.min(atIndex, items.value.length))
+    items.value.splice(safeIndex, 0, item)
+  }
+
   function groupedItemsByStatus(status: DeliveryStatus): DeliveryItem[] {
     return filteredItems.value.filter((item) => item.status === status)
   }
@@ -815,6 +920,110 @@ export function useProjectManagement() {
       items.value.unshift(...toInsert)
     }
     return { count: toInsert.length, name: template.name }
+  }
+
+  function ensureDeliveryDataHardeningBacklogSeeded(): number {
+    try {
+      if (localStorage.getItem(deliveryDataHardeningSeededStorageKey) === '1') {
+        return 0
+      }
+    } catch {
+      // ignore localStorage read error
+    }
+
+    const template = templates.value.find((t) => t.id === DELIVERY_DATA_HARDENING_TEMPLATE_ID)
+    if (!template) return 0
+
+    const existingKeys = new Set(items.value.map((i) => `${i.kind}-${i.title}`))
+    const toInsert = template.items
+      .map((draftItem) => createDeliveryItem(draftItem))
+      .filter((item) => !existingKeys.has(`${item.kind}-${item.title}`))
+
+    if (toInsert.length > 0) {
+      items.value.unshift(...toInsert)
+    }
+
+    try {
+      localStorage.setItem(deliveryDataHardeningSeededStorageKey, '1')
+    } catch {
+      // ignore localStorage write error
+    }
+    return toInsert.length
+  }
+
+  function ensureDeliveryDataHardeningTasksInProgress(): number {
+    try {
+      if (localStorage.getItem(deliveryDataHardeningPromotedStorageKey) === '1') {
+        return 0
+      }
+    } catch {
+      // ignore localStorage read error
+    }
+
+    const template = templates.value.find((t) => t.id === DELIVERY_DATA_HARDENING_TEMPLATE_ID)
+    if (!template) return 0
+    const targetKeys = new Set(template.items.map((item) => `${item.kind}-${item.title}`))
+    let promoted = 0
+
+    items.value.forEach((item) => {
+      const key = `${item.kind}-${item.title}`
+      if (!targetKeys.has(key)) return
+      if (item.status !== 'pending_ai') return
+      const result = updateStatus(item, 'ai_in_progress', {
+        actor: 'AI',
+        note: '优化任务已启动执行（自动推进）'
+      })
+      if (result.ok) {
+        promoted++
+      }
+    })
+
+    try {
+      localStorage.setItem(deliveryDataHardeningPromotedStorageKey, '1')
+    } catch {
+      // ignore localStorage write error
+    }
+    return promoted
+  }
+
+  function ensureDeferredReminderOptimizationBacklogRegistered(): number {
+    try {
+      if (localStorage.getItem(deliveryDataReminderOptimizationRegisteredStorageKey) === '1') {
+        return 0
+      }
+    } catch {
+      // ignore localStorage read error
+    }
+
+    const title = '【低优先】全局提醒降噪与双模式策略细化'
+    const exists = items.value.some((item) => item.title === title && item.kind === 'requirement')
+    if (!exists) {
+      items.value.unshift(
+        createDeliveryItem({
+          title,
+          domain: 'management',
+          kind: 'requirement',
+          mode: 'both',
+          status: 'pending_ai',
+          priority: 'P3',
+          handler: 'ai',
+          decisionOwner: '',
+          dueDate: '',
+          note: '先登记需求，不立即落地：仅在必要时全局提醒；增加今日免打扰、提醒节流与模式确认优化。',
+          evidence: '',
+          risk: '提醒过多会造成打扰，提醒过少会导致用户不知何时处理',
+          impact: '影响非程序员用户对数据管理功能的理解和使用效率',
+          rollback: '保留现有提醒策略，后续按AB或灰度逐步调整'
+        })
+      )
+    }
+
+    try {
+      localStorage.setItem(deliveryDataReminderOptimizationRegisteredStorageKey, '1')
+    } catch {
+      // ignore localStorage write error
+    }
+    return exists ? 0 : 1
   }
 
   function exportSnapshot() {
@@ -948,20 +1157,54 @@ export function useProjectManagement() {
     }
   }
 
-  onMounted(() => {
-    void reconnectProjectFileStorage()
-    void refreshProjectContext()
-    void refreshProjectLinkStatus()
-    void refreshProjectStartupCheck()
+  function clearBridgePollTimer() {
+    if (bridgePollTimer !== undefined) {
+      window.clearTimeout(bridgePollTimer)
+      bridgePollTimer = undefined
+    }
+  }
 
-    loadAppliedBridgeIds()
-    void syncBridgeEventsNow()
-    bridgePollTimer = window.setInterval(() => {
-      void syncBridgeEventsNow()
-      void refreshProjectContext()
-      void refreshProjectLinkStatus()
-      void refreshProjectStartupCheck()
-    }, 5000)
+  function scheduleBridgePolling(delayMs?: number) {
+    if (document.hidden) return
+    clearBridgePollTimer()
+    const wait = typeof delayMs === 'number' ? delayMs : bridgePollBackoffMs
+    bridgePollTimer = window.setTimeout(() => {
+      void (async () => {
+        const result = await syncBridgeEventsNow()
+        await refreshProjectContext()
+        await refreshProjectLinkStatus()
+        await refreshProjectStartupCheck()
+        bridgePollBackoffMs = result.applied > 0 || result.failed > 0 ? 5000 : Math.min(30000, bridgePollBackoffMs * 2)
+        scheduleBridgePolling()
+      })()
+    }, wait)
+  }
+
+  function onVisibilityChange() {
+    if (document.hidden) {
+      clearBridgePollTimer()
+      return
+    }
+    bridgePollBackoffMs = 5000
+    scheduleBridgePolling(0)
+  }
+
+  onMounted(() => {
+    void (async () => {
+      await reconnectProjectFileStorage()
+      await refreshProjectContext()
+      await refreshProjectLinkStatus()
+      await refreshProjectStartupCheck()
+      loadAppliedBridgeIds()
+      await syncBridgeEventsNow()
+      ensureDeliveryDataHardeningBacklogSeeded()
+      ensureDeliveryDataHardeningTasksInProgress()
+      ensureDeferredReminderOptimizationBacklogRegistered()
+      bridgePollBackoffMs = 5000
+      scheduleBridgePolling()
+      projectBootstrapReady.value = true
+    })()
+    document.addEventListener('visibilitychange', onVisibilityChange)
   })
 
   watch(
@@ -975,9 +1218,8 @@ export function useProjectManagement() {
   )
 
   onBeforeUnmount(() => {
-    if (bridgePollTimer !== undefined) {
-      window.clearInterval(bridgePollTimer)
-    }
+    clearBridgePollTimer()
+    document.removeEventListener('visibilitychange', onVisibilityChange)
   })
 
   return {
@@ -998,6 +1240,7 @@ export function useProjectManagement() {
     bridgeSyncMessage,
     bridgeLastSyncAt,
     bridgeSyncing,
+    bridgeFailedEvents,
     projectFileSyncMessage,
     projectFileReady,
     projectBranch,
@@ -1008,6 +1251,7 @@ export function useProjectManagement() {
     projectLinkStatusMessage,
     projectStartupCheck,
     projectControlLoading,
+    projectBootstrapReady,
     dataRepoSyncing,
     dataRepoBackingUp,
     projectControlMessage,
@@ -1041,6 +1285,7 @@ export function useProjectManagement() {
     userConfirmDelivery,
     userRejectDelivery,
     removeItem,
+    restoreItem,
     groupedItemsByStatus,
     importAcceptedRuleReviewItems,
     importTemplateItems,
@@ -1048,11 +1293,13 @@ export function useProjectManagement() {
     exportTimeline,
     syncBridgeEventsNow,
     checkProjectFileApiHealth,
+    checkProjectFileApiOnly,
     refreshProjectLinkStatus,
     refreshProjectStartupCheck,
     runProjectControl,
     syncDataRepoByUi,
     backupDataRepoByUi,
+    updateProjectWorkingModeByUi,
     unlockWriteWithRiskAck,
     relockWrites,
     previewLogCleanup,
