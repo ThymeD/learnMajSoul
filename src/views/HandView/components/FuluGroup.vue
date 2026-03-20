@@ -12,26 +12,41 @@ interface Emits {
   (e: 'toggle-type'): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+function handleKanDblClick() {
+  if (props.item.type === 'kan') {
+    emit('toggle-type')
+  }
+}
 </script>
 
 <template>
   <div class="fulu-group">
-    <div class="fulu-tiles">
+    <el-tooltip
+      :disabled="item.type !== 'kan'"
+      placement="top"
+      :content="item.type === 'kan' ? (item.isOpen === false ? '切换明杠' : '切换暗杠') : ''"
+    >
+      <div
+        class="fulu-tiles"
+        :class="{ 'fulu-tiles--kan': item.type === 'kan' }"
+        @dblclick="handleKanDblClick"
+      >
       <template v-if="item.type === 'kan' && !item.isOpen">
-        <!-- 暗杠：牌背在两边两张 -->
+        <!-- 暗杠：两侧牌背，中间两张按 tiles[1]、tiles[2] 原顺序亮牌（与明杠切换后顺序一致） -->
         <div class="fulu-tile-wrapper kan-back">
           <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" :is-back="true" />
         </div>
         <div class="fulu-tile-wrapper">
-          <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" />
+          <MahjongTile :tile-id="item.tiles[1]" :width="40" :show-name="false" />
         </div>
         <div class="fulu-tile-wrapper">
-          <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" />
+          <MahjongTile :tile-id="item.tiles[2]" :width="40" :show-name="false" />
         </div>
         <div class="fulu-tile-wrapper kan-back">
-          <MahjongTile :tile-id="item.tiles[0]" :width="40" :show-name="false" :is-back="true" />
+          <MahjongTile :tile-id="item.tiles[3]" :width="40" :show-name="false" :is-back="true" />
         </div>
       </template>
       <template v-else>
@@ -40,16 +55,8 @@ const emit = defineEmits<Emits>()
           <MahjongTile :tile-id="tile" :width="40" :show-name="false" />
         </div>
       </template>
-    </div>
-    <el-button
-      v-if="item.type === 'kan'"
-      size="small"
-      type="warning"
-      link
-      @click="emit('toggle-type')"
-    >
-      {{ item.isOpen === false ? '明杠' : '暗杠' }}
-    </el-button>
+      </div>
+    </el-tooltip>
     <el-button v-if="canDelete" size="small" type="danger" link @click="emit('remove')">
       删除
     </el-button>
@@ -69,6 +76,10 @@ const emit = defineEmits<Emits>()
 .fulu-tiles {
   display: flex;
   gap: 4px;
+}
+
+.fulu-tiles--kan {
+  cursor: pointer;
 }
 
 .fulu-tile-wrapper {

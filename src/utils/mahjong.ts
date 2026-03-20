@@ -186,6 +186,28 @@ export function sortTiles(tiles: Tile[]): Tile[] {
 }
 
 /**
+ * 排序手牌/摸牌展示用：按「标准化花色数字」排序，但保留赤牌 id（rw5 不会变成 w5）
+ */
+export function sortTilesPreserveRed(tiles: Tile[]): Tile[] {
+  const rank = (t: Tile) => normalizeRedFive(t)
+  return [...tiles].sort((a, b) => {
+    const na = rank(a)
+    const nb = rank(b)
+    const suitA = getTileSuit(na)
+    const suitB = getTileSuit(nb)
+    if (suitA !== suitB) {
+      return (
+        SUIT_PREFIXES.indexOf(suitA as (typeof SUIT_PREFIXES)[number]) -
+        SUIT_PREFIXES.indexOf(suitB as (typeof SUIT_PREFIXES)[number])
+      )
+    }
+    const d = getTileNumber(na) - getTileNumber(nb)
+    if (d !== 0) return d
+    return a.localeCompare(b)
+  })
+}
+
+/**
  * 统计每种牌的数量
  * @param tiles 牌列表
  * @returns 每种牌的数量映射

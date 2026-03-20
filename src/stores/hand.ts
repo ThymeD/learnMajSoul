@@ -7,6 +7,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import {
   sortTiles,
+  sortTilesPreserveRed,
   countTiles,
   isValidTileCount,
   normalizeTiles,
@@ -155,7 +156,7 @@ export const useHandStore = defineStore('hand', () => {
     if (drawTile.value) {
       result.push(drawTile.value)
     }
-    return sortTiles(result)
+    return sortTilesPreserveRed(result)
   })
 
   /**
@@ -204,13 +205,9 @@ export const useHandStore = defineStore('hand', () => {
       return false
     }
 
-    // 标准化赤牌
-    const normalized = normalizeTiles([tile])[0]
-
-    // 直接添加新牌到手牌，不自动移动摸牌区的牌
-    // 摸牌区的牌需要用户主动操作才会移动
-    tiles.value.push(normalized)
-    tiles.value = sortTiles(tiles.value)
+    // 保留赤牌字面量，素材区 usedTiles 才能正确扣减 rw5 / w5 配额
+    tiles.value.push(tile)
+    tiles.value = sortTilesPreserveRed(tiles.value)
 
     return true
   }
@@ -222,8 +219,14 @@ export const useHandStore = defineStore('hand', () => {
    * @returns 是否移除成功
    */
   function removeTile(tile: string, index?: number): boolean {
-    const normalized = normalizeTiles([tile])[0]
-    const idx = index ?? tiles.value.indexOf(normalized)
+    let idx = index ?? -1
+    if (idx < 0 || idx >= tiles.value.length) {
+      idx = tiles.value.indexOf(tile)
+    }
+    if (idx === -1) {
+      const norm = normalizeRedFive(tile)
+      idx = tiles.value.findIndex((t) => normalizeRedFive(t) === norm)
+    }
 
     if (idx === -1) {
       return false
@@ -238,12 +241,7 @@ export const useHandStore = defineStore('hand', () => {
    * @param tile 牌或null
    */
   function setDrawTile(tile: string | null): void {
-    if (tile) {
-      const normalized = normalizeTiles([tile])[0]
-      drawTile.value = normalized
-    } else {
-      drawTile.value = null
-    }
+    drawTile.value = tile
   }
 
   /**
@@ -341,18 +339,16 @@ export const useHandStore = defineStore('hand', () => {
       return
     }
 
-    // 标准化副露中的牌
-    const normalizedTiles = normalizeTiles(fuluItem.tiles)
-
-    // 检查是否超过4张
-    const allTiles = [...tiles.value, ...normalizedTiles]
+    // 保留赤牌等具体牌 id 用于展示与素材区统计；张数校验仍按「赤5+普5」合并计数
+    const concreteTiles = [...fuluItem.tiles]
+    const allTiles = [...tiles.value, ...concreteTiles]
     if (!isValidTileCount(allTiles)) {
       return
     }
 
     fulu.value.push({
       ...fuluItem,
-      tiles: normalizedTiles
+      tiles: concreteTiles
     })
   }
 
@@ -608,18 +604,18 @@ export const useHandStore = defineStore('hand', () => {
       return false
     }
 
-    const normalized = normalizeTiles([tile])[0]
-    const idx = tiles.value.indexOf(normalized)
+    let idx = tiles.value.indexOf(tile)
+    if (idx === -1) {
+      const norm = normalizeRedFive(tile)
+      idx = tiles.value.findIndex((t) => normalizeRedFive(t) === norm)
+    }
 
     if (idx === -1) {
       return false
     }
 
-    // 移除手牌
-    tiles.value.splice(idx, 1)
-
-    // 添加到牌河
-    river.value.push(normalized)
+    const [removed] = tiles.value.splice(idx, 1)
+    river.value.push(removed)
 
     return true
   }
@@ -633,7 +629,7 @@ export const useHandStore = defineStore('hand', () => {
       const tile = river.value[index]
       river.value.splice(index, 1)
       tiles.value.push(tile)
-      tiles.value = sortTiles(tiles.value)
+      tiles.value = sortTilesPreserveRed(tiles.value)
     }
   }
 
@@ -686,23 +682,23 @@ export const useHandStore = defineStore('hand', () => {
    * 调用 mahjong.ts 中的算法分析手牌，并计算役种和番数
    */
   function analyze(): void {
-    // 校验：检查每种牌的数量是否超过4张
     const all = allTiles.value
-    const tileCounts: Record<string, number> = {}
-    for (const tile of all) {
-      tileCounts[tile] = (tileCounts[tile] || 0) + 1
-      if (tileCounts[tile] > 4) {
-        analysis.value = {
-          isTing: false,
-          isHu: false,
-          tingPai: [],
-          zhenTing: false,
-          han: 0,
-          yaku: [],
-          error: `同一种牌不能超过4张：${tile}已有${tileCounts[tile]}张`
-        }
-        return
+
+    if (!isValidTileCount(all)) {
+      const c = countTiles(all)
+      const bad = Object.entries(c).find(([, n]) => n > 4)
+      analysis.value = {
+        isTing: false,
+        isHu: false,
+        tingPai: [],
+        zhenTing: false,
+        han: 0,
+        yaku: [],
+        error: bad
+          ? `同一种牌不能超过4张：${bad[0]}（含赤牌合并计数）`
+          : '牌的数量不合法'
       }
+      return
     }
 
     // 需要14张牌才能分析（13张手牌+1张摸牌 或 14张手牌）

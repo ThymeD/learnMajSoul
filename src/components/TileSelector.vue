@@ -17,7 +17,6 @@ interface TileCategory {
 interface Props {
   disabled?: boolean
   maxCount?: number
-  selectedTiles?: string[]
   filterSuits?: string[]
   searchText?: string
   usedTiles?: string[] // 已使用的牌，用于计算剩余数量
@@ -33,7 +32,6 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   maxCount: 4,
-  selectedTiles: () => [],
   filterSuits: () => [],
   searchText: '',
   usedTiles: () => []
@@ -217,25 +215,18 @@ const uniqueSourceTiles = computed(() => {
   return tiles
 })
 
-// Get selected count for a specific tile
-const getSelectedCount = (tileId: string): number => {
-  return props.selectedTiles.filter((t) => t === tileId).length
-}
-
-// Check if a tile is disabled (already at max count)
-const isTileDisabled = (tileId: string): boolean => {
-  if (props.disabled) return true
-  return getSelectedCount(tileId) >= props.maxCount
-}
-
 // Get remaining count for a tile - 直接使用 sourceTiles
 const getRemainingCount = (tileId: string): number => {
   return sourceTiles.value[tileId] ?? 0
 }
 
-// 检查是否还有剩余
 const hasRemaining = (tileId: string): boolean => {
   return getRemainingCount(tileId) > 0
+}
+
+// 以素材剩余数为准（含赤5=1、普5=3），不用手牌 maxCount=4 误判普5可点第4张
+const isTileDisabled = (tileId: string): boolean => {
+  return props.disabled || !hasRemaining(tileId)
 }
 
 // Handle tile click - 添加牌到目标区域
@@ -260,7 +251,7 @@ const handleSourceDrop = (event: Event) => {
 
 // 素材区拖拽开始
 const handleSourceDragStart = (event: DragEvent, tileId: string) => {
-  if (!hasRemaining(tileId) || isTileDisabled(tileId)) {
+  if (isTileDisabled(tileId)) {
     event.preventDefault()
     return
   }
@@ -299,9 +290,9 @@ const handleSourceDragStart = (event: DragEvent, tileId: string) => {
           :key="tileId"
           class="tile-item"
           :class="{
-            'is-disabled': isTileDisabled(tileId) || !hasRemaining(tileId)
+            'is-disabled': isTileDisabled(tileId)
           }"
-          :draggable="!disabled && hasRemaining(tileId)"
+          :draggable="!isTileDisabled(tileId)"
           @click="handleTileClick(tileId)"
           @dragstart="(e) => handleSourceDragStart(e, tileId)"
         >
