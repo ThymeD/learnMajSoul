@@ -98,7 +98,7 @@
 - 2026-03-19 → Committer: 合入问题4、5、6、7、8、9到develop
 - 2026-03-18 23:38:00 → Automation Tester: 手牌分析功能自动化测试 → #001 → tests/hand-analysis.test.ts（159个测试用例全部通过）
 - 2026-03-18 23:45:00 → UI Tester: UI测试发现9个生产问题 → #001 → tests/ui/hand-view-ui-test-report.md
-- 2026-03-18 23:50:00 → PM: 复盘与绩效评价 → #001 → evaluation/retrospective/hand-view-2026-03-18.md
+- 2026-03-18 23:50:00 → PM: 复盘与绩效评价（历史档案已清理）→ #001
 - 2026-03-18 23:32:00 → Committer: 代码审核通过，合入 develop → #001 → feature/hand-view → develop
 - 2026-03-18 23:25:18 → Coder: 修复代码审核问题 → #001 → src/
 - 2026-03-18 23:14:47 → Coder: Bug修复（BUG-001~005） → #001 → src/
@@ -151,10 +151,6 @@
 
 | 目录                      | 用途            |
 | ------------------------- | --------------- |
-| evaluation/daily/         | 日常评价        |
-| evaluation/self-summary/  | 各agent绩效总结 |
-| evaluation/stage/         | 阶段考评        |
-| evaluation/cycle/         | 周期复盘        |
-| evaluation/personal/      | 个人考核        |
-| evaluation/retrospective/ | 复盘报告        |
-| evaluation/team/          | 团队变动        |
+| requirements/             | 需求设计与索引  |
+| docs/                     | 架构与流程文档  |
+| tests/                    | 测试与验证产物  |
