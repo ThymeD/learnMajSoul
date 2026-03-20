@@ -13,9 +13,27 @@ npm run dev
 
 # 构建
 npm run build
+
+# 单元测试
+npm run test:run
 ```
 
-## 项目结构
+## 流程入口（统一）
+
+1. [collaboration.md](./collaboration.md) - 任务池、缺陷闭环、迭代记录（执行入口）
+2. [requirements/INDEX.md](./requirements/INDEX.md) - 需求主索引（需求真相源）
+3. [AGENTS.md](./AGENTS.md) - 协作约束与工作流规则
+
+## 文档职责边界
+
+| 文档 | 承载内容 | 不承载内容 |
+|------|----------|------------|
+| `README.md` | 项目简介、启动方式、文档导航 | 任务状态、缺陷状态、详细验收标准 |
+| `collaboration.md` | 执行中的任务、缺陷闭环、迭代记录 | 需求细节定义 |
+| `requirements/INDEX.md` | 需求索引与状态 | 具体实现过程 |
+| `requirements/*` | 单模块需求、验收标准、边界条件 | 日常执行记录 |
+
+## 项目结构（简）
 
 ```
 src/
@@ -42,7 +60,7 @@ src/
     └── draft/           # 草稿区临时开发
 ```
 
-## 菜单页面
+## 菜单页面（高层）
 
 | 路由 | 页面 | 说明 |
 |------|------|------|
@@ -53,46 +71,9 @@ src/
 | /draft | 草稿区 | 临时功能验证 |
 | /strategy | 策略指南 | 待开发 |
 
-## 组件
+## 其他参考文档
 
-### MahjongTile 麻将牌组件
-
-```vue
-<MahjongTile tile-id="w1" />           <!-- 默认尺寸 100px -->
-<MahjongTile tile-id="w1" :width="60" /> <!-- 自定义宽度 -->
-```
-
-属性：
-- `tileId`: 牌面ID (w1-w9, b1-b9, s1-s9, d1-d4, z1-z3)
-- `width`: 宽度数值，高度按 8:13 比例自动计算
-
-### 麻将牌 ID 规则
-
-| 前缀 | 牌种 | 描述用字 |
-|------|------|----------|
-| w1-w9 | 1-9万 | 万 |
-| b1-b9 | 1-9饼 | 饼（或筒） |
-| s1-s9 | 1-9条 | 条（或索） |
-| d1-d4 | 东南西北风 | 风 |
-| z1-z3 | 白中发 | 三元 |
-
-**命名规范**：描述中统一使用"万、饼、条、风、三元"
-
-**役种牌型说明**：
-- 一句话 = 3张连续的牌组成的顺子（如 w123、b456、s789）
-- 一组 = 3张相同的牌组成的刻子（如 w111、b555）
-- 间隔 = 在牌型展示时需要留出间距的位置，用 splitAt 数组指定
-
-## 开发规范
-
-见 [AGENTS.md](./AGENTS.md)
-
-## 相关文档
-
-- [AGENTS.md](./AGENTS.md) - 项目规则
-- [PROJECT_STATUS.md](./PROJECT_STATUS.md) - 项目状态
-- [requirements/INDEX.md](./requirements/INDEX.md) - 统一需求索引
-- [collaboration.md](./collaboration.md) - 需求/缺陷跟踪闭环
+- [requirements/SPEC.md](./requirements/SPEC.md) - 页面级高层概览（非执行清单）
 - [docs/branch-strategy.md](./docs/branch-strategy.md) - 分支管理策略
 
 ## 技术栈

@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { ref, computed, watch, onUnmounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import TileSelector from '../../components/TileSelector.vue'
 import MahjongTile from '../../components/MahjongTile.vue'
 import { useHandStore, type Wind } from '../../stores/hand'
-import { normalizeRedFive, sortTilesPreserveRed } from '../../utils/mahjong'
 
 import HandTiles from './components/HandTiles.vue'
 import DrawTile from './components/DrawTile.vue'
 import FuluGroup from './components/FuluGroup.vue'
 import FuluTemp from './components/FuluTemp.vue'
 import FuluButtons from './components/FuluButtons.vue'
+import { useFuluActions } from './composables/useFuluActions'
+import { useHandBoardActions } from './composables/useHandBoardActions'
 
 // Store
 const store = useHandStore()
@@ -21,6 +21,45 @@ const localTiles = ref<string[]>([])
 const localDrawTile = ref<string | null>(null)
 const isRiverDragOver = ref(false)
 const tileSearchText = ref('')
+const {
+  chiEnabled,
+  ponEnabled,
+  kanEnabled,
+  fuluDropTiles,
+  liqiDisabled,
+  handleRemoveFulu,
+  handleToggleFuluType,
+  handleToggleChi,
+  handleTogglePon,
+  handleToggleKan,
+  handleFuluDrop
+} = useFuluActions({ store, localTiles })
+const {
+  tingCountMap,
+  hasTing,
+  usedTiles,
+  handleTileAdd,
+  handleTileRemoveFromArea,
+  handleTileRemove,
+  handleHandDrop,
+  handleHandTileDragStart,
+  handleDrawTileDrop,
+  handleDrawTileDragStart,
+  handleDrawTileClick,
+  handleDrawTileDblClick,
+  handleRiverTileDblClick,
+  setRiverDragOverDropEffect,
+  handleRiverDrop,
+  handleRiverTileDragStart,
+  handleClear
+} = useHandBoardActions({
+  store,
+  localTiles,
+  localDrawTile,
+  fuluDropTiles,
+  isRiverDragOver,
+  handleRemoveFulu
+})
 
 // 风牌选项
 const windOptions = [
@@ -46,207 +85,6 @@ watch(
   },
   { immediate: true }
 )
-
-/** 摸牌区与拖拽数据比较（赤牌与对应普通5 在 store 中可能已标准化） */
-function isSameDrawTile(draw: string | null, tileId: string): boolean {
-  if (!draw) return false
-  return normalizeRedFive(draw) === normalizeRedFive(tileId)
-}
-
-// 听牌位置映射
-const tingCountMap = computed(() => {
-  if (!store.analysis?.tingPai) return {}
-  const map: Record<string, number> = {}
-  store.analysis.tingPai.forEach((tile) => {
-    map[tile] = (map[tile] || 0) + 1
-  })
-  return map
-})
-
-// 是否有听牌
-const hasTing = computed(() => {
-  return store.analysis?.isTing || (store.analysis?.tingPai?.length ?? 0) > 0
-})
-
-// 处理牌添加（从素材选择区拖入或点击）
-const handleTileAdd = (tile: string) => {
-  if (localTiles.value.length >= 13) {
-    ElMessage.warning('手牌已满')
-    return
-  }
-  store.addTile(tile)
-}
-
-// 从各区域移除牌（拖回素材选择区）
-// 注意：'draw' 和 'river' 的处理已在各自的处理函数中完成，这里只处理其他情况
-const handleTileRemoveFromArea = (
-  tile: string,
-  source: 'hand' | 'river' | 'fulu' | 'draw' | 'fulu-temp'
-) => {
-  if (source === 'hand') {
-    const idx = localTiles.value.indexOf(tile)
-    if (idx !== -1) {
-      localTiles.value.splice(idx, 1)
-      store.tiles = [...localTiles.value]
-      ElMessage.success('已从手牌移除')
-    }
-  } else if (source === 'draw' || source === 'river') {
-    // draw 和 river 的处理已在各自的dblclick/click处理函数中完成
-    // 这里不需要额外处理，usedTiles 会自动响应变化
-  } else if (source === 'fulu-temp') {
-    const idx = fuluDropTiles.value.indexOf(tile)
-    if (idx !== -1) {
-      fuluDropTiles.value.splice(idx, 1)
-      ElMessage.success('已从副露暂存区移除')
-    }
-  } else if (source === 'fulu') {
-    for (let i = store.fulu.length - 1; i >= 0; i--) {
-      if (store.fulu[i].tiles.includes(tile)) {
-        handleRemoveFulu(i)
-        ElMessage.success('已从副露移除')
-        break
-      }
-    }
-  }
-}
-
-// 处理牌移除 - 双击移除时触发素材区数量更新
-const handleTileRemove = (tile: string, _index: number) => {
-  handleTileRemoveFromArea(tile, 'hand')
-}
-
-// 手牌区拖入处理
-const handleHandDrop = (event: DragEvent) => {
-  event.preventDefault()
-  event.stopPropagation()
-
-  const tileId = event.dataTransfer?.getData('text/plain')
-  const source = event.dataTransfer?.getData('source')
-
-  if (!tileId) return
-
-  if (source === 'hand') return
-
-  if (source === 'source') {
-    handleTileAdd(tileId)
-  } else if (source === 'draw') {
-    if (isSameDrawTile(localDrawTile.value, tileId)) {
-      store.setDrawTile(null)
-      localDrawTile.value = null
-    }
-    handleTileAdd(tileId)
-  } else if (source === 'river') {
-    const idx = store.river.indexOf(tileId)
-    if (idx !== -1) {
-      store.river.splice(idx, 1)
-      store.tiles = sortTilesPreserveRed([...store.tiles, tileId])
-      localTiles.value = [...store.tiles]
-    }
-  } else if (source === 'fulu-temp') {
-    const tempIdx = fuluDropTiles.value.indexOf(tileId)
-    if (tempIdx !== -1) {
-      fuluDropTiles.value.splice(tempIdx, 1)
-    }
-    handleTileAdd(tileId)
-  }
-}
-
-// 手牌区拖拽开始
-const handleHandTileDragStart = (event: DragEvent, tile: string, _index: number) => {
-  if (event.dataTransfer) {
-    event.dataTransfer.setData('text/plain', tile)
-    event.dataTransfer.setData('source', 'hand')
-    event.dataTransfer.effectAllowed = 'move'
-  }
-}
-
-// 摸牌区拖入处理
-const handleDrawTileDrop = (event: DragEvent) => {
-  event.preventDefault()
-  event.stopPropagation()
-
-  const tileId = event.dataTransfer?.getData('text/plain')
-  const source = event.dataTransfer?.getData('source')
-
-  if (tileId) {
-    if (source === 'hand') {
-      const idx = localTiles.value.indexOf(tileId)
-      if (idx !== -1) {
-        localTiles.value.splice(idx, 1)
-        store.tiles = [...localTiles.value]
-      }
-    } else if (source === 'fulu-temp') {
-      const idx = fuluDropTiles.value.indexOf(tileId)
-      if (idx !== -1) {
-        fuluDropTiles.value.splice(idx, 1)
-      }
-    }
-    handleSetDrawTile(tileId)
-  }
-}
-
-// 摸牌区拖拽开始
-const handleDrawTileDragStart = (event: DragEvent) => {
-  if (event.dataTransfer && localDrawTile.value) {
-    event.dataTransfer.setData('text/plain', localDrawTile.value)
-    event.dataTransfer.setData('source', 'draw')
-    event.dataTransfer.effectAllowed = 'move'
-  }
-}
-
-// 处理设置摸牌
-const handleSetDrawTile = (tile: string) => {
-  if (localDrawTile.value) {
-    store.addTile(localDrawTile.value)
-  }
-  store.setDrawTile(tile)
-}
-
-// 摸牌单击加入手牌须延迟执行，否则双击时第一次 click 会先把手牌挪走，导致双击移除失效
-let drawTileClickTimer: ReturnType<typeof setTimeout> | null = null
-const DRAW_TILE_CLICK_DELAY_MS = 300
-
-const handleDrawTileClick = () => {
-  if (!localDrawTile.value) return
-  if (drawTileClickTimer) {
-    clearTimeout(drawTileClickTimer)
-    drawTileClickTimer = null
-  }
-  drawTileClickTimer = setTimeout(() => {
-    drawTileClickTimer = null
-    const tile = localDrawTile.value
-    if (!tile) return
-    if (localTiles.value.length >= 13) {
-      ElMessage.warning('手牌已满')
-      return
-    }
-    store.addTile(tile)
-    store.setDrawTile(null)
-  }, DRAW_TILE_CLICK_DELAY_MS)
-}
-
-const handleDrawTileDblClick = () => {
-  if (drawTileClickTimer) {
-    clearTimeout(drawTileClickTimer)
-    drawTileClickTimer = null
-  }
-  if (!localDrawTile.value) return
-  store.setDrawTile(null)
-  localTiles.value = [...localTiles.value]
-  ElMessage.success('已从摸牌区移除，牌回到素材区')
-}
-
-onUnmounted(() => {
-  if (drawTileClickTimer) clearTimeout(drawTileClickTimer)
-})
-
-// 清空
-const handleClear = () => {
-  store.clear()
-  localTiles.value = []
-  localDrawTile.value = null
-  fuluDropTiles.value = []
-}
 
 // 随机生成
 const handleRandom = () => {
@@ -278,385 +116,6 @@ const handleFieldWindChange = (val: Wind) => {
   store.setFieldWind(val)
 }
 
-// 已使用的牌列表
-const usedTiles = computed(() => {
-  const used: string[] = [...localTiles.value]
-  if (localDrawTile.value) used.push(localDrawTile.value)
-  used.push(...store.river)
-  for (const fulu of store.fulu) {
-    used.push(...fulu.tiles)
-  }
-  used.push(...fuluDropTiles.value)
-  // 从素材区直接消耗到牌河的牌也需要计入usedTiles，以便素材区正确计算剩余数量
-  used.push(...store.consumedFromSource)
-  return used
-})
-
-// ==================== 副露操作相关 ====================
-
-// 副露开关状态
-const chiEnabled = ref(true) // 吃开关
-const ponEnabled = ref(true) // 碰开关
-const kanEnabled = ref(true) // 杠开关
-
-const liqiDisabled = computed(() => store.fulu.length > 0)
-
-const handleRemoveFulu = (index: number) => {
-  store.removeFulu(index)
-  localTiles.value = [...store.tiles]
-}
-
-const handleToggleFuluType = (index: number) => {
-  store.toggleFuluType(index)
-}
-
-// 副露数据（用于原生 drag/drop 接收拖入）
-const fuluDropTiles = ref<string[]>([])
-
-/** 从牌池（ multiset ）中找一组顺子，顺序：万→筒→索，数字小优先 */
-function findChiComboInPool(pool: string[]): string[] | null {
-  const suits = ['w', 'b', 's'] as const
-  for (const suit of suits) {
-    for (let n = 1; n <= 7; n++) {
-      const norms = [`${suit}${n}`, `${suit}${n + 1}`, `${suit}${n + 2}`]
-      const picked: string[] = []
-      const avail = [...pool]
-      let ok = true
-      for (const norm of norms) {
-        const i = avail.findIndex((t) => normalizeRedFive(t) === norm)
-        if (i === -1) {
-          ok = false
-          break
-        }
-        picked.push(avail[i])
-        avail.splice(i, 1)
-      }
-      if (ok) return picked
-    }
-  }
-  return null
-}
-
-/** 吃牌：赤牌与同花色普通5视为同序号，可从暂存区+新牌凑成顺子 */
-const checkChiInTemp = (newTile: string): string[] | null => {
-  return findChiComboInPool([...fuluDropTiles.value, newTile])
-}
-
-/** 按张移除暂存区（同 id 多张时只删传入次数，不用 Set 误删多余张） */
-function removeConcreteInstancesFromFuluTemp(toRemove: string[]) {
-  const next = [...fuluDropTiles.value]
-  for (const t of toRemove) {
-    const i = next.indexOf(t)
-    if (i !== -1) next.splice(i, 1)
-  }
-  fuluDropTiles.value = next
-}
-
-function groupTilesByNormalizedRank(tiles: string[]): Map<string, string[]> {
-  const byRank = new Map<string, string[]>()
-  for (const t of tiles) {
-    const k = normalizeRedFive(t)
-    if (!byRank.has(k)) byRank.set(k, [])
-    byRank.get(k)!.push(t)
-  }
-  return byRank
-}
-
-/** 选字典序最小的 rank，保证多组可碰/杠时结果确定 */
-function pickBestRankGroup(byRank: Map<string, string[]>, minLen: number): string[] | null {
-  let bestKey: string | null = null
-  let best: string[] | null = null
-  for (const [k, arr] of byRank) {
-    if (arr.length >= minLen) {
-      if (bestKey === null || k < bestKey) {
-        bestKey = k
-        best = arr.slice(0, minLen)
-      }
-    }
-  }
-  return best
-}
-
-/**
- * 副露开关打开时：对暂存区按规则自动成组。
- * 优先级：杠（暂存4同）> 明杠（已有碰+暂存1张）> 碰（暂存3同）> 吃（暂存顺子）
- * 与需求一致：碰/吃冲突优先碰；杠/吃冲突优先杠。
- */
-function tryResolveFuluTemp() {
-  if (store.isLiqi) return
-
-  const MAX_PASSES = 24
-  for (let pass = 0; pass < MAX_PASSES && fuluDropTiles.value.length > 0; pass++) {
-    const byRank = groupTilesByNormalizedRank(fuluDropTiles.value)
-
-    // 1 暗杠：暂存区4张同序（杠优先于吃）
-    if (kanEnabled.value) {
-      const four = pickBestRankGroup(byRank, 4)
-      if (four) {
-        store.addFulu({
-          type: 'kan',
-          tiles: [...four],
-          isOpen: false
-        })
-        removeConcreteInstancesFromFuluTemp(four)
-        ElMessage.success('暗杠成功')
-        continue
-      }
-    }
-
-    // 2 明杠：已有碰 + 暂存第4张
-    if (kanEnabled.value) {
-      let upgraded = false
-      for (let i = 0; i < store.fulu.length; i++) {
-        const f = store.fulu[i]
-        if (f.type !== 'pon') continue
-        const rk = normalizeRedFive(f.tiles[0])
-        const j = fuluDropTiles.value.findIndex((t) => normalizeRedFive(t) === rk)
-        if (j !== -1) {
-          const fourth = fuluDropTiles.value[j]
-          store.removeFulu(i)
-          store.addFulu({
-            type: 'kan',
-            tiles: [...f.tiles, fourth],
-            isOpen: true
-          })
-          fuluDropTiles.value.splice(j, 1)
-          ElMessage.success('明杠成功')
-          upgraded = true
-          break
-        }
-      }
-      if (upgraded) continue
-    }
-
-    // 3 碰：暂存3同（碰优先于吃）
-    if (ponEnabled.value) {
-      const three = pickBestRankGroup(groupTilesByNormalizedRank(fuluDropTiles.value), 3)
-      if (three) {
-        store.addFulu({
-          type: 'pon',
-          tiles: [...three]
-        })
-        removeConcreteInstancesFromFuluTemp(three)
-        ElMessage.success('碰牌成功')
-        continue
-      }
-    }
-
-    // 4 吃
-    if (chiEnabled.value) {
-      const chi = findChiComboInPool(fuluDropTiles.value)
-      if (chi) {
-        store.addFulu({
-          type: 'chi',
-          tiles: chi
-        })
-        removeConcreteInstancesFromFuluTemp(chi)
-        ElMessage.success('吃牌成功')
-        continue
-      }
-    }
-
-    break
-  }
-}
-
-const handleToggleChi = () => {
-  const turningOn = !chiEnabled.value
-  chiEnabled.value = !chiEnabled.value
-  if (turningOn) tryResolveFuluTemp()
-}
-
-const handleTogglePon = () => {
-  const turningOn = !ponEnabled.value
-  ponEnabled.value = !ponEnabled.value
-  if (turningOn) tryResolveFuluTemp()
-}
-
-const handleToggleKan = () => {
-  const turningOn = !kanEnabled.value
-  kanEnabled.value = !kanEnabled.value
-  if (turningOn) tryResolveFuluTemp()
-}
-
-const handleFuluDrop = (event: DragEvent) => {
-  event.preventDefault()
-  event.stopPropagation()
-
-  const tileId = event.dataTransfer?.getData('text/plain')
-  const source = event.dataTransfer?.getData('source')
-
-  if (!tileId) return
-
-  if (source === 'fulu') return
-
-  // 吃牌检查：根据 chiEnabled 开关状态决定
-  if (chiEnabled.value) {
-    const chiCombo = checkChiInTemp(tileId)
-
-    if (chiCombo) {
-      if (source === 'draw') {
-        store.setDrawTile(null)
-      } else {
-        for (const t of chiCombo) {
-          const handIdx = localTiles.value.indexOf(t)
-          if (handIdx !== -1) {
-            localTiles.value.splice(handIdx, 1)
-          }
-        }
-        store.tiles = [...localTiles.value]
-      }
-
-      store.addFulu({
-        type: 'chi',
-        tiles: chiCombo
-      })
-
-      for (const t of chiCombo) {
-        const idx = fuluDropTiles.value.indexOf(t)
-        if (idx !== -1) {
-          fuluDropTiles.value.splice(idx, 1)
-        }
-      }
-
-      ElMessage.success('吃牌成功')
-      return
-    }
-  }
-
-  // 碰牌检查：如果已有碰，检查是否能加杠（赤5与普5视为同刻）
-  const existingPonIndex = store.fulu.findIndex(
-    (f) => f.type === 'pon' && normalizeRedFive(f.tiles[0]) === normalizeRedFive(tileId)
-  )
-
-  if (existingPonIndex !== -1) {
-    // 已经有碰存在
-    if (kanEnabled.value) {
-      const prevPon = store.fulu[existingPonIndex]
-      if (source === 'draw') {
-        store.setDrawTile(null)
-      }
-
-      store.removeFulu(existingPonIndex)
-      store.addFulu({
-        type: 'kan',
-        tiles: [...prevPon.tiles, tileId],
-        isOpen: true
-      })
-      ElMessage.success('明杠成功')
-      return
-    }
-    // 杠开关关闭时，不在这里处理，让牌继续添加到暂存区
-  }
-
-  if (source === 'draw') {
-    store.setDrawTile(null)
-  } else {
-    const handIdx = localTiles.value.indexOf(tileId)
-    if (handIdx !== -1) {
-      localTiles.value.splice(handIdx, 1)
-      store.tiles = [...localTiles.value]
-    }
-  }
-
-  fuluDropTiles.value.push(tileId)
-
-  const sameTiles = fuluDropTiles.value.filter((t) => normalizeRedFive(t) === normalizeRedFive(tileId))
-
-  // 杠牌检查：根据 kanEnabled 开关状态决定
-  if (sameTiles.length === 4) {
-    if (kanEnabled.value) {
-      store.addFulu({
-        type: 'kan',
-        tiles: [...sameTiles],
-        isOpen: false
-      })
-      removeConcreteInstancesFromFuluTemp(sameTiles)
-      ElMessage.success('暗杠成功')
-    } else {
-      // 杠禁用时，第4张牌留在暂存区，但不形成杠
-      ElMessage.info('杠已禁用，第4张牌已添加到暂存区')
-    }
-  } else if (sameTiles.length === 3) {
-    // 碰牌：根据 ponEnabled 开关状态决定
-    if (ponEnabled.value) {
-      store.addFulu({
-        type: 'pon',
-        tiles: [...sameTiles]
-      })
-      removeConcreteInstancesFromFuluTemp(sameTiles)
-      ElMessage.success('碰牌成功')
-    }
-    // 如果 pon 禁用，牌留在暂存区但不成组
-  }
-}
-
-// ==================== 牌河相关 ====================
-
-// 牌河双击移除（回到素材区）
-const handleRiverTileDblClick = (tile: string) => {
-  const idx = store.river.indexOf(tile)
-  if (idx !== -1) {
-    // 使用 filter 创建新数组而非 splice，确保 Vue 响应式正确触发
-    store.river = store.river.filter((_, i) => i !== idx)
-    ElMessage.success('已从牌河移除，牌回到素材区')
-  }
-}
-
-// 牌河 dragover：dragover 阶段多数浏览器不允许读取 dataTransfer.getData()，source 恒为空。
-// 若误判为 move，会与素材区 dragstart 里 effectAllowed='copy' 冲突，导致无法放置。
-const setRiverDragOverDropEffect = (e: DragEvent) => {
-  const dt = e.dataTransfer
-  if (!dt) return
-  dt.dropEffect = dt.effectAllowed === 'copy' ? 'copy' : 'move'
-}
-
-const handleRiverDrop = (event: DragEvent) => {
-  event.preventDefault()
-  event.stopPropagation()
-  isRiverDragOver.value = false
-
-  const tileId = event.dataTransfer?.getData('text/plain')
-  const source = event.dataTransfer?.getData('source')
-
-  if (!tileId) return
-
-  if (source === 'river') return
-
-  if (source === 'hand') {
-    store.river.push(tileId)
-    const idx = localTiles.value.indexOf(tileId)
-    if (idx !== -1) {
-      localTiles.value.splice(idx, 1)
-      store.tiles = [...localTiles.value]
-    }
-  } else if (source === 'draw') {
-    if (isSameDrawTile(localDrawTile.value, tileId)) {
-      store.setDrawTile(null)
-      store.river.push(tileId)
-    }
-  } else if (source === 'fulu-temp') {
-    const tempIdx = fuluDropTiles.value.indexOf(tileId)
-    if (tempIdx !== -1) {
-      fuluDropTiles.value.splice(tempIdx, 1)
-      store.river.push(tileId)
-    }
-  } else if (source === 'source') {
-    // 从素材区拖拽到牌河，牌直接加入牌河
-    // 同时记录到 consumedFromSource，让素材区能够正确减少数量
-    store.river.push(tileId)
-    store.addConsumedFromSource(tileId)
-    ElMessage.success('已添加到牌河')
-  }
-}
-
-const handleRiverTileDragStart = (event: DragEvent, tile: string, _index: number) => {
-  if (event.dataTransfer) {
-    event.dataTransfer.setData('text/plain', tile)
-    event.dataTransfer.setData('source', 'river')
-    event.dataTransfer.effectAllowed = 'move'
-  }
-}
 </script>
 
 <template>

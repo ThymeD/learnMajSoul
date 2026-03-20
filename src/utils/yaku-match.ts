@@ -13,72 +13,21 @@ import {
   isHonorTile,
   isYaojiu,
   splitMentsu,
-  checkChitoitsu,
-  checkKokushimusou,
-  checkKokushimusou13,
-  checkChuurenpu,
-  checkChuurenpu9,
   type Tile
 } from './mahjong'
-import type { Wind } from '../stores/hand'
+import { matchSpecialYaku } from './yaku/special'
+import {
+  DRAGON_TILES,
+  WIND_TILES,
+  WIND_TO_TILE,
+  type MatchInput,
+  type Fulu,
+  type YakuMatchResult
+} from './yaku/types'
 
 // ==================== 类型定义 ====================
 
-/** 役种匹配输入 */
-export interface MatchInput {
-  /** 所有牌（手牌+摸牌+副露） */
-  allTiles: Tile[]
-  /** 是否门清（无副露） */
-  isMenqian: boolean
-  /** 是否立直 */
-  isLiqi: boolean
-  /** 是否自摸（摸牌与胡牌相同） */
-  isZimo: boolean
-  /** 庄家 */
-  dealer: boolean
-  /** 自风 */
-  selfWind: Wind
-  /** 场风 */
-  fieldWind: Wind
-  /** 副露列表 */
-  fulu: Fulu[]
-  /** 听牌列表 */
-  tingPai: Tile[]
-  /** 牌河（用于振听判断） */
-  river?: Tile[]
-}
-
-/** 副露 */
-export interface Fulu {
-  type: 'chi' | 'pon' | 'kan'
-  tiles: Tile[]
-  from?: number
-}
-
-/** 役种匹配结果 */
-export interface YakuMatchResult {
-  id: string
-  name: string
-  han: number
-  matched: boolean
-  reason?: string
-}
-
-// ==================== 常量定义 ====================
-
-/** 风牌列表 */
-const WIND_TILES: Tile[] = ['d1', 'd2', 'd3', 'd4']
-
-/** 三元牌列表 */
-const DRAGON_TILES: Tile[] = ['z1', 'z2', 'z3']
-
-/** 役牌风牌对应关系 */
-const WIND_TO_TILE: Record<Wind, Tile> = {
-  d1: 'd1',
-  d2: 'd2',
-  d3: 'd3',
-  d4: 'd4'
-}
+export type { MatchInput, Fulu, YakuMatchResult } from './yaku/types'
 
 // ==================== 役种匹配函数 ====================
 
@@ -285,76 +234,6 @@ export function matchYaku(input: MatchInput): YakuMatchResult[] {
   const honroutouResult = matchHonroutou(normalized)
   if (honroutouResult.matched) {
     results.push(honroutouResult)
-  }
-
-  return results
-}
-
-/**
- * 检测特殊役满（七对、国士、九莲）
- * 这些役种互斥，只能成立一个
- */
-function matchSpecialYaku(tiles: Tile[], isMenqian: boolean): YakuMatchResult[] {
-  const results: YakuMatchResult[] = []
-
-  // 检测国士无双十三面
-  if (isMenqian && checkKokushimusou13(tiles)) {
-    results.push({
-      id: 'kokushimusoujuusanmen',
-      name: '国士无双十三面',
-      han: 8,
-      matched: true,
-      reason: '13种幺九牌各1张的听牌状态'
-    })
-    return results
-  }
-
-  // 检测国士无双
-  if (isMenqian && checkKokushimusou(tiles)) {
-    results.push({
-      id: 'kokushimusou',
-      name: '国士无双',
-      han: 8,
-      matched: true,
-      reason: '13种幺九牌各1张+1张幺九对子'
-    })
-    return results
-  }
-
-  // 检测纯正九莲宝灯
-  if (isMenqian && checkChuurenpu9(tiles)) {
-    results.push({
-      id: 'chuurenpuutoujyun',
-      name: '纯正九莲宝灯',
-      han: 8,
-      matched: true,
-      reason: '九莲宝灯九面听状态'
-    })
-    return results
-  }
-
-  // 检测九莲宝灯
-  if (isMenqian && checkChuurenpu(tiles)) {
-    results.push({
-      id: 'chuurenpuutou',
-      name: '九莲宝灯',
-      han: 8,
-      matched: true,
-      reason: '同种数牌1112345678999+1张'
-    })
-    return results
-  }
-
-  // 检测七对子
-  if (isMenqian && checkChitoitsu(tiles)) {
-    results.push({
-      id: 'chitoitsu',
-      name: '七对子',
-      han: 2,
-      matched: true,
-      reason: '7组不同的对子'
-    })
-    return results
   }
 
   return results
@@ -1278,72 +1157,4 @@ function matchHonroutou(tiles: Tile[]): YakuMatchResult {
   }
 }
 
-// ==================== 番数计算 ====================
-
-/**
- * 计算总番数
- * @param matchedYaku 匹配的役种列表
- * @param isMenqian 是否门清
- * @returns 总番数
- */
-export function calculateHan(matchedYaku: YakuMatchResult[], isMenqian: boolean): number {
-  if (matchedYaku.length === 0) {
-    return 0
-  }
-
-  // 统计役满数量
-  const yakumanCount = matchedYaku.filter((y) => y.han >= 8).length
-
-  // 役满处理（多个役满是倍役满）
-  if (yakumanCount >= 1) {
-    if (yakumanCount >= 2) {
-      // 倍役满：每个役满8番，两个役满=16番
-      return yakumanCount * 8 // 倍役满
-    }
-    // 只有一个役满
-    return matchedYaku.find((y) => y.han >= 8)?.han || 8
-  }
-
-  // 非役满：累加所有匹配的役种番数
-  let totalHan = 0
-  for (const yaku of matchedYaku) {
-    totalHan += yaku.han
-  }
-
-  // 副露后基础番数减1（1-2番役种）
-  // 门前清役种不受影响
-  if (!isMenqian) {
-    // 找出需要减番的役种（1-2番的役种）
-    let hasReduction = false
-    for (const y of matchedYaku) {
-      // 门前清役种不受副露影响
-      const menqianYakuList = [
-        'reach',
-        'tsumo',
-        'pinfu',
-        'ipeikou',
-        'ryanpeikou',
-        'chitoitsu',
-        'kokushimusou',
-        'kokushimusoujuusanmen',
-        'chuurenpuutou',
-        'chuurenpuutoujyun'
-      ]
-      if (!menqianYakuList.includes(y.id) && y.han >= 1 && y.han <= 2) {
-        hasReduction = true
-        break
-      }
-    }
-
-    if (hasReduction) {
-      totalHan = Math.max(0, totalHan - 1)
-    }
-  }
-
-  // 满贯处理（5番以上按满贯计）
-  if (totalHan >= 5) {
-    return 5
-  }
-
-  return totalHan
-}
+export { calculateHan } from './yaku/han'

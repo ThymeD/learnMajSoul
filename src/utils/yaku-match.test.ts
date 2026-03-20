@@ -328,6 +328,74 @@ describe('役种匹配', () => {
     })
   })
 
+  describe('回归稳定性', () => {
+    it('特殊役成立时不再继续叠加普通役', () => {
+      const input: MatchInput = {
+        allTiles: [
+          'w1',
+          'w1',
+          'w2',
+          'w2',
+          'w3',
+          'w3',
+          'b4',
+          'b4',
+          's5',
+          's5',
+          'd1',
+          'd1',
+          'z1',
+          'z1'
+        ],
+        isMenqian: true,
+        isLiqi: true,
+        isZimo: true,
+        dealer: false,
+        selfWind: 'd1',
+        fieldWind: 'd1',
+        fulu: [],
+        tingPai: ['w1']
+      }
+
+      const result = matchYaku(input)
+      expect(result.length).toBe(1)
+      expect(result[0].id).toBe('chitoitsu')
+    })
+
+    it('副露后仍可稳定识别三色同刻', () => {
+      const input: MatchInput = {
+        allTiles: [
+          'w1',
+          'w1',
+          'w1',
+          'b1',
+          'b1',
+          'b1',
+          's1',
+          's1',
+          's1',
+          'w2',
+          'w3',
+          'w4',
+          'd1',
+          'd1'
+        ],
+        isMenqian: false,
+        isLiqi: false,
+        isZimo: false,
+        dealer: false,
+        selfWind: 'd1',
+        fieldWind: 'd1',
+        fulu: [{ type: 'pon', tiles: ['s1', 's1', 's1'] }],
+        tingPai: []
+      }
+
+      const result = matchYaku(input)
+      const sanshokuDouko = result.find((y) => y.id === 'sanshoku-douko')
+      expect(sanshokuDouko?.matched).toBe(true)
+    })
+  })
+
   describe('番数计算', () => {
     it('应该正确计算总番数（门清）', () => {
       const matchedYaku = [

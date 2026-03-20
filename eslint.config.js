@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   {
-    ignores: ['node_modules', 'dist', '.opencode', '.poc']
+    ignores: ['node_modules', 'dist', '.poc']
   },
   ...pluginVue.configs['flat/essential'],
   {

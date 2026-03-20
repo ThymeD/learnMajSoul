@@ -9,23 +9,62 @@
 
 ---
 
+## 本周执行入口（3行）
+
+1. 先看“最新任务”中的“当前进行中”和“待办事项”，确认本次要做的条目。
+2. 实现前后同步更新：`requirements/INDEX.md` + 对应需求文档 + 本文状态。
+3. 完成后补“验证证据/回归结论”，未验证不标记关闭。
+
+---
+
 ## 需求进度（引用SPEC.md）
 
 | 需求编号 | 需求描述     | 状态                                   | 负责人 |
 | -------- | ------------ | -------------------------------------- | ------ |
-| #001     | 手牌分析功能 | 合入develop，发现9个问题待下次迭代修复 | -      |
+| #001     | 手牌分析功能 | 已合入并完成11项生产问题修复，当前维护中 | -      |
 
 ---
 
 ## 最新任务（用户可直接复制给agent）
 
-### 当前进行中
+### 当前进行中（建议）
 
-**（无进行中任务）**
+- `RF-003` 拆分 `src/stores/hand.ts` 纯逻辑到 domain utils（P1）
+- `RF-004` 拆分 `requirements/hand-view-requirements.md` 文档结构（P1）
+- 新需求分支准备：从当前收尾版本切 `feature/*` 后开始特性开发
 
-### 待办事项（生产问题修复）
+> 说明：以上为建议优先队列；正式开工后请同步到下方任务池状态与进度追踪。
 
-> 以下生产问题（用户登记）记录在案，修复后必须复盘确认才能关闭：
+#### RF-001 执行拆分（可直接分配）
+
+| 子任务 | 内容 | 产出 | 验收标准 |
+| --- | --- | --- | --- |
+| RF-001-A | 从 `src/views/HandView/index.vue` 提取状态与计算逻辑到 composable（如 `useHandViewState`） | `src/views/HandView/composables/` | `index.vue` 行数明显下降；页面行为无回归 |
+| RF-001-B | 抽离交互动作（摸牌/副露/拖拽）到 composable（如 `useHandActions`） | `src/views/HandView/composables/` | 关键交互可用；方法命名与参数语义清晰 |
+| RF-001-C | 将视图片区块拆为展示组件（手牌区/牌河区/副露区） | `src/views/HandView/components/` | 组件职责单一；父子 props/emits 类型完整 |
+| RF-001-D | 回归测试与文档同步（需求索引/协作记录） | `tests/`、`requirements/INDEX.md`、`collaboration.md` | `npm run test:run` 通过；状态更新完整 |
+
+#### RF-002 执行拆分（可直接分配）
+
+| 子任务 | 内容 | 产出 | 验收标准 |
+| --- | --- | --- | --- |
+| RF-002-A | 梳理 `src/utils/yaku-match.ts` 现有对外导出 API，冻结函数签名与返回结构 | `src/utils/yaku-match.ts`、`docs/`（可选记录） | 对外调用点无需改动；签名变更为 0 |
+| RF-002-B | 按役种簇拆分匹配逻辑模块（如顺子类/刻子类/特殊役），抽到 `src/utils/yaku/` 子模块 | `src/utils/yaku/` | 模块边界清晰；单文件复杂度下降 |
+| RF-002-C | 在入口文件重组聚合导出，保持旧入口兼容 | `src/utils/yaku-match.ts` | 业务侧 import 路径不变；类型检查通过 |
+| RF-002-D | 补充/更新回归测试，覆盖高频役种与边界组合 | `tests/` | 核心识别结果与重构前一致；`npm run test:run` 通过 |
+| RF-002-E | 同步文档状态（索引/协作记录）并记录风险点 | `requirements/INDEX.md`、`collaboration.md` | 状态与备注可追溯；后续迭代有明确 follow-up |
+
+#### TEST-001 执行拆分（可直接分配）
+
+| 子任务 | 内容 | 产出 | 验收标准 |
+| --- | --- | --- | --- |
+| TEST-001-A | 对齐 `tests/drag-drop.spec.ts` 手动区域选择器到当前 DOM（移除 `.hand-display-area`） | `tests/drag-drop.spec.ts` | 选择器能稳定命中手牌拖拽区 |
+| TEST-001-B | 运行拖拽核心回归用例（素材区→手牌区、单次拖拽只增1张） | `tests/drag-drop.spec.ts` | Playwright 用例通过 |
+| TEST-001-C | 回填迭代记录与后续未覆盖项 | `collaboration.md` | 当前迭代可追溯 |
+
+### 待办事项（当前迭代）
+
+> 本区可登记缺陷修复、需求实现与结构重构；所有条目完成后都需补验证结论。
 
 #### 🔧 修复进度
 
@@ -83,8 +122,8 @@
 ## 重构任务池（仅结构优化，不改功能）
 | 编号 | 任务 | 优先级 | 状态 | 备注 |
 | --- | --- | --- | --- | --- |
-| RF-001 | 拆分 `src/views/HandView/index.vue` 到 composables/components | P0 | 待开始 | 降低入口文件复杂度 |
-| RF-002 | 拆分 `src/utils/yaku-match.ts` 按役种簇模块化 | P0 | 待开始 | 保持对外 API 不变 |
+| RF-001 | 拆分 `src/views/HandView/index.vue` 到 composables/components | P0 | 已完成（首轮） | 已抽离 `useFuluActions` + `useHandBoardActions`，入口降复杂 |
+| RF-002 | 拆分 `src/utils/yaku-match.ts` 按役种簇模块化 | P0 | 已完成（首轮） | 已拆分 `types` / `special` / `han` 并保持 API 兼容 |
 | RF-003 | 拆分 `src/stores/hand.ts` 纯逻辑到 domain utils | P1 | 待开始 | Store 仅保留状态编排 |
 | RF-004 | 拆分 `requirements/hand-view-requirements.md` 文档结构 | P1 | 待开始 | 通过 `requirements/INDEX.md` 聚合 |
 
@@ -94,6 +133,7 @@
 
 > 格式：YYYY-MM-DD HH:MM:SS（真实时间）→ agent: 任务 → #xxx → 产出
 
+- 2026-03-20 → Coder: 重构收尾（RF-001/RF-002/TEST-001）→ 手牌分析维护 → `src/views/HandView/composables/useHandBoardActions.ts`、`src/utils/yaku/`、`tests/drag-drop.spec.ts`
 - 2026-03-20 → Coder: 手牌分析 #5/#10/#11（摸牌单击延迟、赤牌副露 normalizeRedFive、吃牌多手牌移除、明杠牌面）→ src/views/HandView/index.vue
 - 2026-03-19 → Committer: 合入问题4、5、6、7、8、9到develop
 - 2026-03-18 23:38:00 → Automation Tester: 手牌分析功能自动化测试 → #001 → tests/hand-analysis.test.ts（159个测试用例全部通过）

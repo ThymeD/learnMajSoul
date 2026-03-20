@@ -1,4 +1,4 @@
-# 雀魂麻将攻略 - 需求总览（入口）
+# 雀魂麻将攻略 - 需求总览（高层）
 
 ## 项目概述
 
@@ -7,6 +7,7 @@ Vue3 + TypeScript + Vite + Element Plus 麻将游戏攻略系统
 ## 统一索引
 
 - 需求统一索引：`requirements/INDEX.md`
+- 需求状态与验收以 `requirements/INDEX.md` 及其登记文档为准。
 
 ## 页面清单（高层）
 
@@ -27,3 +28,4 @@ Vue3 + TypeScript + Vite + Element Plus 麻将游戏攻略系统
 
 - 详细需求请优先查看 `requirements/INDEX.md` 中登记的文档。
 - 新需求必须先登记到 `requirements/INDEX.md`，再进入实现。
+- 本文档仅保留页面级概览，不作为任务执行清单。

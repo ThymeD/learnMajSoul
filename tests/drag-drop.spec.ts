@@ -31,7 +31,7 @@ test.describe('拖拽功能测试', () => {
     const sourceTile = page.locator('.tile-grid .tile-item').first()
     await expect(sourceTile).toBeVisible()
 
-    const handArea = page.locator('.hand-display-area')
+    const handArea = page.locator('.tiles-container').first()
     await expect(handArea).toBeVisible()
 
     await sourceTile.dragTo(handArea)
@@ -161,7 +161,7 @@ test.describe('拖拽功能测试', () => {
     const sourceTile = page.locator('.tile-grid .tile-item').first()
     await expect(sourceTile).toBeVisible()
 
-    const handArea = page.locator('.hand-display-area')
+    const handArea = page.locator('.tiles-container').first()
     await expect(handArea).toBeVisible()
 
     // 测试多次拖拽，确保每次都只添加1张
