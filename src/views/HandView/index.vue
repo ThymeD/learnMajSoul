@@ -482,6 +482,14 @@ const handleRiverTileDblClick = (tile: string) => {
   }
 }
 
+// 牌河 dragover：dragover 阶段多数浏览器不允许读取 dataTransfer.getData()，source 恒为空。
+// 若误判为 move，会与素材区 dragstart 里 effectAllowed='copy' 冲突，导致无法放置。
+const setRiverDragOverDropEffect = (e: DragEvent) => {
+  const dt = e.dataTransfer
+  if (!dt) return
+  dt.dropEffect = dt.effectAllowed === 'copy' ? 'copy' : 'move'
+}
+
 const handleRiverDrop = (event: DragEvent) => {
   event.preventDefault()
   event.stopPropagation()
@@ -723,10 +731,7 @@ const handleRiverTileDragStart = (event: DragEvent, tile: string, _index: number
             @dragover.prevent="
               (e) => {
                 isRiverDragOver = true
-                if (e.dataTransfer) {
-                  const source = e.dataTransfer.getData('source')
-                  e.dataTransfer.dropEffect = source === 'source' ? 'copy' : 'move'
-                }
+                setRiverDragOverDropEffect(e)
               }
             "
             @dragleave="isRiverDragOver = false"
