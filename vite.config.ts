@@ -36,6 +36,12 @@ function projectManagementFileApi() {
     }
   }
 
+  function saveLinkConfig(config: any) {
+    const targetPath = existsSync(linkConfigPath) ? linkConfigPath : legacyLinkConfigPath
+    ensureDir(resolve(targetPath, '..'))
+    writeJsonAtomic(targetPath, config && typeof config === 'object' ? config : { version: 1, projects: {} })
+  }
+
   function ensureMigratedDefaultData(projectKey: string) {
     ensureDir(defaultDataDir)
     const names = ['items', 'bridge', 'receipts'] as const
@@ -91,6 +97,11 @@ function projectManagementFileApi() {
     ahead: number
     behind: number
     syncMessage: string
+    workingMode: 'single_local' | 'multi_sync'
+    modeConfirmed: boolean
+    modeConfirmedAt: number
+    needsModeConfirmation: boolean
+    modePromptReason: string
   } {
     const config = loadLinkConfig()
     const projects = config.projects && typeof config.projects === 'object' ? config.projects : {}
@@ -110,7 +121,12 @@ function projectManagementFileApi() {
       workingTreeDirty: false,
       ahead: 0,
       behind: 0,
-      syncMessage: '未检测同步状态'
+      syncMessage: '未检测同步状态',
+      workingMode: 'single_local' as const,
+      modeConfirmed: false,
+      modeConfirmedAt: 0,
+      needsModeConfirmation: false,
+      modePromptReason: ''
     }
     if (!entry || typeof entry !== 'object') {
       ensureMigratedDefaultData(projectKey)
@@ -148,6 +164,14 @@ function projectManagementFileApi() {
     }
     const managementDataDir = resolve(managementRepoPath, managementDataSubdir)
     ensureDir(managementDataDir)
+
+    const rawWorkingMode = entry.workingMode === 'multi_sync' ? 'multi_sync' : 'single_local'
+    const modeConfirmed = Boolean(entry.modeConfirmed)
+    const modeConfirmedAt =
+      typeof entry.modeConfirmedAt === 'number' && Number.isFinite(entry.modeConfirmedAt)
+        ? entry.modeConfirmedAt
+        : 0
+    const confirmedRemoteUrl = typeof entry.confirmedRemoteUrl === 'string' ? entry.confirmedRemoteUrl : ''
 
     let remoteUrl = ''
     let managementBranch = 'unknown'
@@ -222,6 +246,14 @@ function projectManagementFileApi() {
     } else {
       syncMessage = '管理仓库与远端已同步'
     }
+    const needsModeConfirmation =
+      Boolean(remoteUrl) && (!modeConfirmed || normalizePath(confirmedRemoteUrl) !== normalizePath(remoteUrl))
+    const modePromptReason = needsModeConfirmation
+      ? modeConfirmed
+        ? '检测到远程仓库配置变化，请重新确认当前工作模式'
+        : '检测到已配置远程仓库，请确认你是单机还是多设备同步开发'
+      : ''
+
     return {
       linked: true,
       backupReady,
@@ -237,7 +269,12 @@ function projectManagementFileApi() {
       workingTreeDirty,
       ahead,
       behind,
-      syncMessage
+      syncMessage,
+      workingMode: rawWorkingMode,
+      modeConfirmed,
+      modeConfirmedAt,
+      needsModeConfirmation,
+      modePromptReason
     }
   }
 
@@ -361,6 +398,66 @@ function projectManagementFileApi() {
     projectKey: string,
     action: 'sync' | 'backup'
   ): { ok: boolean; message: string; changed?: boolean } {
+    function runGit(command: string, cwd: string): string {
+      return execSync(command, {
+        cwd,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe']
+      }).trim()
+    }
+
+    function formatGitActionError(error: unknown, fallbackMessage: string): string {
+      const err = error as { stderr?: string | Buffer; stdout?: string | Buffer; message?: string }
+      const stderrText =
+        typeof err?.stderr === 'string'
+          ? err.stderr
+          : err?.stderr
+            ? Buffer.from(err.stderr).toString('utf-8')
+            : ''
+      const stdoutText =
+        typeof err?.stdout === 'string'
+          ? err.stdout
+          : err?.stdout
+            ? Buffer.from(err.stdout).toString('utf-8')
+            : ''
+      const raw = `${stderrText}\n${stdoutText}\n${err?.message || ''}`.trim()
+      const normalized = raw.toLowerCase()
+
+      if (
+        normalized.includes('could not resolve host') ||
+        normalized.includes('failed to connect') ||
+        normalized.includes('connection timed out')
+      ) {
+        return '网络连接失败：请检查网络或代理后重试'
+      }
+      if (
+        normalized.includes('authentication failed') ||
+        normalized.includes('permission denied (publickey)') ||
+        normalized.includes('could not read username')
+      ) {
+        return 'GitHub 鉴权失败：请确认账号登录状态或 SSH/Token 权限'
+      }
+      if (
+        normalized.includes('conflict') ||
+        normalized.includes('merge conflict') ||
+        normalized.includes('rebase')
+      ) {
+        return '与远端存在提交冲突：请先同步并处理冲突后再备份'
+      }
+      if (normalized.includes('no upstream branch')) {
+        return '当前分支未设置远端跟踪：请先完成一次 -u 推送'
+      }
+      if (normalized.includes('not a git repository')) {
+        return '管理仓库不可用：目标路径不是 Git 仓库'
+      }
+
+      const lastLine = raw.split('\n').map((line) => line.trim()).filter(Boolean).slice(-1)[0]
+      if (lastLine) {
+        return `${fallbackMessage}（${lastLine}）`
+      }
+      return fallbackMessage
+    }
+
     const status = resolveProjectLinkStatus(projectKey)
     if (!status.linked || !status.managementRepoPath) {
       return {
@@ -381,38 +478,43 @@ function projectManagementFileApi() {
       }
     }
     try {
-      execSync(`git pull --rebase origin ${status.managementBranch}`, {
-        cwd: status.managementRepoPath,
-        encoding: 'utf-8'
-      })
+      const branch = status.managementBranch && status.managementBranch !== 'unknown'
+        ? status.managementBranch
+        : runGit('git branch --show-current', status.managementRepoPath)
+      if (!branch || branch === 'unknown') {
+        return { ok: false, message: '无法识别管理仓库分支，请先在该仓库检出有效分支' }
+      }
+
+      runGit('git fetch origin', status.managementRepoPath)
+
       if (action === 'sync') {
-        return { ok: true, message: '数据仓同步成功' }
+        runGit(`git pull --rebase --autostash origin ${branch}`, status.managementRepoPath)
+        return { ok: true, message: '数据仓同步成功（已拉取远端最新提交）' }
       }
-      execSync('git add .', {
-        cwd: status.managementRepoPath,
-        encoding: 'utf-8'
-      })
-      const staged = execSync('git diff --cached --name-only', {
-        cwd: status.managementRepoPath,
-        encoding: 'utf-8'
-      }).trim()
-      if (!staged) {
-        return { ok: true, message: '无变更，无需备份', changed: false }
+
+      runGit('git add .', status.managementRepoPath)
+      const staged = runGit('git diff --cached --name-only', status.managementRepoPath)
+      let changed = false
+      if (staged) {
+        const message = `chore(pm-data): ui backup ${new Date().toISOString()}`
+        runGit(`git commit -m "${message}"`, status.managementRepoPath)
+        changed = true
       }
-      const message = `chore(pm-data): ui backup ${new Date().toISOString()}`
-      execSync(`git commit -m "${message}"`, {
-        cwd: status.managementRepoPath,
-        encoding: 'utf-8'
-      })
-      execSync(`git push origin ${status.managementBranch}`, {
-        cwd: status.managementRepoPath,
-        encoding: 'utf-8'
-      })
-      return { ok: true, message: '数据仓备份成功并已推送', changed: true }
-    } catch {
+
+      runGit(`git pull --rebase --autostash origin ${branch}`, status.managementRepoPath)
+      runGit(`git push -u origin ${branch}`, status.managementRepoPath)
+      return {
+        ok: true,
+        message: changed ? '数据仓备份成功并已推送' : '远端已对齐（无本地新增变更）',
+        changed
+      }
+    } catch (error) {
       return {
         ok: false,
-        message: action === 'sync' ? '数据仓同步失败，请检查冲突或网络' : '数据仓备份失败，请检查冲突或网络'
+        message:
+          action === 'sync'
+            ? formatGitActionError(error, '数据仓同步失败')
+            : formatGitActionError(error, '数据仓备份失败')
       }
     }
   }
@@ -434,6 +536,32 @@ function projectManagementFileApi() {
       return parsed.projectKey
     }
     return defaultProjectKey
+  }
+
+  function setProjectWorkingMode(
+    projectKey: string,
+    mode: 'single_local' | 'multi_sync'
+  ): { ok: boolean; message: string } {
+    const config = loadLinkConfig()
+    const projects = config.projects && typeof config.projects === 'object' ? config.projects : {}
+    const entry = projects[projectKey]
+    if (!entry || typeof entry !== 'object') {
+      return { ok: false, message: '未找到项目关联配置，请先完成业务仓与数据仓关联' }
+    }
+    const status = resolveProjectLinkStatus(projectKey)
+    const nextEntry = {
+      ...entry,
+      workingMode: mode,
+      modeConfirmed: true,
+      modeConfirmedAt: Date.now(),
+      confirmedRemoteUrl: status.remoteUrl || ''
+    }
+    projects[projectKey] = nextEntry
+    saveLinkConfig({ ...(config || {}), version: 1, projects })
+    return {
+      ok: true,
+      message: mode === 'multi_sync' ? '已切换为多设备同步模式' : '已切换为本地单机模式'
+    }
   }
 
   function registerRoutes(middlewares: any) {
@@ -750,6 +878,28 @@ function projectManagementFileApi() {
         res.statusCode = 500
         res.end(JSON.stringify({ ok: false, message: 'link status failed' }))
       }
+    })
+
+    middlewares.use('/__pm_api/mode', (req: any, res: any) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 405
+        res.end(JSON.stringify({ ok: false, message: 'method not allowed' }))
+        return
+      }
+      void parseRequestBody(req)
+        .then((parsed: any) => {
+          const projectKey = parseProjectKeyFromBody(parsed)
+          const mode = parsed?.workingMode === 'multi_sync' ? 'multi_sync' : 'single_local'
+          const result = setProjectWorkingMode(projectKey, mode)
+          const status = resolveProjectLinkStatus(projectKey)
+          res.statusCode = result.ok ? 200 : 400
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify({ ...result, projectKey, workingMode: status.workingMode, modeConfirmed: status.modeConfirmed }))
+        })
+        .catch(() => {
+          res.statusCode = 400
+          res.end(JSON.stringify({ ok: false, message: 'invalid json payload' }))
+        })
     })
 
     middlewares.use('/__pm_api/data/sync', (req: any, res: any) => {

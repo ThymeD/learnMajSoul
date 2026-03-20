@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { featureFlags } from '../config/features'
+import { loadProjectLinkStatus } from '../data/delivery'
+import type { ProjectLinkStatus } from '../data/delivery'
 
 const router = useRouter()
 const route = useRoute()
@@ -25,6 +28,117 @@ const menuItems = baseMenuItems.filter((item) => {
 const handleMenuSelect = (index: string) => {
   router.push(index)
 }
+
+const linkStatus = ref<ProjectLinkStatus | null>(null)
+let statusTimer: number | undefined
+
+type GlobalHint = {
+  key: string
+  type: 'info' | 'warning'
+  title: string
+  required: boolean
+}
+
+async function refreshLinkStatus() {
+  if (!featureFlags.deliveryManagement) return
+  try {
+    linkStatus.value = await loadProjectLinkStatus()
+  } catch {
+    // ignore global reminder read failure
+  }
+}
+
+const globalHint = computed(() => {
+  const status = linkStatus.value
+  const previewQuery = route.query.showGlobalHint
+  const previewEnabled =
+    previewQuery === '1' || (Array.isArray(previewQuery) && previewQuery.includes('1'))
+  if (previewEnabled) {
+    return {
+      key: 'preview',
+      type: 'info' as const,
+      title: '全局提醒预览：这里会在必要时提醒你去数据管理处理同步或备份。',
+      required: false
+    }
+  }
+  if (!status) return null
+  if (route.path === '/data-management') return null
+  if (status.needsModeConfirmation) {
+    return {
+      key: 'mode-confirmation',
+      type: 'warning' as const,
+      title: status.modePromptReason || '检测到远程仓配置变化，请到数据管理确认工作模式。',
+      required: true
+    }
+  }
+  if (status.workingMode === 'multi_sync' && status.behind > 0) {
+    return {
+      key: `behind-${status.behind}`,
+      type: 'warning' as const,
+      title: `多设备模式提醒：本地落后远端 ${status.behind} 次提交，建议先同步数据仓。`,
+      required: false
+    }
+  }
+  if (status.workingMode === 'multi_sync' && status.ahead > 0) {
+    return {
+      key: `ahead-${status.ahead}`,
+      type: 'info' as const,
+      title: `多设备模式提醒：本地领先远端 ${status.ahead} 次提交，可在收尾时备份到 GitHub。`,
+      required: false
+    }
+  }
+  return null
+})
+
+function getHintSnoozeUntil(key: string): number {
+  const raw = localStorage.getItem(`pm-global-hint-snooze:${key}`)
+  const ts = Number(raw || 0)
+  return Number.isFinite(ts) ? ts : 0
+}
+
+const visibleGlobalHint = computed<GlobalHint | null>(() => {
+  const hint = globalHint.value as GlobalHint | null
+  if (!hint) return null
+  if (hint.required) return hint
+  const snoozeUntil = getHintSnoozeUntil(hint.key)
+  return Date.now() < snoozeUntil ? null : hint
+})
+
+const globalHintActionButtonType = computed<'primary' | 'warning'>(() => {
+  return visibleGlobalHint.value?.type === 'warning' ? 'warning' : 'primary'
+})
+
+function goDataManagement() {
+  void router.push('/data-management')
+}
+
+function snoozeGlobalHint(hours: number) {
+  const hint = visibleGlobalHint.value
+  if (!hint || hint.required) return
+  const until = Date.now() + hours * 60 * 60 * 1000
+  localStorage.setItem(`pm-global-hint-snooze:${hint.key}`, String(until))
+}
+
+function snoozeGlobalHintToday() {
+  const hint = visibleGlobalHint.value
+  if (!hint || hint.required) return
+  const now = new Date()
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime()
+  localStorage.setItem(`pm-global-hint-snooze:${hint.key}`, String(endOfDay))
+}
+
+onMounted(() => {
+  void refreshLinkStatus()
+  statusTimer = window.setInterval(() => {
+    void refreshLinkStatus()
+  }, 15000)
+})
+
+onBeforeUnmount(() => {
+  if (statusTimer !== undefined) {
+    window.clearInterval(statusTimer)
+  }
+})
 </script>
 
 <template>
@@ -41,6 +155,42 @@ const handleMenuSelect = (index: string) => {
       </el-menu>
     </el-aside>
     <el-main class="main-content">
+      <el-alert
+        v-if="visibleGlobalHint"
+        class="global-hint"
+        :type="visibleGlobalHint.type"
+        :title="visibleGlobalHint.title"
+        :closable="false"
+        show-icon
+      >
+        <template #default>
+          <el-button
+            class="global-hint-action-btn"
+            :type="globalHintActionButtonType"
+            @click="goDataManagement"
+          >
+            去数据管理处理
+          </el-button>
+          <el-button
+            v-if="!visibleGlobalHint.required"
+            class="global-hint-secondary-btn"
+            text
+            type="info"
+            @click="snoozeGlobalHint(2)"
+          >
+            2小时后提醒
+          </el-button>
+          <el-button
+            v-if="!visibleGlobalHint.required"
+            class="global-hint-secondary-btn"
+            text
+            type="info"
+            @click="snoozeGlobalHintToday"
+          >
+            今日不再提醒
+          </el-button>
+        </template>
+      </el-alert>
       <RouterView />
     </el-main>
   </el-container>
@@ -65,6 +215,34 @@ const handleMenuSelect = (index: string) => {
   padding: 16px;
   background: #fafafa;
   min-height: 100vh;
+}
+.global-hint {
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border-width: 1px;
+  --el-alert-padding: 10px 14px;
+}
+.global-hint.el-alert--info {
+  --el-alert-bg-color: #f4f9ff;
+  --el-alert-border-color: #d9ecff;
+  --el-alert-title-color: #2f5f9b;
+  --el-alert-description-color: #2f5f9b;
+  --el-color-info: #3b82f6;
+}
+.global-hint.el-alert--warning {
+  --el-alert-bg-color: #fffaf2;
+  --el-alert-border-color: #fde3b0;
+  --el-alert-title-color: #8a5a00;
+  --el-alert-description-color: #8a5a00;
+  --el-color-warning: #d08a00;
+}
+.global-hint-action-btn {
+  min-height: 34px;
+  padding: 0 14px;
+  font-weight: 600;
+}
+.global-hint-secondary-btn {
+  min-height: 32px;
 }
 
 .logo {

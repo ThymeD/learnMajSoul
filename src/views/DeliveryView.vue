@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 import { DataAnalysis, Download, FolderChecked, Switch, Tools } from '@element-plus/icons-vue'
 import { projectManagementConfig } from '../config/project-management'
 import type {
@@ -34,6 +34,7 @@ const {
   timelineEndDate,
   bridgeReviewNote,
   bridgeSyncing,
+  bridgeFailedEvents,
   writeLockReason,
   writeLockRequired,
   writeLockActive,
@@ -58,6 +59,7 @@ const {
   userRejectDelivery,
   getAvailableStatuses,
   removeItem,
+  restoreItem,
   groupedItemsByStatus,
   importAcceptedRuleReviewItems,
   importTemplateItems,
@@ -67,6 +69,10 @@ const {
   unlockWriteWithRiskAck,
   relockWrites,
 } = useProjectManagement()
+
+const recentlyRemovedItem = ref<DeliveryItem | null>(null)
+const recentlyRemovedIndex = ref(0)
+let removeUndoTimer: ReturnType<typeof setTimeout> | undefined
 
 function onCardDragStart(event: DragEvent, itemId: string) {
   event.dataTransfer?.setData('text/plain', itemId)
@@ -130,6 +136,10 @@ function handleExportTimeline(format: 'json' | 'csv') {
 
 async function handleSyncBridgeEvents() {
   const result = await syncBridgeEventsNow()
+  if (result.failed > 0) {
+    ElMessage.warning(`桥接同步完成：成功 ${result.applied} 条，失败 ${result.failed} 条，请处理失败记录`)
+    return
+  }
   if (result.applied > 0) {
     ElMessage.success(`已同步 ${result.applied} 条AI桥接事件`)
   } else {
@@ -148,10 +158,53 @@ function handleStatusChange(row: DeliveryItem, status: DeliveryStatus) {
   ElMessage.success(`已变更：${statusLabel(fromStatus)} -> ${statusLabel(status)}`)
 }
 
-function handleRemoveItem(id: string) {
+function handleStatusSelect(row: DeliveryItem, value: unknown) {
+  handleStatusChange(row, value as DeliveryStatus)
+}
+
+async function handleRemoveItem(id: string) {
   if (!assertWriteAllowed('删除条目')) return
+  const index = items.value.findIndex((item) => item.id === id)
+  const target = index >= 0 ? items.value[index] : null
+  if (!target) return
+  try {
+    await ElMessageBox.confirm(`将删除「${target.title}」，是否继续？`, '删除确认', {
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+  } catch {
+    return
+  }
   removeItem(id)
-  ElMessage.success('已删除交付项')
+  if (removeUndoTimer) {
+    clearTimeout(removeUndoTimer)
+  }
+  recentlyRemovedItem.value = target
+  recentlyRemovedIndex.value = index
+  removeUndoTimer = setTimeout(() => {
+    recentlyRemovedItem.value = null
+  }, 10000)
+  ElMessage.success('已删除交付项，可在10秒内撤销')
+}
+
+function handleUndoRemove() {
+  if (!recentlyRemovedItem.value) return
+  restoreItem(recentlyRemovedItem.value, recentlyRemovedIndex.value)
+  recentlyRemovedItem.value = null
+  if (removeUndoTimer) {
+    clearTimeout(removeUndoTimer)
+  }
+  ElMessage.success('已撤销删除')
+}
+
+async function handleRetryBridgeFailures() {
+  const result = await syncBridgeEventsNow()
+  if (result.failed > 0) {
+    ElMessage.warning(`重试完成：仍有 ${result.failed} 条失败，请检查条目是否存在或状态是否合法`)
+    return
+  }
+  ElMessage.success('桥接失败项已重试完成')
 }
 
 function handleSubmitByAiForUserConfirm(item: DeliveryItem) {
@@ -268,6 +321,12 @@ function statusTagType(status: DeliveryStatus): 'info' | 'warning' | 'danger' | 
 }
 
 const priorityOptions: DeliveryPriority[] = ['P0', 'P1', 'P2', 'P3']
+
+onBeforeUnmount(() => {
+  if (removeUndoTimer) {
+    clearTimeout(removeUndoTimer)
+  }
+})
 </script>
 
 <template>
@@ -330,8 +389,41 @@ const priorityOptions: DeliveryPriority[] = ['P0', 'P1', 'P2', 'P3']
       </template>
     </el-alert>
 
+    <el-alert
+      v-if="recentlyRemovedItem"
+      type="warning"
+      :closable="false"
+      show-icon
+      title="条目已删除，可在10秒内撤销"
+    >
+      <template #default>
+        <div class="lock-alert-actions">
+          <span>{{ recentlyRemovedItem.title }}</span>
+          <el-button size="small" type="warning" plain @click="handleUndoRemove">撤销删除</el-button>
+        </div>
+      </template>
+    </el-alert>
+
     <el-card shadow="hover">
       <template #header>交付桥接面板（AI -> 用户）</template>
+      <el-alert
+        v-if="bridgeFailedEvents.length > 0"
+        type="error"
+        :closable="false"
+        show-icon
+        :title="`桥接失败 ${bridgeFailedEvents.length} 条，请处理后重试`"
+      >
+        <template #default>
+          <div class="bridge-failure-list">
+            <div v-for="event in bridgeFailedEvents.slice(0, 5)" :key="event.id" class="timeline-sub">
+              {{ event.action }} · {{ event.itemId }} · {{ event.reason }}（重试 {{ event.retryCount }} 次）
+            </div>
+            <el-button size="small" type="danger" plain :loading="bridgeSyncing" @click="handleRetryBridgeFailures">
+              重试失败项
+            </el-button>
+          </div>
+        </template>
+      </el-alert>
       <div v-if="pendingUserConfirmItems.length === 0" class="timeline-empty">当前没有待用户确认项</div>
       <div v-else class="timeline-list">
         <div v-for="item in pendingUserConfirmItems" :key="item.id" class="timeline-item">
@@ -474,7 +566,7 @@ const priorityOptions: DeliveryPriority[] = ['P0', 'P1', 'P2', 'P3']
               size="small"
               style="width: 120px"
               :disabled="writeLockActive"
-              @change="(v: DeliveryStatus) => handleStatusChange(row, v)"
+              @change="handleStatusSelect(row, $event)"
             >
               <el-option
                 v-for="s in getAvailableStatuses(row.status)"
@@ -795,6 +887,13 @@ const priorityOptions: DeliveryPriority[] = ['P0', 'P1', 'P2', 'P3']
 .bridge-actions {
   display: flex;
   gap: 8px;
+  margin-top: 8px;
+}
+
+.bridge-failure-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin-top: 8px;
 }
 

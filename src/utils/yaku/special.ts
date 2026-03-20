@@ -1,5 +1,4 @@
 import {
-  checkChitoitsu,
   checkKokushimusou,
   checkKokushimusou13,
   checkChuurenpu,
@@ -55,17 +54,6 @@ export function matchSpecialYaku(tiles: Tile[], isMenqian: boolean): YakuMatchRe
       han: 8,
       matched: true,
       reason: '同种数牌1112345678999+1张'
-    })
-    return results
-  }
-
-  if (isMenqian && checkChitoitsu(tiles)) {
-    results.push({
-      id: 'chitoitsu',
-      name: '七对子',
-      han: 2,
-      matched: true,
-      reason: '7组不同的对子'
     })
     return results
   }

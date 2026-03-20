@@ -34,6 +34,7 @@ const PROJECT_STARTUP_CHECK_API = '/__pm_api/startup/check'
 const PROJECT_CONTROL_API = '/__pm_api/control'
 const PROJECT_DATA_SYNC_API = '/__pm_api/data/sync'
 const PROJECT_DATA_BACKUP_API = '/__pm_api/data/backup'
+const PROJECT_MODE_API = '/__pm_api/mode'
 
 export function loadDeliveryItems(): DeliveryItem[] {
   return repository.load()
@@ -128,6 +129,11 @@ export interface ProjectLinkStatus {
   ahead: number
   behind: number
   syncMessage: string
+  workingMode: 'single_local' | 'multi_sync'
+  modeConfirmed: boolean
+  modeConfirmedAt: number
+  needsModeConfirmation: boolean
+  modePromptReason: string
 }
 
 export interface ProcessLogSummary {
@@ -233,7 +239,40 @@ export async function loadProjectLinkStatus(): Promise<ProjectLinkStatus> {
     workingTreeDirty: Boolean(data.workingTreeDirty),
     ahead: typeof data.ahead === 'number' ? data.ahead : 0,
     behind: typeof data.behind === 'number' ? data.behind : 0,
-    syncMessage: data.syncMessage || '同步状态未知'
+    syncMessage: data.syncMessage || '同步状态未知',
+    workingMode: data.workingMode === 'multi_sync' ? 'multi_sync' : 'single_local',
+    modeConfirmed: Boolean(data.modeConfirmed),
+    modeConfirmedAt: typeof data.modeConfirmedAt === 'number' ? data.modeConfirmedAt : 0,
+    needsModeConfirmation: Boolean(data.needsModeConfirmation),
+    modePromptReason: data.modePromptReason || ''
+  }
+}
+
+export async function setProjectWorkingMode(
+  workingMode: 'single_local' | 'multi_sync'
+): Promise<{ ok: boolean; message: string; workingMode: 'single_local' | 'multi_sync'; modeConfirmed: boolean }> {
+  const response = await fetch(PROJECT_MODE_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      projectKey: projectManagementConfig.projectKey,
+      workingMode
+    })
+  })
+  const data = (await response.json()) as {
+    ok?: boolean
+    message?: string
+    workingMode?: 'single_local' | 'multi_sync'
+    modeConfirmed?: boolean
+  }
+  if (!response.ok || !data.ok) {
+    throw new Error(data.message || `set working mode failed: ${response.status}`)
+  }
+  return {
+    ok: Boolean(data.ok),
+    message: data.message || '模式已更新',
+    workingMode: data.workingMode === 'multi_sync' ? 'multi_sync' : 'single_local',
+    modeConfirmed: Boolean(data.modeConfirmed)
   }
 }
 
