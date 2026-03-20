@@ -268,7 +268,8 @@ const handleSourceDragStart = (event: DragEvent, tileId: string) => {
   if (event.dataTransfer) {
     event.dataTransfer.setData('text/plain', tileId)
     event.dataTransfer.setData('source', 'source')
-    event.dataTransfer.effectAllowed = 'copy'
+    // 允许 copy/move，避免目标区在 dragover 阶段无法读取 source 时设置 move 导致 drop 被拒绝
+    event.dataTransfer.effectAllowed = 'copyMove'
   }
 }
 </script>
