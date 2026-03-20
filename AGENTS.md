@@ -34,62 +34,53 @@
 ### PM
 
 - **类型**: project-manager
-- **定义文件**: .opencode/agents/pm.md
 - **职责**: 任务管家、协调者、考评者
 - **协作文件**: collaboration.md
 
 ### Requirements Manager
 
 - **类型**: requirements-manager
-- **定义文件**: .opencode/agents/requirements-manager.md
 - **职责**: 需求分析
 - **产出目录**: requirements/
 
 ### Architect
 
 - **类型**: architect
-- **定义文件**: .opencode/agents/architect.md
 - **职责**: 技术方案设计
 - **产出目录**: docs/
 
 ### UI Designer
 
 - **类型**: ui-designer
-- **定义文件**: .opencode/agents/ui-designer.md
 - **职责**: 界面设计
 - **产出目录**: design/
 
 ### Coder
 
 - **类型**: coder
-- **定义文件**: .opencode/agents/coder.md
 - **职责**: 代码实现
 - **产出目录**: src/
 
 ### Committer
 
 - **类型**: committer
-- **定义文件**: .opencode/agents/committer.md
 - **职责**: 代码审核 + 合入develop
 
 ### Automation Tester
 
 - **类型**: automation-tester
-- **定义文件**: .opencode/agents/automation-tester.md
 - **职责**: 自动化测试
 - **产出目录**: tests/
 
 ### UI Tester
 
 - **类型**: ui-tester
-- **定义文件**: .opencode/agents/ui-tester.md
 - **职责**: UI测试
 - **产出目录**: tests/ui/
 
 ### Docs Writer
 
 - **类型**: docs-writer
-- **定义文件**: .opencode/agents/docs-writer.md
 - **职责**: 文档编写
 - **产出目录**: docs/
 
