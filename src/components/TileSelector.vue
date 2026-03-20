@@ -264,7 +264,6 @@ const handleSourceDragStart = (event: DragEvent, tileId: string) => {
     event.preventDefault()
     return
   }
-  // 通知父组件减少素材区数量（通过 select 事件，父组件会将牌添加到其他区域）
   if (event.dataTransfer) {
     event.dataTransfer.setData('text/plain', tileId)
     event.dataTransfer.setData('source', 'source')
