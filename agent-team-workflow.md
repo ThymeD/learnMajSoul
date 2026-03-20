@@ -1,4 +1,6 @@
-# 多Agent团队协作工作流
+# 多Agent团队协作工作流（历史归档）
+
+> 说明：该文档为 opencode 时代流程归档。当前项目以 `.cursor/rules/workflow.md` 作为执行工作流规范。
 
 ## 核心理念
 

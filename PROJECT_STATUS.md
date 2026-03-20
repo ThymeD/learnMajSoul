@@ -44,7 +44,7 @@ npm run format
 
 ## 开发规范
 
-- 任务管理：使用 TODO.md 追踪任务
+- 任务管理：使用 `collaboration.md` 追踪需求与缺陷闭环
 - 规范文档：见 [AGENTS.md](./AGENTS.md)
 - 优化计划：见 [PROJECT_OPTIMIZATION.md](./PROJECT_OPTIMIZATION.md)
 

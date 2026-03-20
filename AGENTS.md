@@ -5,7 +5,7 @@
 - **项目名称**：雀魂麻将游戏攻略
 - **项目简介**：本项目旨在实现雀魂麻将游戏攻略系统，采用模块化开发，每个功能可独立验证，最终整合为完整系统。
 - **初始化时间**：2026-03-18
-- **工作流**：agent-team-workflow.md
+- **工作流**：.cursor/rules/workflow.md（Cursor 工作流固化）
 - **开发服务器地址**：http://localhost:5173
 - **启动命令**：npm run dev
 
@@ -34,62 +34,53 @@
 ### PM
 
 - **类型**: project-manager
-- **定义文件**: .opencode/agents/pm.md
 - **职责**: 任务管家、协调者、考评者
 - **协作文件**: collaboration.md
 
 ### Requirements Manager
 
 - **类型**: requirements-manager
-- **定义文件**: .opencode/agents/requirements-manager.md
 - **职责**: 需求分析
 - **产出目录**: requirements/
 
 ### Architect
 
 - **类型**: architect
-- **定义文件**: .opencode/agents/architect.md
 - **职责**: 技术方案设计
 - **产出目录**: docs/
 
 ### UI Designer
 
 - **类型**: ui-designer
-- **定义文件**: .opencode/agents/ui-designer.md
 - **职责**: 界面设计
 - **产出目录**: design/
 
 ### Coder
 
 - **类型**: coder
-- **定义文件**: .opencode/agents/coder.md
 - **职责**: 代码实现
 - **产出目录**: src/
 
 ### Committer
 
 - **类型**: committer
-- **定义文件**: .opencode/agents/committer.md
 - **职责**: 代码审核 + 合入develop
 
 ### Automation Tester
 
 - **类型**: automation-tester
-- **定义文件**: .opencode/agents/automation-tester.md
 - **职责**: 自动化测试
 - **产出目录**: tests/
 
 ### UI Tester
 
 - **类型**: ui-tester
-- **定义文件**: .opencode/agents/ui-tester.md
 - **职责**: UI测试
 - **产出目录**: tests/ui/
 
 ### Docs Writer
 
 - **类型**: docs-writer
-- **定义文件**: .opencode/agents/docs-writer.md
 - **职责**: 文档编写
 - **产出目录**: docs/
 
@@ -135,7 +126,7 @@ PM 通知原 Agent 继续任务
 
 ## 工作流说明
 
-详见 `agent-team-workflow.md`
+详见 `.cursor/rules/workflow.md`（Cursor 工作流固化）
 
 ---
 
@@ -149,4 +140,4 @@ PM作为主agent，调用各子agent协作完成任务。
 
 用户在各窗口切换，传递任务信息。
 
-详见 `agent-team-workflow.md` 中的"两种作业模式"章节。
+详见 `.cursor/rules/workflow.md` 中的工作流程说明。
