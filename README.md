@@ -47,7 +47,7 @@ src/
 | 路由 | 页面 | 说明 |
 |------|------|------|
 | /home | 首页 | 项目入口 |
-| /hand | 手牌分析 | 待开发 |
+| /hand | 手牌分析 | 已实现，持续迭代 |
 | /tiles | 素材验证 | 麻将牌素材展示 |
 | /yaku | 役种一览 | 役种列表及导航 |
 | /draft | 草稿区 | 临时功能验证 |
@@ -91,6 +91,9 @@ src/
 
 - [AGENTS.md](./AGENTS.md) - 项目规则
 - [PROJECT_STATUS.md](./PROJECT_STATUS.md) - 项目状态
+- [requirements/INDEX.md](./requirements/INDEX.md) - 统一需求索引
+- [collaboration.md](./collaboration.md) - 需求/缺陷跟踪闭环
+- [docs/branch-strategy.md](./docs/branch-strategy.md) - 分支管理策略
 
 ## 技术栈
 
