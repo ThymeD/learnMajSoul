@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import MahjongTile from '../../../components/MahjongTile.vue'
+import { normalizeRedFive } from '../../../utils/mahjong'
 
 interface Props {
   tiles: string[]
@@ -29,14 +31,17 @@ const tingCountMap = computed(() => {
   return map
 })
 
-import { computed } from 'vue'
-
 const handleTileClick = (tile: string, index: number) => {
   emit('tile-remove', tile, index)
 }
 
 const handleDragStart = (event: DragEvent, tile: string, index: number) => {
   emit('tile-drag-start', event, tile, index)
+}
+
+const isTingHighlight = (tile: string) => {
+  const n = normalizeRedFive(tile)
+  return props.tingPai.some((t) => normalizeRedFive(t) === n)
 }
 </script>
 
@@ -46,12 +51,12 @@ const handleDragStart = (event: DragEvent, tile: string, index: number) => {
       v-for="(element, index) in tiles"
       :key="index"
       class="tile-wrapper"
-      :class="{ 'is-ting': tingPai.includes(element) }"
+      :class="{ 'is-ting': isTingHighlight(element) }"
       draggable="true"
       @dragstart="(e) => handleDragStart(e, element, index)"
       @dblclick="handleTileClick(element, index)"
     >
-      <div v-if="tingPai.includes(element)" class="ting-indicator">
+      <div v-if="isTingHighlight(element)" class="ting-indicator">
         {{ tingCountMap[element] || '' }}
       </div>
       <MahjongTile :tile-id="element" :width="60" :show-name="false" />
