@@ -32,6 +32,21 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/YakuView.vue')
   },
   {
+    path: '/rule-review',
+    name: 'ruleReview',
+    component: () => import('../views/RuleReviewView.vue')
+  },
+  {
+    path: '/data-management',
+    name: 'dataManagement',
+    component: () => import('../views/DataManagementView.vue')
+  },
+  {
+    path: '/delivery',
+    name: 'delivery',
+    component: () => import('../views/DeliveryView.vue')
+  },
+  {
     path: '/draft',
     name: 'draft',
     component: () => import('../views/DraftView.vue')

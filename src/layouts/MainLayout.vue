@@ -1,17 +1,26 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
+import { featureFlags } from '../config/features'
 
 const router = useRouter()
 const route = useRoute()
 
-const menuItems = [
+const baseMenuItems = [
   { path: '/yaku', label: '役种一览', icon: 'List' },
+  { path: '/rule-review', label: '规则复核', icon: 'DocumentChecked' },
+  { path: '/delivery', label: '项目交付管理', icon: 'DataAnalysis', feature: 'deliveryManagement' },
+  { path: '/data-management', label: '数据管理', icon: 'Setting', feature: 'deliveryManagement' },
   { path: '/home', label: '首页', icon: 'House' },
   { path: '/hand', label: '手牌分析', icon: 'Grid' },
   { path: '/tiles', label: '素材验证', icon: 'Picture' },
   { path: '/draft', label: '草稿区', icon: 'Edit' },
   { path: '/strategy', label: '策略指南', icon: 'Reading' }
 ]
+
+const menuItems = baseMenuItems.filter((item) => {
+  if (!('feature' in item)) return true
+  return featureFlags[item.feature as keyof typeof featureFlags]
+})
 
 const handleMenuSelect = (index: string) => {
   router.push(index)

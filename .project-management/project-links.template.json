@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "projects": {
+    "learnMajSoul": {
+      "businessRepoPath": "C:/path/to/your/business-repo",
+      "managementRepoPath": "C:/path/to/your/management-repo",
+      "managementDataSubdir": "data"
+    }
+  }
+}

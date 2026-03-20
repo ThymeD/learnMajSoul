@@ -12,6 +12,8 @@ node_modules
 dist
 dist-ssr
 *.local
+.project-management/project-links.local.json
+.project-management/business-sources.local.json
 test-results/
 
 # Editor directories and files

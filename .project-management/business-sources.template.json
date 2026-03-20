@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "type": "collaboration_md",
+      "enabled": true
+    },
+    {
+      "type": "git_status",
+      "enabled": true
+    }
+  ]
+}
