@@ -46,7 +46,8 @@ npm run format
 
 - 任务管理：使用 `collaboration.md` 追踪需求与缺陷闭环
 - 规范文档：见 [AGENTS.md](./AGENTS.md)
-- 优化计划：见 [PROJECT_OPTIMIZATION.md](./PROJECT_OPTIMIZATION.md)
+- 工作流规则：见 [.cursor/rules/workflow.md](./.cursor/rules/workflow.md)
+- 分支策略：见 [docs/branch-strategy.md](./docs/branch-strategy.md)
 
 ## 更新日志
 

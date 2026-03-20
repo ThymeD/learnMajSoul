@@ -57,3 +57,9 @@
 - 每次完成实现后，优先运行 `npm run test:run`，并把结果回填到 `collaboration.md`。
 - 涉及复杂交互（DnD、联动开关、跨区同步）时，补充 Playwright 或明确手动回归步骤。
 
+## 上下文与 token 控制
+- 进入任务前先读取：`collaboration.md`、`requirements/INDEX.md`、对应模块需求文档。
+- 避免整文件读取超大代码文件，优先按符号或区段读取。
+- 若任务跨越过多文件，先拆分子任务并分阶段交付，避免单次上下文过载。
+- 参考：`.cursor/rules/context-efficiency.md`
+

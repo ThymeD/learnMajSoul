@@ -80,6 +80,14 @@
 - 手牌分析：`requirements/hand-view-requirements.md`
 - 役种一览：`requirements/yaku/SPEC.md`
 
+## 重构任务池（仅结构优化，不改功能）
+| 编号 | 任务 | 优先级 | 状态 | 备注 |
+| --- | --- | --- | --- | --- |
+| RF-001 | 拆分 `src/views/HandView/index.vue` 到 composables/components | P0 | 待开始 | 降低入口文件复杂度 |
+| RF-002 | 拆分 `src/utils/yaku-match.ts` 按役种簇模块化 | P0 | 待开始 | 保持对外 API 不变 |
+| RF-003 | 拆分 `src/stores/hand.ts` 纯逻辑到 domain utils | P1 | 待开始 | Store 仅保留状态编排 |
+| RF-004 | 拆分 `requirements/hand-view-requirements.md` 文档结构 | P1 | 待开始 | 通过 `requirements/INDEX.md` 聚合 |
+
 ## 进度追踪（完整记录）
 
 ### 已完成

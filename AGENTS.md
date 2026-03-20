@@ -127,6 +127,7 @@ PM 通知原 Agent 继续任务
 ## 工作流说明
 
 详见 `.cursor/rules/workflow.md`（Cursor 工作流固化）
+以及 `.cursor/rules/context-efficiency.md`（上下文预算与文件规模控制）
 
 ---
 

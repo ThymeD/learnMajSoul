@@ -41,5 +41,5 @@
 ## 证明材料
 
 - 协作文件：collaboration.md
-- 工作流文档：agent-team-workflow.md
+- 工作流文档：Cursor工作流规则（历史记录已归档）
 - PM描述文件：.opencode/agents/pm.md
