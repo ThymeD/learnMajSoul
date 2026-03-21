@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { execSync } from 'node:child_process'
+import { execFileSync, execSync } from 'node:child_process'
 
 function projectManagementFileApi() {
   const rootDir = process.cwd()
@@ -102,6 +102,8 @@ function projectManagementFileApi() {
     modeConfirmedAt: number
     needsModeConfirmation: boolean
     modePromptReason: string
+    integrationBranch: string
+    releaseBranch: string
   } {
     const config = loadLinkConfig()
     const projects = config.projects && typeof config.projects === 'object' ? config.projects : {}
@@ -126,12 +128,22 @@ function projectManagementFileApi() {
       modeConfirmed: false,
       modeConfirmedAt: 0,
       needsModeConfirmation: false,
-      modePromptReason: ''
+      modePromptReason: '',
+      integrationBranch: 'develop',
+      releaseBranch: ''
     }
     if (!entry || typeof entry !== 'object') {
       ensureMigratedDefaultData(projectKey)
       return fallback
     }
+    const integrationBranch =
+      typeof entry.integrationBranch === 'string' && entry.integrationBranch.trim()
+        ? entry.integrationBranch.trim()
+        : 'develop'
+    const releaseBranch =
+      typeof entry.releaseBranch === 'string' && entry.releaseBranch.trim()
+        ? entry.releaseBranch.trim()
+        : ''
     const businessRepoPath =
       typeof entry.businessRepoPath === 'string' && entry.businessRepoPath
         ? resolve(entry.businessRepoPath)
@@ -150,7 +162,9 @@ function projectManagementFileApi() {
         reason: '管理项目路径不存在，请更新映射配置',
         businessRepoPath,
         managementRepoPath,
-        syncMessage: '管理仓库不可用'
+        syncMessage: '管理仓库不可用',
+        integrationBranch,
+        releaseBranch
       }
     }
     if (normalizePath(businessRepoPath) !== normalizePath(rootDir)) {
@@ -159,7 +173,9 @@ function projectManagementFileApi() {
         reason: '映射中的业务项目路径与当前仓库不一致，请检查映射',
         businessRepoPath,
         managementRepoPath,
-        syncMessage: '映射校验失败'
+        syncMessage: '映射校验失败',
+        integrationBranch,
+        releaseBranch
       }
     }
     const managementDataDir = resolve(managementRepoPath, managementDataSubdir)
@@ -189,10 +205,19 @@ function projectManagementFileApi() {
       remoteUrl = ''
     }
     try {
-      managementBranch = execSync('git branch --show-current', {
+      const cur = execSync('git branch --show-current', {
         cwd: managementRepoPath,
         encoding: 'utf-8'
       }).trim()
+      if (cur) {
+        managementBranch = cur
+      } else {
+        const short = execSync('git rev-parse --short HEAD', {
+          cwd: managementRepoPath,
+          encoding: 'utf-8'
+        }).trim()
+        managementBranch = short ? `游离(${short})` : '游离'
+      }
     } catch {
       managementBranch = 'unknown'
     }
@@ -274,8 +299,665 @@ function projectManagementFileApi() {
       modeConfirmed,
       modeConfirmedAt,
       needsModeConfirmation,
-      modePromptReason
+      modePromptReason,
+      integrationBranch,
+      releaseBranch
     }
+  }
+
+  function formatDataRepoGitError(error: unknown, fallbackMessage: string): string {
+    const err = error as { stderr?: string | Buffer; stdout?: string | Buffer; message?: string }
+    const stderrText =
+      typeof err?.stderr === 'string'
+        ? err.stderr
+        : err?.stderr
+          ? Buffer.from(err.stderr).toString('utf-8')
+          : ''
+    const stdoutText =
+      typeof err?.stdout === 'string'
+        ? err.stdout
+        : err?.stdout
+          ? Buffer.from(err.stdout).toString('utf-8')
+          : ''
+    const raw = `${stderrText}\n${stdoutText}\n${err?.message || ''}`.trim()
+    const normalized = raw.toLowerCase()
+    if (
+      normalized.includes('could not resolve host') ||
+      normalized.includes('failed to connect') ||
+      normalized.includes('connection timed out')
+    ) {
+      return '网络连接失败：请检查网络或代理后重试'
+    }
+    if (
+      normalized.includes('authentication failed') ||
+      normalized.includes('permission denied (publickey)') ||
+      normalized.includes('could not read username')
+    ) {
+      return 'GitHub 鉴权失败：请确认账号登录状态或 SSH/Token 权限'
+    }
+    if (normalized.includes('not a git repository')) {
+      return '目标路径不是 Git 仓库'
+    }
+    const lastLine = raw
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(-1)[0]
+    if (lastLine) {
+      return `${fallbackMessage}（${lastLine}）`
+    }
+    return fallbackMessage
+  }
+
+  function runDataRepoGit(cwd: string, command: string): string {
+    return execSync(command, {
+      cwd,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe']
+    }).trim()
+  }
+
+  function dataRepoBranchExistsLocal(cwd: string, name: string): boolean {
+    try {
+      execSync(`git show-ref --verify --quiet refs/heads/${name}`, { cwd, stdio: 'ignore' })
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /** 分支名比较（大小写不敏感，避免 develop / Develop 误判走合并路径） */
+  function dataRepoBranchNameMatch(a: string, b: string): boolean {
+    return a.trim().toLowerCase() === b.trim().toLowerCase()
+  }
+
+  function dataRepoReadCurrentBranch(cwd: string): string {
+    try {
+      return execFileSync('git', ['branch', '--show-current'], {
+        cwd,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe']
+      }).trim()
+    } catch {
+      return ''
+    }
+  }
+
+  function listDataRepoBranches(
+    projectKey: string,
+    doFetch: boolean
+  ): {
+    ok: boolean
+    message?: string
+    branches?: string[]
+    current?: string
+    integrationBranch?: string
+    releaseBranch?: string
+  } {
+    const status = resolveProjectLinkStatus(projectKey)
+    if (!status.linked || !status.managementRepoPath) {
+      return { ok: false, message: '未完成业务仓与数据仓关联' }
+    }
+    const cwd = status.managementRepoPath
+    if (!existsSync(cwd)) {
+      return { ok: false, message: '数据仓路径不存在' }
+    }
+    try {
+      if (doFetch && status.backupReady) {
+        runDataRepoGit(cwd, 'git fetch origin')
+      }
+      const localRaw = runDataRepoGit(cwd, 'git branch --format=%(refname:short)')
+      const local = localRaw
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean)
+      const remote: string[] = []
+      if (status.backupReady) {
+        try {
+          const remoteRaw = runDataRepoGit(cwd, 'git branch -r --format=%(refname:short)')
+          remote.push(
+            ...remoteRaw
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean)
+              .filter((r) => r.startsWith('origin/'))
+              .map((r) => r.replace(/^origin\//, ''))
+              .filter((r) => r !== 'HEAD')
+          )
+        } catch {
+          // ignore
+        }
+      }
+      const set = new Set<string>([...local, ...remote])
+      const branches = [...set].sort((a, b) => a.localeCompare(b, 'zh-CN'))
+      let current = 'unknown'
+      try {
+        const cur = runDataRepoGit(cwd, 'git branch --show-current')
+        if (cur) {
+          current = cur
+        } else {
+          const short = runDataRepoGit(cwd, 'git rev-parse --short HEAD')
+          current = short ? `游离(${short})` : '游离'
+        }
+      } catch {
+        current = 'unknown'
+      }
+      return {
+        ok: true,
+        branches,
+        current,
+        integrationBranch: status.integrationBranch,
+        releaseBranch: status.releaseBranch
+      }
+    } catch (error: unknown) {
+      return { ok: false, message: formatDataRepoGitError(error, '读取分支列表失败') }
+    }
+  }
+
+  function checkoutDataRepoBranch(projectKey: string, branch: string): { ok: boolean; message: string } {
+    const status = resolveProjectLinkStatus(projectKey)
+    if (!status.linked || !status.managementRepoPath) {
+      return { ok: false, message: '未完成业务仓与数据仓关联' }
+    }
+    const cwd = status.managementRepoPath
+    if (!existsSync(cwd)) {
+      return { ok: false, message: '数据仓路径不存在' }
+    }
+    if (gitWorkingTreeDirty(cwd)) {
+      try {
+        execFileSync('git', ['add', '-A'], { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+        const msg = `chore(pm-data): before checkout ${new Date().toISOString()}`
+        try {
+          execFileSync('git', ['commit', '-m', msg], { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+        } catch {
+          /* 无变更可提交时忽略（与并入协作主分支一致） */
+        }
+      } catch (error: unknown) {
+        return {
+          ok: false,
+          message: formatDataRepoGitError(error, '无法暂存/提交改动，请手动处理工作区后再切换分支')
+        }
+      }
+    }
+    if (gitWorkingTreeDirty(cwd)) {
+      return {
+        ok: false,
+        message:
+          '工作区仍有未提交改动。请先在数据仓目录处理冲突或受保护文件，或使用「备份到 GitHub」完整提交并推送。'
+      }
+    }
+    const name = branch.trim().replace(/^origin\//, '')
+    if (!name || /[\s]/.test(name)) {
+      return { ok: false, message: '分支名无效' }
+    }
+    try {
+      if (status.backupReady) {
+        runDataRepoGit(cwd, 'git fetch origin')
+      }
+      if (dataRepoBranchExistsLocal(cwd, name)) {
+        runDataRepoGit(cwd, `git switch ${name}`)
+        return { ok: true, message: `已切换到分支 ${name}` }
+      }
+      if (status.backupReady) {
+        try {
+          runDataRepoGit(cwd, `git rev-parse --verify origin/${name}`)
+          runDataRepoGit(cwd, `git switch -c ${name} --track origin/${name}`)
+          return { ok: true, message: `已基于远端 origin/${name} 创建并切换本地分支` }
+        } catch {
+          // fall through
+        }
+      }
+      return { ok: false, message: `未找到分支「${name}」（本地或 origin 上均不存在）` }
+    } catch (error: unknown) {
+      return { ok: false, message: formatDataRepoGitError(error, '切换分支失败') }
+    }
+  }
+
+  function pushDataRepo(projectKey: string): { ok: boolean; message: string } {
+    const status = resolveProjectLinkStatus(projectKey)
+    if (!status.backupReady) {
+      return { ok: false, message: '数据仓未配置 origin，无法推送' }
+    }
+    const cwd = status.managementRepoPath
+    if (!existsSync(cwd)) {
+      return { ok: false, message: '数据仓路径不存在' }
+    }
+    try {
+      runDataRepoGit(cwd, 'git fetch origin')
+      const branch = runDataRepoGit(cwd, 'git branch --show-current')
+      if (!branch) {
+        return { ok: false, message: '无法读取当前分支' }
+      }
+      runDataRepoGit(cwd, 'git push -u origin HEAD')
+      return { ok: true, message: `已推送到远端 origin/${branch}` }
+    } catch (error: unknown) {
+      return { ok: false, message: formatDataRepoGitError(error, '推送失败') }
+    }
+  }
+
+  function gitWorkingTreeDirty(cwd: string): boolean {
+    try {
+      const line = execFileSync('git', ['status', '--porcelain'], {
+        cwd,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe']
+      }).trim()
+      return Boolean(line)
+    } catch {
+      return false
+    }
+  }
+
+  function originRefExists(cwd: string, branch: string): boolean {
+    try {
+      execFileSync('git', ['rev-parse', '--verify', `origin/${branch}`], {
+        cwd,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe']
+      })
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /** 远端可作为「协作主分支」起点的分支：优先 main / master / develop（已存在于 origin） */
+  function pickRemoteBaseBranchForNewIntegration(cwd: string, target: string): string | null {
+    const candidates = ['main', 'master', 'develop'].filter((b) => b !== target)
+    for (const b of candidates) {
+      if (originRefExists(cwd, b)) {
+        return b
+      }
+    }
+    return null
+  }
+
+  /** 在已 fetch 的前提下，若 origin 尚无该分支则创建并推送；成功后尽量恢复到原 HEAD */
+  function gitInitSingleRemoteBranchIfMissing(cwd: string, branch: string): { ok: boolean; message: string } {
+    if (originRefExists(cwd, branch)) {
+      return { ok: true, message: `origin/${branch} 已存在` }
+    }
+    if (gitWorkingTreeDirty(cwd)) {
+      return {
+        ok: false,
+        message: '工作区有未提交改动，请先提交或暂存后再初始化远端分支'
+      }
+    }
+    let headBefore = ''
+    try {
+      headBefore = execFileSync('git', ['rev-parse', 'HEAD'], {
+        cwd,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe']
+      }).trim()
+    } catch {
+      return { ok: false, message: '无法读取当前 HEAD' }
+    }
+
+    let msg = ''
+    try {
+      if (dataRepoBranchExistsLocal(cwd, branch)) {
+        execFileSync('git', ['switch', branch], {
+          cwd,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe']
+        })
+        execFileSync('git', ['push', '-u', 'origin', branch], {
+          cwd,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe']
+        })
+        msg = `已推送本地 ${branch} 到远端`
+      } else {
+        const base = pickRemoteBaseBranchForNewIntegration(cwd, branch)
+        if (base !== null) {
+          execFileSync('git', ['switch', '-c', branch, `origin/${base}`], {
+            cwd,
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe']
+          })
+          msg = `已基于 origin/${base} 创建并推送 origin/${branch}`
+        } else {
+          execFileSync('git', ['switch', '-c', branch], {
+            cwd,
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe']
+          })
+          msg = `远端无 main/master/develop 等基准，已基于当前 HEAD 创建并推送 origin/${branch}`
+        }
+        execFileSync('git', ['push', '-u', 'origin', branch], {
+          cwd,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe']
+        })
+      }
+    } catch (error: unknown) {
+      return { ok: false, message: formatDataRepoGitError(error, '初始化远端分支失败') }
+    } finally {
+      if (headBefore) {
+        try {
+          execFileSync('git', ['checkout', headBefore], {
+            cwd,
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe']
+          })
+        } catch {
+          /* 恢复检出失败时忽略 */
+        }
+      }
+    }
+    return { ok: true, message: msg }
+  }
+
+  function checkDataRepoRemoteBranchStatus(projectKey: string): {
+    ok: boolean
+    message?: string
+    integrationBranch: string
+    releaseBranch: string
+    integrationExists: boolean
+    releaseExists: boolean | null
+  } {
+    const status = resolveProjectLinkStatus(projectKey)
+    const ib = (status.integrationBranch || 'develop').trim()
+    const rb = (status.releaseBranch || '').trim()
+    if (!status.linked || !status.managementRepoPath) {
+      return {
+        ok: false,
+        message: '未完成业务仓与数据仓关联',
+        integrationBranch: ib || 'develop',
+        releaseBranch: rb,
+        integrationExists: false,
+        releaseExists: rb ? false : null
+      }
+    }
+    if (!status.backupReady) {
+      return {
+        ok: false,
+        message: '未配置 origin，无法检查远端分支',
+        integrationBranch: ib || 'develop',
+        releaseBranch: rb,
+        integrationExists: false,
+        releaseExists: rb ? false : null
+      }
+    }
+    const cwd = status.managementRepoPath
+    if (!existsSync(cwd)) {
+      return {
+        ok: false,
+        message: '数据仓路径不存在',
+        integrationBranch: ib || 'develop',
+        releaseBranch: rb,
+        integrationExists: false,
+        releaseExists: rb ? false : null
+      }
+    }
+    try {
+      execFileSync('git', ['fetch', 'origin'], { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+      const integrationBranch = ib || 'develop'
+      const integrationExists = originRefExists(cwd, integrationBranch)
+      const releaseExists = rb ? originRefExists(cwd, rb) : null
+      return {
+        ok: true,
+        integrationBranch,
+        releaseBranch: rb,
+        integrationExists,
+        releaseExists
+      }
+    } catch (error: unknown) {
+      return {
+        ok: false,
+        message: formatDataRepoGitError(error, '检查远端分支失败'),
+        integrationBranch: ib || 'develop',
+        releaseBranch: rb,
+        integrationExists: false,
+        releaseExists: rb ? false : null
+      }
+    }
+  }
+
+  function initDataRepoRemoteBranches(
+    projectKey: string,
+    options: { integration?: boolean; release?: boolean }
+  ): { ok: boolean; message: string } {
+    const status = resolveProjectLinkStatus(projectKey)
+    if (!status.linked || !status.managementRepoPath) {
+      return { ok: false, message: '未完成业务仓与数据仓关联' }
+    }
+    if (!status.backupReady) {
+      return { ok: false, message: '未配置 origin，无法推送' }
+    }
+    const cwd = status.managementRepoPath
+    if (!existsSync(cwd)) {
+      return { ok: false, message: '数据仓路径不存在' }
+    }
+    const ib = (status.integrationBranch || 'develop').trim()
+    if (!ib || /\s/.test(ib)) {
+      return { ok: false, message: '协作主分支名无效' }
+    }
+    const rb = (status.releaseBranch || '').trim()
+    const initIntegration = options.integration !== false
+    const initRelease = rb.length > 0 && options.release !== false
+    if (!initIntegration && !initRelease) {
+      return { ok: false, message: '未指定要初始化的远端分支' }
+    }
+    try {
+      execFileSync('git', ['fetch', 'origin'], { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+      const parts: string[] = []
+      if (initIntegration) {
+        const r = gitInitSingleRemoteBranchIfMissing(cwd, ib)
+        if (!r.ok) {
+          return r
+        }
+        parts.push(`协作主分支：${r.message}`)
+      }
+      if (initRelease) {
+        const r = gitInitSingleRemoteBranchIfMissing(cwd, rb)
+        if (!r.ok) {
+          return r
+        }
+        parts.push(`发布分支：${r.message}`)
+      }
+      return { ok: true, message: parts.join('；') }
+    } catch (error: unknown) {
+      return { ok: false, message: formatDataRepoGitError(error, '初始化远端分支失败') }
+    }
+  }
+
+  /** 将当前分支工作提交后并入「协作主分支」（默认 develop）并推送；已在主分支时等价于拉取+推送 */
+  function mergeCurrentIntoIntegrationBranchAndPush(projectKey: string): { ok: boolean; message: string } {
+    const status = resolveProjectLinkStatus(projectKey)
+    if (!status.linked || !status.managementRepoPath) {
+      return { ok: false, message: '未完成业务仓与数据仓关联' }
+    }
+    if (!status.backupReady) {
+      return { ok: false, message: '数据仓未配置 origin，无法推送' }
+    }
+    const cwd = status.managementRepoPath
+    if (!existsSync(cwd)) {
+      return { ok: false, message: '数据仓路径不存在' }
+    }
+    const target = (status.integrationBranch || 'develop').trim()
+    if (!target || /\s/.test(target)) {
+      return { ok: false, message: '协作主分支名无效，请在左侧填写并保存约定' }
+    }
+    try {
+      execFileSync('git', ['fetch', 'origin'], { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+      let sourceBranch = execFileSync('git', ['branch', '--show-current'], {
+        cwd,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe']
+      }).trim()
+      let createdDetachedTempBranch = false
+      if (!sourceBranch) {
+        let short = ''
+        try {
+          short = execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+            cwd,
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe']
+          }).trim()
+        } catch {
+          /* */
+        }
+        if (!short) {
+          return { ok: false, message: '无法解析当前 HEAD，请确认数据仓为有效 Git 仓库' }
+        }
+        let candidate = `pm-detached-${short}`
+        let n = 0
+        while (dataRepoBranchExistsLocal(cwd, candidate)) {
+          n += 1
+          candidate = `pm-detached-${short}-${n}`
+        }
+        try {
+          execFileSync('git', ['switch', '-c', candidate], {
+            cwd,
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe']
+          })
+          sourceBranch = candidate
+          createdDetachedTempBranch = true
+        } catch (error: unknown) {
+          return {
+            ok: false,
+            message: formatDataRepoGitError(
+              error,
+              '当前数据仓处于游离 HEAD，且无法从当前提交创建临时分支。请切换到一条本地分支后再并入'
+            )
+          }
+        }
+      }
+      if (gitWorkingTreeDirty(cwd)) {
+        execFileSync('git', ['add', '-A'], { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+        const msg = `chore(pm-data): workspace ${new Date().toISOString()}`
+        try {
+          execFileSync('git', ['commit', '-m', msg], { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+        } catch {
+          /* 无变更可提交时忽略 */
+        }
+      }
+
+      const hasOriginTarget = originRefExists(cwd, target)
+
+      if (!hasOriginTarget) {
+        return {
+          ok: false,
+          message: `远端不存在 origin/${target}。请先在「分支约定」中点击「检查远端分支」，对缺失项执行「初始化远端分支」后再试。`
+        }
+      }
+
+      if (dataRepoBranchNameMatch(sourceBranch, target)) {
+        execFileSync('git', ['pull', '--rebase', 'origin', target], {
+          cwd,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe']
+        })
+        execFileSync('git', ['push', '-u', 'origin', 'HEAD'], { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+        const after = dataRepoReadCurrentBranch(cwd)
+        return {
+          ok: true,
+          message: `已在「${after || target}」上拉取远端并推送`
+        }
+      }
+
+      if (dataRepoBranchExistsLocal(cwd, target)) {
+        execFileSync('git', ['switch', target], { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+      } else {
+        execFileSync('git', ['switch', '-c', target, '--track', `origin/${target}`], {
+          cwd,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe']
+        })
+      }
+      execFileSync('git', ['pull', '--rebase', 'origin', target], {
+        cwd,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe']
+      })
+      try {
+        execFileSync('git', ['merge', sourceBranch, '--no-edit'], {
+          cwd,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe']
+        })
+      } catch (error: unknown) {
+        return {
+          ok: false,
+          message: formatDataRepoGitError(
+            error,
+            `合并 ${sourceBranch} → ${target} 失败（可能有冲突，请在数据仓目录用 Git 处理）`
+          )
+        }
+      }
+
+      let onBranch = dataRepoReadCurrentBranch(cwd)
+      if (!onBranch) {
+        return {
+          ok: false,
+          message:
+            '合并后未处于任何本地分支（可能是 detached HEAD）。请在数据仓目录手动执行 git checkout 到协作主分支后再推送。'
+        }
+      }
+      if (!dataRepoBranchNameMatch(onBranch, target)) {
+        try {
+          execFileSync('git', ['switch', target], { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+          onBranch = dataRepoReadCurrentBranch(cwd)
+        } catch {
+          /* 尝试失败则沿用下方报错 */
+        }
+        if (!onBranch || !dataRepoBranchNameMatch(onBranch, target)) {
+          return {
+            ok: false,
+            message: `合并后当前检出为「${onBranch || '未知'}」，与约定协作主分支「${target}」不一致，已中止推送。请在数据仓目录确认分支后再试。`
+          }
+        }
+      }
+
+      execFileSync('git', ['push', '-u', 'origin', 'HEAD'], { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] })
+      const shown = dataRepoReadCurrentBranch(cwd) || target
+      if (createdDetachedTempBranch && sourceBranch.startsWith('pm-detached-')) {
+        try {
+          execFileSync('git', ['branch', '-d', sourceBranch], {
+            cwd,
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe']
+          })
+        } catch {
+          /* 合并后删除临时分支；失败则保留便于排查 */
+        }
+      }
+      return {
+        ok: true,
+        message: `已将「${sourceBranch}」并入「${target}」并推送到 GitHub（当前检出「${shown}」）${
+          createdDetachedTempBranch ? '；游离 HEAD 已先转为临时分支完成合并' : ''
+        }`
+      }
+    } catch (error: unknown) {
+      return { ok: false, message: formatDataRepoGitError(error, '并入协作主分支失败') }
+    }
+  }
+
+  function saveDataRepoBranchConfig(
+    projectKey: string,
+    integrationBranch?: string,
+    releaseBranch?: string
+  ): { ok: boolean; message: string } {
+    const config = loadLinkConfig()
+    const projects = config.projects && typeof config.projects === 'object' ? config.projects : {}
+    const entry = projects[projectKey]
+    if (!entry || typeof entry !== 'object') {
+      return { ok: false, message: '未找到项目关联配置' }
+    }
+    const next = { ...entry } as Record<string, unknown>
+    if (integrationBranch !== undefined) {
+      const v = integrationBranch.trim()
+      if (v) next.integrationBranch = v
+    }
+    if (releaseBranch !== undefined) {
+      next.releaseBranch = releaseBranch.trim()
+    }
+    projects[projectKey] = next
+    saveLinkConfig({ ...(config || {}), version: 1, projects })
+    return { ok: true, message: '分支约定已保存到本地配置' }
   }
 
   function projectDataDir(projectKey: string): string {
@@ -382,7 +1064,7 @@ function projectManagementFileApi() {
 
   function runStartupCheck(projectKey: string) {
     try {
-      execSync('node scripts/pm-startup-check.mjs', {
+      execSync('node scripts/pm/pm-startup-check.mjs', {
         cwd: rootDir,
         encoding: 'utf-8',
         env: { ...process.env, PM_PROJECT_KEY: projectKey }
@@ -942,6 +1624,162 @@ function projectManagementFileApi() {
         })
     })
 
+    middlewares.use('/__pm_api/data/branches', (req: any, res: any) => {
+      if (req.method !== 'GET') {
+        res.statusCode = 405
+        res.end(JSON.stringify({ ok: false, message: 'method not allowed' }))
+        return
+      }
+      try {
+        const url = new URL(req.url || '', 'http://localhost')
+        const projectKey = url.searchParams.get('projectKey') || defaultProjectKey
+        const doFetch = url.searchParams.get('fetch') === '1' || url.searchParams.get('fetch') === 'true'
+        const result = listDataRepoBranches(projectKey, doFetch)
+        res.statusCode = result.ok ? 200 : 400
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.end(JSON.stringify({ projectKey, ...result }))
+      } catch {
+        res.statusCode = 500
+        res.end(JSON.stringify({ ok: false, message: 'branches list failed' }))
+      }
+    })
+
+    middlewares.use('/__pm_api/data/checkout', (req: any, res: any) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 405
+        res.end(JSON.stringify({ ok: false, message: 'method not allowed' }))
+        return
+      }
+      void parseRequestBody(req)
+        .then((parsed: any) => {
+          const projectKey = parseProjectKeyFromBody(parsed)
+          const branch = typeof parsed.branch === 'string' ? parsed.branch : ''
+          const result = checkoutDataRepoBranch(projectKey, branch)
+          res.statusCode = result.ok ? 200 : 400
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify({ ...result, projectKey }))
+        })
+        .catch(() => {
+          res.statusCode = 400
+          res.end(JSON.stringify({ ok: false, message: 'invalid json payload' }))
+        })
+    })
+
+    middlewares.use('/__pm_api/data/push', (req: any, res: any) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 405
+        res.end(JSON.stringify({ ok: false, message: 'method not allowed' }))
+        return
+      }
+      void parseRequestBody(req)
+        .then((parsed: any) => {
+          const projectKey = parseProjectKeyFromBody(parsed)
+          const result = pushDataRepo(projectKey)
+          res.statusCode = result.ok ? 200 : 400
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify({ ...result, projectKey }))
+        })
+        .catch(() => {
+          res.statusCode = 400
+          res.end(JSON.stringify({ ok: false, message: 'invalid json payload' }))
+        })
+    })
+
+    middlewares.use('/__pm_api/data/merge-integration', (req: any, res: any) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 405
+        res.end(JSON.stringify({ ok: false, message: 'method not allowed' }))
+        return
+      }
+      void parseRequestBody(req)
+        .then((parsed: any) => {
+          const projectKey = parseProjectKeyFromBody(parsed)
+          const result = mergeCurrentIntoIntegrationBranchAndPush(projectKey)
+          res.statusCode = result.ok ? 200 : 400
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify({ ...result, projectKey }))
+        })
+        .catch(() => {
+          res.statusCode = 400
+          res.end(JSON.stringify({ ok: false, message: 'invalid json payload' }))
+        })
+    })
+
+    middlewares.use('/__pm_api/data/branch-config', (req: any, res: any) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 405
+        res.end(JSON.stringify({ ok: false, message: 'method not allowed' }))
+        return
+      }
+      void parseRequestBody(req)
+        .then((parsed: any) => {
+          const projectKey = parseProjectKeyFromBody(parsed)
+          const integrationBranch =
+            typeof parsed.integrationBranch === 'string' ? parsed.integrationBranch : undefined
+          const releaseBranch = typeof parsed.releaseBranch === 'string' ? parsed.releaseBranch : undefined
+          const result = saveDataRepoBranchConfig(projectKey, integrationBranch, releaseBranch)
+          res.statusCode = result.ok ? 200 : 400
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          const status = resolveProjectLinkStatus(projectKey)
+          res.end(
+            JSON.stringify({
+              ...result,
+              projectKey,
+              integrationBranch: status.integrationBranch,
+              releaseBranch: status.releaseBranch
+            })
+          )
+        })
+        .catch(() => {
+          res.statusCode = 400
+          res.end(JSON.stringify({ ok: false, message: 'invalid json payload' }))
+        })
+    })
+
+    middlewares.use('/__pm_api/data/branch-remote-status', (req: any, res: any) => {
+      if (req.method !== 'GET') {
+        res.statusCode = 405
+        res.end(JSON.stringify({ ok: false, message: 'method not allowed' }))
+        return
+      }
+      try {
+        const url = new URL(req.url || '', 'http://localhost')
+        const projectKey = url.searchParams.get('projectKey') || defaultProjectKey
+        const result = checkDataRepoRemoteBranchStatus(projectKey)
+        res.statusCode = result.ok ? 200 : 400
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.end(JSON.stringify({ projectKey, ...result }))
+      } catch {
+        res.statusCode = 500
+        res.end(JSON.stringify({ ok: false, message: 'branch remote status failed' }))
+      }
+    })
+
+    middlewares.use('/__pm_api/data/branch-init', (req: any, res: any) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 405
+        res.end(JSON.stringify({ ok: false, message: 'method not allowed' }))
+        return
+      }
+      void parseRequestBody(req)
+        .then((parsed: any) => {
+          const projectKey = parseProjectKeyFromBody(parsed)
+          const integration = parsed.integration
+          const release = parsed.release
+          const result = initDataRepoRemoteBranches(projectKey, {
+            integration: typeof integration === 'boolean' ? integration : undefined,
+            release: typeof release === 'boolean' ? release : undefined
+          })
+          res.statusCode = result.ok ? 200 : 400
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify({ ...result, projectKey }))
+        })
+        .catch(() => {
+          res.statusCode = 400
+          res.end(JSON.stringify({ ok: false, message: 'invalid json payload' }))
+        })
+    })
+
     middlewares.use('/__pm_api/startup/check', (req: any, res: any) => {
       try {
         const url = new URL(req.url || '', 'http://localhost')
@@ -969,9 +1807,14 @@ function projectManagementFileApi() {
               typeof parsed.projectKey === 'string' ? parsed.projectKey : defaultProjectKey
             const action = typeof parsed.action === 'string' ? parsed.action : ''
             if (action === 'startup_check') {
-              const check = runStartupCheck(projectKey)
+              const check = runStartupCheck(projectKey) as {
+                messages?: string[]
+                severity?: string
+              }
+              const message =
+                (check.messages && check.messages[0]) || `启动检查完成（${check.severity || 'unknown'}）`
               res.setHeader('Content-Type', 'application/json; charset=utf-8')
-              res.end(JSON.stringify({ ok: true, action, check }))
+              res.end(JSON.stringify({ ok: true, action, check, message }))
               return
             }
             if (action === 'sync_data_repo') {

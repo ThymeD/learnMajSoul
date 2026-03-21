@@ -1,4 +1,4 @@
-import { createDefaultProjectTemplates, type ProjectTemplate } from '../modules/project-management'
+import { createDefaultProjectTemplates, type ProjectTemplate } from './core'
 import type {
   ProjectDomain,
   ProjectHandler,
@@ -6,7 +6,7 @@ import type {
   ProjectItemPriority,
   ProjectItemStatus,
   ProjectMode
-} from '../modules/project-management'
+} from './core'
 
 interface LabelMap {
   pageTitle: string

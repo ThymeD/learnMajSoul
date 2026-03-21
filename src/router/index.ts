@@ -39,12 +39,12 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/data-management',
     name: 'dataManagement',
-    component: () => import('../views/DataManagementView.vue')
+    component: () => import('../pm/views/DataManagementView.vue')
   },
   {
     path: '/delivery',
     name: 'delivery',
-    component: () => import('../views/DeliveryView.vue')
+    component: () => import('../pm/views/DeliveryView.vue')
   },
   {
     path: '/draft',

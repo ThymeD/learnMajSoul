@@ -3,7 +3,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { onBeforeUnmount, ref } from 'vue'
 import { DataAnalysis, Download, FolderChecked, Switch, Tools } from '@element-plus/icons-vue'
-import { projectManagementConfig } from '../config/project-management'
+import { projectManagementConfig } from '../config'
 import type {
   DeliveryDomain,
   DeliveryHandler,
@@ -12,8 +12,8 @@ import type {
   DeliveryMode,
   DeliveryPriority,
   DeliveryStatus
-} from '../data/delivery'
-import { useProjectManagement } from '../modules/project-management'
+} from '../api/delivery'
+import { useProjectManagement } from '../core'
 
 const router = useRouter()
 const showMoreHeaderActions = ref(false)

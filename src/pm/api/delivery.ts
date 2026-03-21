@@ -8,8 +8,8 @@ import {
   type ProjectItemPriority,
   type ProjectItemStatus,
   type ProjectMode
-} from '../modules/project-management'
-import { projectManagementConfig } from '../config/project-management'
+} from '../core'
+import { projectManagementConfig } from '../config'
 
 export type DeliveryMode = ProjectMode
 export type DeliveryKind = ProjectItemKind
@@ -34,6 +34,13 @@ const PROJECT_STARTUP_CHECK_API = '/__pm_api/startup/check'
 const PROJECT_CONTROL_API = '/__pm_api/control'
 const PROJECT_DATA_SYNC_API = '/__pm_api/data/sync'
 const PROJECT_DATA_BACKUP_API = '/__pm_api/data/backup'
+const PROJECT_DATA_BRANCHES_API = '/__pm_api/data/branches'
+const PROJECT_DATA_CHECKOUT_API = '/__pm_api/data/checkout'
+const PROJECT_DATA_PUSH_API = '/__pm_api/data/push'
+const PROJECT_DATA_BRANCH_CONFIG_API = '/__pm_api/data/branch-config'
+const PROJECT_DATA_MERGE_INTEGRATION_API = '/__pm_api/data/merge-integration'
+const PROJECT_DATA_BRANCH_REMOTE_STATUS_API = '/__pm_api/data/branch-remote-status'
+const PROJECT_DATA_BRANCH_INIT_API = '/__pm_api/data/branch-init'
 const PROJECT_MODE_API = '/__pm_api/mode'
 
 export function loadDeliveryItems(): DeliveryItem[] {
@@ -134,6 +141,8 @@ export interface ProjectLinkStatus {
   modeConfirmedAt: number
   needsModeConfirmation: boolean
   modePromptReason: string
+  integrationBranch: string
+  releaseBranch: string
 }
 
 export interface ProcessLogSummary {
@@ -244,7 +253,12 @@ export async function loadProjectLinkStatus(): Promise<ProjectLinkStatus> {
     modeConfirmed: Boolean(data.modeConfirmed),
     modeConfirmedAt: typeof data.modeConfirmedAt === 'number' ? data.modeConfirmedAt : 0,
     needsModeConfirmation: Boolean(data.needsModeConfirmation),
-    modePromptReason: data.modePromptReason || ''
+    modePromptReason: data.modePromptReason || '',
+    integrationBranch:
+      typeof data.integrationBranch === 'string' && data.integrationBranch.trim()
+        ? data.integrationBranch.trim()
+        : 'develop',
+    releaseBranch: typeof data.releaseBranch === 'string' ? data.releaseBranch.trim() : ''
   }
 }
 
@@ -361,6 +375,167 @@ export async function syncProjectDataRepo(): Promise<ProjectDataControlResult> {
 
 export async function backupProjectDataRepo(): Promise<ProjectDataControlResult> {
   return postProjectDataControl(PROJECT_DATA_BACKUP_API)
+}
+
+export interface DataRepoBranchListResult {
+  ok: boolean
+  message?: string
+  branches: string[]
+  current: string
+  integrationBranch: string
+  releaseBranch: string
+}
+
+export async function fetchDataRepoBranchList(options?: { fetchRemote?: boolean }): Promise<DataRepoBranchListResult> {
+  const fetchRemote = options?.fetchRemote === true
+  const url = `${PROJECT_DATA_BRANCHES_API}?projectKey=${encodeURIComponent(projectManagementConfig.projectKey)}${fetchRemote ? '&fetch=1' : ''}`
+  const response = await fetch(url, { cache: 'no-store' })
+  const data = (await response.json()) as Partial<DataRepoBranchListResult> & { ok?: boolean; message?: string }
+  if (!response.ok || !data.ok) {
+    throw new Error(data.message || `list branches failed: ${response.status}`)
+  }
+  return {
+    ok: true,
+    message: data.message,
+    branches: Array.isArray(data.branches) ? data.branches : [],
+    current: typeof data.current === 'string' ? data.current : 'unknown',
+    integrationBranch:
+      typeof data.integrationBranch === 'string' && data.integrationBranch.trim()
+        ? data.integrationBranch.trim()
+        : 'develop',
+    releaseBranch: typeof data.releaseBranch === 'string' ? data.releaseBranch.trim() : ''
+  }
+}
+
+export async function checkoutDataRepoBranch(branch: string): Promise<{ ok: boolean; message: string }> {
+  const response = await fetch(PROJECT_DATA_CHECKOUT_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      projectKey: projectManagementConfig.projectKey,
+      branch
+    })
+  })
+  const data = (await response.json()) as { ok?: boolean; message?: string }
+  if (!response.ok || !data.ok) {
+    throw new Error(data.message || `checkout failed: ${response.status}`)
+  }
+  return { ok: true, message: data.message || '已切换分支' }
+}
+
+export async function pushDataRepoCurrentBranch(): Promise<{ ok: boolean; message: string }> {
+  const response = await fetch(PROJECT_DATA_PUSH_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      projectKey: projectManagementConfig.projectKey
+    })
+  })
+  const data = (await response.json()) as { ok?: boolean; message?: string }
+  if (!response.ok || !data.ok) {
+    throw new Error(data.message || `push failed: ${response.status}`)
+  }
+  return { ok: true, message: data.message || '已推送' }
+}
+
+export async function mergeDataRepoToIntegrationBranch(): Promise<{ ok: boolean; message: string }> {
+  const response = await fetch(PROJECT_DATA_MERGE_INTEGRATION_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      projectKey: projectManagementConfig.projectKey
+    })
+  })
+  const data = (await response.json()) as { ok?: boolean; message?: string }
+  if (!response.ok || !data.ok) {
+    throw new Error(data.message || `merge failed: ${response.status}`)
+  }
+  return { ok: true, message: data.message || '完成' }
+}
+
+export interface DataRepoRemoteBranchStatusResult {
+  ok: boolean
+  message?: string
+  integrationBranch: string
+  releaseBranch: string
+  integrationExists: boolean
+  releaseExists: boolean | null
+}
+
+export async function fetchDataRepoRemoteBranchStatus(): Promise<DataRepoRemoteBranchStatusResult> {
+  const url = `${PROJECT_DATA_BRANCH_REMOTE_STATUS_API}?projectKey=${encodeURIComponent(projectManagementConfig.projectKey)}`
+  const response = await fetch(url, { cache: 'no-store' })
+  const data = (await response.json()) as Partial<DataRepoRemoteBranchStatusResult> & { ok?: boolean; message?: string }
+  if (!response.ok || !data.ok) {
+    throw new Error(data.message || `remote branch status failed: ${response.status}`)
+  }
+  return {
+    ok: true,
+    message: data.message,
+    integrationBranch:
+      typeof data.integrationBranch === 'string' && data.integrationBranch.trim()
+        ? data.integrationBranch.trim()
+        : 'develop',
+    releaseBranch: typeof data.releaseBranch === 'string' ? data.releaseBranch.trim() : '',
+    integrationExists: Boolean(data.integrationExists),
+    releaseExists:
+      data.releaseExists === null || data.releaseExists === undefined
+        ? null
+        : Boolean(data.releaseExists)
+  }
+}
+
+export async function initDataRepoRemoteBranches(options?: {
+  integration?: boolean
+  release?: boolean
+}): Promise<{ ok: boolean; message: string }> {
+  const response = await fetch(PROJECT_DATA_BRANCH_INIT_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      projectKey: projectManagementConfig.projectKey,
+      integration: options?.integration,
+      release: options?.release
+    })
+  })
+  const data = (await response.json()) as { ok?: boolean; message?: string }
+  if (!response.ok || !data.ok) {
+    throw new Error(data.message || `branch init failed: ${response.status}`)
+  }
+  return { ok: true, message: data.message || '完成' }
+}
+
+export async function saveDataRepoBranchConvention(input: {
+  integrationBranch: string
+  releaseBranch?: string
+}): Promise<{ ok: boolean; message: string; integrationBranch: string; releaseBranch: string }> {
+  const response = await fetch(PROJECT_DATA_BRANCH_CONFIG_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      projectKey: projectManagementConfig.projectKey,
+      integrationBranch: input.integrationBranch.trim(),
+      releaseBranch: input.releaseBranch !== undefined ? input.releaseBranch.trim() : undefined
+    })
+  })
+  const data = (await response.json()) as {
+    ok?: boolean
+    message?: string
+    integrationBranch?: string
+    releaseBranch?: string
+  }
+  if (!response.ok || !data.ok) {
+    throw new Error(data.message || `save branch config failed: ${response.status}`)
+  }
+  return {
+    ok: true,
+    message: data.message || '已保存',
+    integrationBranch:
+      typeof data.integrationBranch === 'string' && data.integrationBranch.trim()
+        ? data.integrationBranch.trim()
+        : 'develop',
+    releaseBranch: typeof data.releaseBranch === 'string' ? data.releaseBranch.trim() : ''
+  }
 }
 
 export async function previewProcessLogCleanup(beforeDate: string): Promise<ProcessLogSummary> {

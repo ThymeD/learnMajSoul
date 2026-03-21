@@ -1,7 +1,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { ruleReviewItems } from '../../../data/rule-review-items'
 import { loadNormalizedObjectMap } from '../../../utils/storage-map'
-import { projectManagementConfig } from '../../../config/project-management'
+import { projectManagementConfig } from '../../config'
 import {
   createDeliveryItem,
   appendDeliveryReceiptToProjectFile,
@@ -27,7 +27,7 @@ import {
   type DeliveryKind,
   type DeliveryMode,
   type DeliveryStatus
-} from '../../../data/delivery'
+} from '../../api/delivery'
 import type { ProjectItemStatus } from '../types'
 
 const STATUS_TRANSITIONS: Record<DeliveryStatus, DeliveryStatus[]> = {
@@ -150,7 +150,9 @@ export function useProjectManagement() {
     modeConfirmed: false,
     modeConfirmedAt: 0,
     needsModeConfirmation: false,
-    modePromptReason: ''
+    modePromptReason: '',
+    integrationBranch: 'develop',
+    releaseBranch: ''
   })
   const projectLinkStatusMessage = ref('未检测关联')
   const writeRiskAcknowledged = ref(false)
@@ -200,6 +202,31 @@ export function useProjectManagement() {
     receiptsRemovable: 0
   })
   const logCleanupLoading = ref(false)
+  /** 进程日志全量条数（与清理日期无关），供总览与卡片展示 */
+  const processLogInventory = ref({
+    bridgeTotal: 0,
+    receiptsTotal: 0,
+    loaded: false
+  })
+  const processLogInventoryLoading = ref(false)
+
+  async function refreshProcessLogInventory(): Promise<void> {
+    processLogInventoryLoading.value = true
+    try {
+      const d = new Date()
+      const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      const s = await previewProcessLogCleanup(today)
+      processLogInventory.value = {
+        bridgeTotal: s.bridge.total,
+        receiptsTotal: s.receipts.total,
+        loaded: true
+      }
+    } catch {
+      processLogInventory.value = { bridgeTotal: 0, receiptsTotal: 0, loaded: false }
+    } finally {
+      processLogInventoryLoading.value = false
+    }
+  }
   async function reconnectProjectFileStorage(): Promise<boolean> {
     try {
       const loadResult = await loadDeliveryItemsFromProjectFile()
@@ -1145,6 +1172,7 @@ export function useProjectManagement() {
     try {
       const result = await cleanupProcessLogs(logCleanupDate.value)
       await syncBridgeEventsNow()
+      await refreshProcessLogInventory()
       return {
         ok: true,
         bridgeRemoved: result.bridge.removed,
@@ -1197,6 +1225,7 @@ export function useProjectManagement() {
       await refreshProjectStartupCheck()
       loadAppliedBridgeIds()
       await syncBridgeEventsNow()
+      await refreshProcessLogInventory()
       ensureDeliveryDataHardeningBacklogSeeded()
       ensureDeliveryDataHardeningTasksInProgress()
       ensureDeferredReminderOptimizationBacklogRegistered()
@@ -1277,6 +1306,9 @@ export function useProjectManagement() {
     logCleanupDate,
     logCleanupPreview,
     logCleanupLoading,
+    processLogInventory,
+    processLogInventoryLoading,
+    refreshProcessLogInventory,
     addItem,
     updateStatus,
     canTransitionStatus,
@@ -1294,6 +1326,7 @@ export function useProjectManagement() {
     syncBridgeEventsNow,
     checkProjectFileApiHealth,
     checkProjectFileApiOnly,
+    refreshProjectContext,
     refreshProjectLinkStatus,
     refreshProjectStartupCheck,
     runProjectControl,

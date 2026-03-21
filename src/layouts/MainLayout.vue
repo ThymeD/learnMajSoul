@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { featureFlags } from '../config/features'
-import { loadProjectLinkStatus } from '../data/delivery'
-import type { ProjectLinkStatus } from '../data/delivery'
+import { loadProjectLinkStatus } from '../pm/api/delivery'
+import type { ProjectLinkStatus } from '../pm/api/delivery'
 
 const router = useRouter()
 const route = useRoute()
+
+watch(
+  () => route.path,
+  () => {
+    void refreshLinkStatus()
+  }
+)
 
 const baseMenuItems = [
   { path: '/yaku', label: '役种一览', icon: 'List' },
@@ -57,7 +64,8 @@ const globalHint = computed(() => {
     return {
       key: 'preview',
       type: 'info' as const,
-      title: '全局提醒预览：这里会在必要时提醒你去数据管理处理同步或备份。',
+      title:
+        '全局提醒预览：未确认工作模式、或多设备模式下的同步/备份等会在此提示；点「去数据管理处理」进入数据管理页。',
       required: false
     }
   }
