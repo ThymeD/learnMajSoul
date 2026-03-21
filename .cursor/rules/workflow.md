@@ -11,7 +11,7 @@
 2. `requirements/INDEX.md`
    - 全项目统一需求索引（模块、文档路径、状态）
 3. 具体需求文档（如 `requirements/hand-view-requirements.md`）
-4. `src/` 与 `tests/`
+4. `src/` 与 `tests/`（PM 交付套件与 `src/pm` 对齐的用例在 **`tests/pm/`**，`npm run test:pm`）
    - 用于验证实现是否满足需求与验收标准
 
 ## 处理新需求的规则（必须固化到项目）

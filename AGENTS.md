@@ -1,19 +1,19 @@
-# 项目Agent配置
+# 项目协作与约束
+
+流程与「每次先读什么」以 **`.cursor/rules/workflow.md`** 为准。本文只放**技术约束**、**信息源索引**和**本地环境问题**处理，不维护多角色假名清单。
 
 ## 项目信息
 
 - **项目名称**：雀魂麻将游戏攻略
-- **项目简介**：本项目旨在实现雀魂麻将游戏攻略系统，采用模块化开发，每个功能可独立验证，最终整合为完整系统。
-- **初始化时间**：2026-03-18
-- **工作流**：.cursor/rules/workflow.md（Cursor 工作流固化）
-- **开发服务器地址**：http://localhost:5173
-- **启动命令**：npm run dev
+- **项目简介**：雀魂麻将攻略系统，模块化开发，功能可独立验证后整合。
+- **项目入口**：[README.md](./README.md)（快速开始、目录与路由导航）
+- **本地开发**：http://localhost:5173 · `npm run dev`
 
 ---
 
 ## 技术约束
 
-### UI组件库
+### UI 组件库
 
 - **优先使用 Element Plus**，组件缺失时使用自定义组件但保持风格一致
 - 遇到 AI 训练语料可能过时时，以官网 https://element-plus.org/zh-CN/ 为准
@@ -24,120 +24,33 @@
 
 ### 业务规则
 
-- 正常胡牌14张牌（13张手牌+1张听牌）
-- 开杠比正常胡牌多一张，每个杠多一张（杠=4张相同的牌）
+- 正常胡牌 14 张牌（13 张手牌 + 1 张听牌）
+- 开杠比正常胡牌多一张，每个杠多一张（杠 = 4 张相同的牌）
 
 ---
 
-## Agent列表
+## 协作与信息源
 
-### PM
-
-- **类型**: project-manager
-- **职责**: 任务管家、协调者、考评者
-- **协作文件**: collaboration.md
-
-### Requirements Manager
-
-- **类型**: requirements-manager
-- **职责**: 需求分析
-- **产出目录**: requirements/
-
-### Architect
-
-- **类型**: architect
-- **职责**: 技术方案设计
-- **产出目录**: docs/
-
-### UI Designer
-
-- **类型**: ui-designer
-- **职责**: 界面设计
-- **产出目录**: design/
-
-### Coder
-
-- **类型**: coder
-- **职责**: 代码实现
-- **产出目录**: src/
-
-### Committer
-
-- **类型**: committer
-- **职责**: 代码审核 + 合入develop
-
-### Automation Tester
-
-- **类型**: automation-tester
-- **职责**: 自动化测试
-- **产出目录**: tests/
-
-### UI Tester
-
-- **类型**: ui-tester
-- **职责**: UI测试
-- **产出目录**: tests/ui/
-
-### Docs Writer
-
-- **类型**: docs-writer
-- **职责**: 文档编写
-- **产出目录**: docs/
+| 文件 | 说明 |
+| ---- | ---- |
+| [README.md](./README.md) | 项目入口、命令、结构简图 |
+| [collaboration.md](./collaboration.md) | 任务池、缺陷闭环、迭代记录 |
+| [requirements/INDEX.md](./requirements/INDEX.md) | 需求索引与状态 |
+| `.cursor/rules/workflow.md` | **对话先读顺序、需求/缺陷流程**（权威） |
+| `.cursor/rules/context-efficiency.md` | 上下文预算与文件规模 |
 
 ---
 
-## 协作文件
+## 本地开发环境问题
 
-| 文件             | 说明               |
-| ---------------- | ------------------ |
-| collaboration.md | 协作计划、任务跟踪 |
-
----
-
-## 故障处理
-
-### 端口无法访问处理流程
-
-```
-Agent 发现服务器无法访问 (http://localhost:5173)
-    ↓
-报告给 PM（说明情况）
-    ↓
-PM 协调 Coder 处理
-    ↓
-Coder 检查并修复
-    ↓
-Coder 通知 PM 已修复
-    ↓
-PM 通知原 Agent 继续任务
-```
-
-### 职责划分
-
-| 情况             | 处理方式          |
-| ---------------- | ----------------- |
-| 服务器未启动     | 统一由 Coder 启动 |
-| 端口被占用       | 统一由 Coder 处理 |
-| 启动失败         | 统一由 Coder 修复 |
-| 其他开发环境问题 | 统一由 Coder 处理 |
+| 情况 | 处理 |
+| ---- | ---- |
+| 服务器未启动 / 端口无法访问 | 在项目目录执行 `npm run dev`，确认终端无报错 |
+| 端口被占用 | 结束占用 5173 的进程或改 Vite 端口 |
+| 启动失败、依赖异常 | 查终端与 `npm install`；必要时在 `collaboration.md` 或对话中记录现象 |
 
 ---
 
-## 工作流说明
+## 命名提示（避免混淆）
 
-详见 `.cursor/rules/workflow.md`（Cursor 工作流固化）
-以及 `.cursor/rules/context-efficiency.md`（上下文预算与文件规模控制）
-
----
-
-## 使用说明
-
-### 模式一：单窗口协同（PM主控）
-
-PM作为主agent，调用各子agent协作完成任务。
-
-### 模式二：多窗口协同（用户主控）
-
-用户在各窗口切换，传递任务信息。
-
-详见 `.cursor/rules/workflow.md` 中的工作流程说明。
+仓库目录 **`src/pm/`** 表示 **项目交付与数据管理** 套件代码，与「产品经理」等日常用语中的 **PM** 无关；文档见 [docs/pm/README.md](./docs/pm/README.md)。
