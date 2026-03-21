@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const projectKey = process.env.PM_PROJECT_KEY || 'learnMajSoul'
-const bridgeFile = resolve(__dirname, `../.project-management/${projectKey}-bridge.json`)
+const bridgeFile = resolve(__dirname, `../../.project-management/${projectKey}-bridge.json`)
 
 function ensureBridgeFile() {
   const parent = dirname(bridgeFile)

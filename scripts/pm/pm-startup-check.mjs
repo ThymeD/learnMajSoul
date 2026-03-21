@@ -5,7 +5,7 @@ import { execSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const scriptDir = resolve(fileURLToPath(new URL('.', import.meta.url)))
-const rootDir = resolve(scriptDir, '..')
+const rootDir = resolve(scriptDir, '..', '..')
 const portableRootDir = resolve(rootDir, '..', '.pm-center')
 const outputPath = resolve(portableRootDir, 'startup-check.json')
 const linkConfigPath = resolve(portableRootDir, 'project-links.local.json')

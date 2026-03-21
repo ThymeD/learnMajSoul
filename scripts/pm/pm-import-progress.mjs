@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const scriptDir = resolve(fileURLToPath(new URL('.', import.meta.url)))
-const rootDir = resolve(scriptDir, '..')
+const rootDir = resolve(scriptDir, '..', '..')
 const projectKey = process.env.PM_PROJECT_KEY || 'learnMajSoul'
 const portableRootDir = resolve(rootDir, '..', '.pm-center')
 const defaultDataDir = resolve(portableRootDir, 'data')

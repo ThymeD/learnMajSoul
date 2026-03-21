@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const projectKey = process.env.PM_PROJECT_KEY || 'learnMajSoul'
-const receiptsFile = resolve(__dirname, `../.project-management/${projectKey}-receipts.json`)
+const receiptsFile = resolve(__dirname, `../../.project-management/${projectKey}-receipts.json`)
 
 function printHelp() {
   console.log(`Usage:
