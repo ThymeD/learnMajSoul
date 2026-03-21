@@ -95,7 +95,7 @@ src/
 
 ### 项目交付与数据管理（PM 套件）
 
-与业务隔离的四块：**代码** `src/pm/`、**文档**（索引与全文）[docs/pm/README.md](./docs/pm/README.md)、**测试** `tests/pm/`、**CLI** `scripts/pm/`。
+与业务隔离的四块：**代码** `src/pm/`、**文档**（索引与全文）[docs/pm/README.md](./docs/pm/README.md)、**测试** `tests/pm/`、**CLI** `scripts/pm/`。双仓（业务 + `learnMajSoul-pm-data`）与 AI 提交约定见 [docs/pm/pm-dual-repo-ai-maintenance.md](./docs/pm/pm-dual-repo-ai-maintenance.md)。
 
 ## 技术栈
 

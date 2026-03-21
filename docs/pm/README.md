@@ -8,6 +8,7 @@
 | [pm-delivery-suite-maintainer.md](./pm-delivery-suite-maintainer.md) | 开发维护与代码地图 |
 | [pm-linking.md](./pm-linking.md) | 便携中心、`project-links`、CLI |
 | [pm-data-repo-overview.md](./pm-data-repo-overview.md) | **管理数据仓库是什么**（与业务仓关系、配置字段） |
+| [pm-dual-repo-ai-maintenance.md](./pm-dual-repo-ai-maintenance.md) | **双仓 + AI**：提交边界、`develop`/`release`、跨设备相对路径 |
 | [project-management-module.md](./project-management-module.md) | 可复用模块边界 |
 | [pm-data-repo-branches.md](./pm-data-repo-branches.md) | 数据仓分支约定与界面能力（方案） |
 | [checklist-business-release.md](./checklist-business-release.md) | 业务项目发布部署确认清单 |

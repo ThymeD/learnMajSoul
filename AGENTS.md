@@ -38,6 +38,7 @@
 | [requirements/INDEX.md](./requirements/INDEX.md) | 需求索引与状态 |
 | `.cursor/rules/workflow.md` | **对话先读顺序、需求/缺陷流程**（权威） |
 | `.cursor/rules/context-efficiency.md` | 上下文预算与文件规模 |
+| [docs/pm/pm-dual-repo-ai-maintenance.md](./docs/pm/pm-dual-repo-ai-maintenance.md) | 业务仓 + 数据仓双仓提交、`develop`/`release`、勿提交本机映射 |
 
 ---
 

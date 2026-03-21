@@ -1,0 +1,15 @@
+---
+description: 项目交付双仓（业务仓 learnMajSoul + 数据仓 learnMajSoul-pm-data）的提交边界、develop/release 分支、跨设备相对路径；勿提交 project-links.local.json
+globs:
+  - "src/pm/**"
+  - "scripts/pm/**"
+  - "docs/pm/**"
+  - "vite.config.ts"
+alwaysApply: false
+---
+
+编辑或提交 **交付/数据管理** 相关改动时，先阅读 **`docs/pm/pm-dual-repo-ai-maintenance.md`**：
+
+- **业务代码与 PM 脚本** → 仅在 **本仓库（learnMajSoul）** 提交；**数据 JSON** → 仅在 **`learnMajSoul-pm-data`** 仓库提交。
+- 分支：**`develop`** 开发态（可直接推送或从 `develop` 拉分支）；**`release`** 特性完成后再合入；**`main`/`master`** 不常用。数据仓多数时候在 **`develop`** 同步即可，勿在 **`release`** 上多向分叉导致无法合入。
+- 跨设备：两仓 **相对位置** 固定（同级目录），**绝对路径** 每台不同；**不要** 将 `project-links.local.json` 等本机配置提交进 Git。

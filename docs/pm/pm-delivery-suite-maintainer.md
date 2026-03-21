@@ -13,6 +13,7 @@
 | [管理系统移植确认清单](./checklist-pm-suite-migration.md) | 拆到新项目时的代码、脚本、耦合与验证 |
 | [项目管理关联与备份](./pm-linking.md) | 便携中心、`project-links`、CLI、`npm` 脚本 |
 | [管理数据仓库概览](./pm-data-repo-overview.md) | 数据仓与业务仓关系、`managementRepoPath` 等字段 |
+| [双仓 AI 维护说明](./pm-dual-repo-ai-maintenance.md) | 两仓提交边界、`develop`/`release`、跨设备相对路径 |
 | [项目管理模块复用](./project-management-module.md) | `src/pm/core` 模块边界 |
 | [PM 数据仓分支约定](./pm-data-repo-branches.md) | 分支与界面能力设计 |
 
