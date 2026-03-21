@@ -45,9 +45,9 @@
 
 ## 建议 AI 接手流程
 
-1. 先读取本文件与 `docs/pm-linking.md`。
-2. 读取 `src/views/DeliveryView.vue` 与 `src/views/DataManagementView.vue`，确认管理面交互一致性。
-3. 读取 `src/modules/project-management/composables/useProjectManagement.ts`，确认写锁、同步、校验逻辑。
+1. 先读取本文件与 `docs/pm/pm-linking.md`。
+2. 读取 `src/pm/views/DeliveryView.vue` 与 `src/pm/views/DataManagementView.vue`，确认管理面交互一致性。
+3. 读取 `src/pm/core/composables/useProjectManagement.ts`，确认写锁、同步、校验逻辑。
 4. 若继续治理管理页面，先在当前接力分支提交；稳定后再发起 PR 合并到 `develop`。
 
 ## 远程备注入口
