@@ -16,6 +16,9 @@ dist-ssr
 .project-management/business-sources.local.json
 test-results/
 
+# Local scratch clones (e.g. inspecting sibling repos)
+.tmp-learnMajSoul-pm-data/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

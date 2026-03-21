@@ -29,11 +29,11 @@
 2. 克隆并切换数据仓分支：
    - `git clone https://github.com/ThymeD/learnMajSoul-pm-data.git`
    - `git -C learnMajSoul-pm-data checkout handoff/device-switch-20260320`
-3. 安装依赖：`npm install`
-4. 执行一次初始化：`npm run pm:init`
-5. 配置本地映射：`C:/code/.pm-center/project-links.local.json`
-   - `businessRepoPath` 指向本机业务仓目录
-   - `dataRepoPath` 指向本机数据仓目录
+3. 安装依赖：在业务仓根目录执行 `npm install`
+4. 执行一次初始化：`npm run pm:init`（生成 `../.pm-center/project-links.local.json`，默认数据仓为业务仓上一级下的 `learnMajSoul-pm-data`）
+5. 若需手改映射：编辑 **`D:/code/learnMajSoul/.pm-center/project-links.local.json`**（路径随业务仓父目录而变；便携中心 = 业务仓根的 `../.pm-center`）
+   - `businessRepoPath`：本机业务仓根（含 `package.json`），例如 `D:/code/learnMajSoul/learnMajSoul`
+   - `managementRepoPath`：本机数据仓根，例如 **`D:/code/learnMajSoul/learnMajSoul-pm-data`**（与 [pm-link.mjs](../scripts/pm/pm-link.mjs) 默认一致；概念见 [pm-data-repo-overview](./pm/pm-data-repo-overview.md)）
 6. 校验链接状态：`npm run pm:link-status`
 7. 启动：`npm run dev`（会触发 predev 启动校验）
 

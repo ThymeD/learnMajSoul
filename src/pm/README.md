@@ -9,7 +9,7 @@
 | `core/` | 类型、仓库、模板、`useProjectManagement` |
 | `views/` | `DeliveryView`、`DataManagementView` |
 
-详细说明见仓库内 **`docs/pm/`**（与业务文档隔离）：[维护说明](../../docs/pm/pm-delivery-suite-maintainer.md)、[使用说明](../../docs/pm/pm-delivery-suite-user-guide.md)。
+详细说明见仓库内 **`docs/pm/`**（与业务文档隔离）：[维护说明](../../docs/pm/pm-delivery-suite-maintainer.md)、[使用说明](../../docs/pm/pm-delivery-suite-user-guide.md)、[管理数据仓库概览](../../docs/pm/pm-data-repo-overview.md)（业务仓与数据仓关系）。
 
 自动化测试与 **`src/pm` 对齐** 的目录为 **`tests/pm/`**（`npm run test:pm`），见 [tests/pm/README.md](../../tests/pm/README.md)。
 

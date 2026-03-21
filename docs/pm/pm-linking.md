@@ -1,6 +1,6 @@
 # 项目管理关联与备份（方案A）
 
-**相关文档**：[使用说明（交付/数据管理页）](./pm-delivery-suite-user-guide.md) · [维护与拆库](./pm-delivery-suite-maintainer.md)
+**相关文档**：[管理数据仓库概览](./pm-data-repo-overview.md)（先读） · [使用说明（交付/数据管理页）](./pm-delivery-suite-user-guide.md) · [维护与拆库](./pm-delivery-suite-maintainer.md)
 
 ## 目标
 
@@ -16,15 +16,17 @@
 2. 若需自定义，编辑 `../.pm-center/project-links.local.json`
 3. 按实际路径填写（本地文件，不入业务仓库）
 
-示例：
+**默认映射（`npm run pm:init` 首次生成时）** 与 **`scripts/pm/pm-link.mjs`** 一致：以 **业务仓库根目录**（含 `package.json` 的那一层）为基准，数据仓为 **上一级目录**下的 `learnMajSoul-pm-data`。例如业务仓在 `D:/code/learnMajSoul/learnMajSoul` 时，数据仓为 **`D:/code/learnMajSoul/learnMajSoul-pm-data`**（不是与 `code` 同级的 `learnMajSoul-pm-data`）。便携中心目录为 **`D:/code/learnMajSoul/.pm-center`**（业务仓的 `../.pm-center`）。
+
+示例（路径请按本机修改）：
 
 ```json
 {
   "version": 1,
   "projects": {
     "learnMajSoul": {
-      "businessRepoPath": "C:/code/learnMajSoul",
-      "managementRepoPath": "C:/code/learnMajSoul-pm-data",
+      "businessRepoPath": "D:/code/learnMajSoul/learnMajSoul",
+      "managementRepoPath": "D:/code/learnMajSoul/learnMajSoul-pm-data",
       "managementDataSubdir": "data",
       "integrationBranch": "develop",
       "releaseBranch": "release"

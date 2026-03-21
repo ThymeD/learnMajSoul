@@ -12,6 +12,7 @@
 | [业务项目发布部署确认清单](./checklist-business-release.md) | 上线时 feature、`__pm_api`、静态部署 |
 | [管理系统移植确认清单](./checklist-pm-suite-migration.md) | 拆到新项目时的代码、脚本、耦合与验证 |
 | [项目管理关联与备份](./pm-linking.md) | 便携中心、`project-links`、CLI、`npm` 脚本 |
+| [管理数据仓库概览](./pm-data-repo-overview.md) | 数据仓与业务仓关系、`managementRepoPath` 等字段 |
 | [项目管理模块复用](./project-management-module.md) | `src/pm/core` 模块边界 |
 | [PM 数据仓分支约定](./pm-data-repo-branches.md) | 分支与界面能力设计 |
 

@@ -2,7 +2,7 @@
 
 面向：**用本应用管理「AI 辅助开发」交付事项与进度数据的用户**（个人项目、多设备均可）。
 
-> 开发与命令行细节见 [项目管理关联与备份](./pm-linking.md)；分支策略见 [PM 数据仓分支约定](./pm-data-repo-branches.md)。
+> **双仓概念**见 [管理数据仓库概览](./pm-data-repo-overview.md)。开发与命令行细节见 [项目管理关联与备份](./pm-linking.md)；分支策略见 [PM 数据仓分支约定](./pm-data-repo-branches.md)。
 
 ---
 
