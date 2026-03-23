@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
-const fs = require('node:fs/promises');
-const path = require('node:path');
+let fsPromises;
+let pathApi;
 
 const DEFAULT_OUTPUT_FILE = 'chinese-texts-report.json';
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -71,6 +71,8 @@ const HORIZONTAL_SPACES_REGEX = /[ \t\u00A0]+/g;
 
 async function main() {
   try {
+    await loadNodeModules();
+
     const args = process.argv.slice(2);
     if (args.includes('--help') || args.includes('-h')) {
       printHelp();
@@ -81,10 +83,10 @@ async function main() {
       throw new Error('Too many arguments. Use --help to see usage.');
     }
 
-    const scanRoot = args[0] ? path.resolve(args[0]) : process.cwd();
+    const scanRoot = args[0] ? pathApi.resolve(args[0]) : process.cwd();
     const outputPath = args[1]
-      ? path.resolve(args[1])
-      : path.resolve(process.cwd(), DEFAULT_OUTPUT_FILE);
+      ? pathApi.resolve(args[1])
+      : pathApi.resolve(process.cwd(), DEFAULT_OUTPUT_FILE);
 
     await ensureDirectory(scanRoot);
 
@@ -137,7 +139,7 @@ async function main() {
       texts,
     };
 
-    await fs.writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+    await fsPromises.writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
 
     console.log(`Scan completed.`);
     console.log(`Root: ${scanRoot}`);
@@ -148,6 +150,16 @@ async function main() {
     console.error('Scan failed:', error instanceof Error ? error.message : error);
     process.exitCode = 1;
   }
+}
+
+async function loadNodeModules() {
+  const [fsModule, pathModule] = await Promise.all([
+    import('node:fs/promises'),
+    import('node:path'),
+  ]);
+
+  fsPromises = fsModule.default ?? fsModule;
+  pathApi = pathModule.default ?? pathModule;
 }
 
 function printHelp() {
@@ -171,7 +183,7 @@ Output format:
 async function ensureDirectory(directoryPath) {
   let stat;
   try {
-    stat = await fs.stat(directoryPath);
+    stat = await fsPromises.stat(directoryPath);
   } catch (error) {
     throw new Error(`Cannot access scan directory: ${directoryPath}`);
   }
@@ -184,7 +196,7 @@ async function ensureDirectory(directoryPath) {
 async function collectFiles(scanRoot, outputPath, scanStats) {
   const files = [];
   const stack = [scanRoot];
-  const outputRealPath = path.resolve(outputPath);
+  const outputRealPath = pathApi.resolve(outputPath);
 
   while (stack.length > 0) {
     const currentDir = stack.pop();
@@ -194,7 +206,7 @@ async function collectFiles(scanRoot, outputPath, scanStats) {
 
     let entries;
     try {
-      entries = await fs.readdir(currentDir, { withFileTypes: true });
+      entries = await fsPromises.readdir(currentDir, { withFileTypes: true });
       scanStats.directoriesVisited += 1;
     } catch (error) {
       scanStats.traversalErrors += 1;
@@ -202,7 +214,7 @@ async function collectFiles(scanRoot, outputPath, scanStats) {
     }
 
     for (const entry of entries) {
-      const entryPath = path.join(currentDir, entry.name);
+      const entryPath = pathApi.join(currentDir, entry.name);
 
       if (entryPath === outputRealPath) {
         scanStats.skippedByRule += 1;
@@ -243,19 +255,19 @@ async function collectFiles(scanRoot, outputPath, scanStats) {
 
 function shouldSkipFile(fileName) {
   const lowerName = fileName.toLowerCase();
-  const ext = path.extname(lowerName);
+  const ext = pathApi.extname(lowerName);
   return IGNORED_EXTENSIONS.has(ext);
 }
 
 async function scanFile(filePath, counts, scanStats) {
   try {
-    const stat = await fs.stat(filePath);
+    const stat = await fsPromises.stat(filePath);
     if (stat.size > MAX_FILE_SIZE_BYTES) {
       scanStats.skippedLarge += 1;
       return;
     }
 
-    const buffer = await fs.readFile(filePath);
+    const buffer = await fsPromises.readFile(filePath);
     if (isLikelyBinary(buffer)) {
       scanStats.skippedBinary += 1;
       return;
