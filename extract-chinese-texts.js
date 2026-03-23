@@ -84,9 +84,16 @@ async function main() {
     }
 
     const scanRoot = args[0] ? pathApi.resolve(args[0]) : process.cwd();
-    const outputPath = args[1]
+    let outputPath = args[1]
       ? pathApi.resolve(args[1])
       : pathApi.resolve(process.cwd(), DEFAULT_OUTPUT_FILE);
+    if (pathApi.extname(outputPath).toLowerCase() === '.csv') {
+      outputPath = pathApi.join(
+        pathApi.dirname(outputPath),
+        `${pathApi.basename(outputPath, pathApi.extname(outputPath))}.json`,
+      );
+    }
+    const csvOutputPath = getCsvOutputPath(outputPath);
 
     await ensureDirectory(scanRoot);
 
@@ -103,7 +110,7 @@ async function main() {
       totalOccurrences: 0,
     };
 
-    const files = await collectFiles(scanRoot, outputPath, scanStats);
+    const files = await collectFiles(scanRoot, [outputPath, csvOutputPath], scanStats);
     const counts = new Map();
 
     for (const filePath of files) {
@@ -140,12 +147,14 @@ async function main() {
     };
 
     await fsPromises.writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+    await fsPromises.writeFile(csvOutputPath, buildCsv(texts), 'utf8');
 
     console.log(`Scan completed.`);
     console.log(`Root: ${scanRoot}`);
     console.log(`Unique Chinese texts: ${report.summary.uniqueTextCount}`);
     console.log(`Total occurrences: ${report.summary.totalOccurrences}`);
-    console.log(`Output file: ${outputPath}`);
+    console.log(`JSON output: ${outputPath}`);
+    console.log(`CSV output: ${csvOutputPath}`);
   } catch (error) {
     console.error('Scan failed:', error instanceof Error ? error.message : error);
     process.exitCode = 1;
@@ -170,6 +179,7 @@ Usage:
 Arguments:
   scanRoot    Optional. Directory to scan recursively. Default: current directory.
   outputFile  Optional. Output JSON file path. Default: ./chinese-texts-report.json
+              A CSV file with the same base name is generated automatically.
 
 Output format:
   {
@@ -193,10 +203,10 @@ async function ensureDirectory(directoryPath) {
   }
 }
 
-async function collectFiles(scanRoot, outputPath, scanStats) {
+async function collectFiles(scanRoot, outputPaths, scanStats) {
   const files = [];
   const stack = [scanRoot];
-  const outputRealPath = pathApi.resolve(outputPath);
+  const outputRealPaths = new Set(outputPaths.map((item) => pathApi.resolve(item)));
 
   while (stack.length > 0) {
     const currentDir = stack.pop();
@@ -216,7 +226,7 @@ async function collectFiles(scanRoot, outputPath, scanStats) {
     for (const entry of entries) {
       const entryPath = pathApi.join(currentDir, entry.name);
 
-      if (entryPath === outputRealPath) {
+      if (outputRealPaths.has(pathApi.resolve(entryPath))) {
         scanStats.skippedByRule += 1;
         continue;
       }
@@ -336,6 +346,24 @@ function isLikelyBinary(buffer) {
   }
 
   return suspiciousCount / sampleSize > 0.3;
+}
+
+function getCsvOutputPath(outputPath) {
+  const parsed = pathApi.parse(outputPath);
+  return pathApi.join(parsed.dir, `${parsed.name}.csv`);
+}
+
+function buildCsv(texts) {
+  const lines = ['text,count'];
+  for (const item of texts) {
+    lines.push(`${escapeCsvField(item.text)},${item.count}`);
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+function escapeCsvField(value) {
+  const raw = String(value);
+  return `"${raw.replace(/"/g, '""')}"`;
 }
 
 void main();
