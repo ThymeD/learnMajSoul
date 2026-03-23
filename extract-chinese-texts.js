@@ -66,7 +66,7 @@ const IGNORED_EXTENSIONS = new Set([
 
 const HAS_CHINESE_REGEX = /[\p{Script=Han}]/u;
 const CHINESE_TEXT_REGEX =
-  /[\p{Script=Han}][\p{Script=Han}A-Za-z0-9，。！？；：、,.!?:;"'“”‘’（）()《》〈〉【】「」『』—…·\-_/+%％￥¥#@&~ \t\u00A0]*/gu;
+  /[\p{Script=Han}][\p{Script=Han}A-Za-z0-9，。！？；：、（）()《》〈〉【】「」『』—…·\-_/+%％￥¥~ \t\u00A0]*/gu;
 const HORIZONTAL_SPACES_REGEX = /[ \t\u00A0]+/g;
 
 async function main() {
