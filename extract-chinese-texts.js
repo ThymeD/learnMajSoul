@@ -6,6 +6,7 @@ let pathApi;
 
 const DEFAULT_OUTPUT_FILE = 'chinese-texts-report.json';
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const UTF8_BOM = '\uFEFF';
 
 const IGNORED_DIRECTORIES = new Set([
   '.git',
@@ -180,6 +181,7 @@ Arguments:
   scanRoot    Optional. Directory to scan recursively. Default: current directory.
   outputFile  Optional. Output JSON file path. Default: ./chinese-texts-report.json
               A CSV file with the same base name is generated automatically.
+              CSV is encoded as UTF-8 with BOM for spreadsheet compatibility.
 
 Output format:
   {
@@ -358,7 +360,7 @@ function buildCsv(texts) {
   for (const item of texts) {
     lines.push(`${escapeCsvField(item.text)},${item.count}`);
   }
-  return `${lines.join('\n')}\n`;
+  return `${UTF8_BOM}${lines.join('\n')}\n`;
 }
 
 function escapeCsvField(value) {
